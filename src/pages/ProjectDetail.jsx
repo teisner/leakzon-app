@@ -811,9 +811,34 @@ export default function ProjectDetail() {
       bounds,
     }).eq('id', layer.id);
 
-    // Insertion Meters / Ultrasonic Meter layers: sync points as Main Meter records
+    // Insertion Meters / Ultrasonic Meter layers: sync points as Main Meter
+    // records. Delete the layer's existing meters before re-inserting the
+    // edited set — matched by layer_id OR the layer's *previous* file_url
+    // (Base44-imported rows link by source_file_url and may predate the
+    // layer_id FK; `layer.file_url` here is the old value, since the update
+    // above ran on the DB but `layer` is the pre-edit object).
+    //
+    // Critically: if the delete fails (e.g. a momentarily-expired session
+    // silently downgrades the browser client to the anon role, which has no
+    // delete grant), we must NOT insert — inserting on top of undeleted rows
+    // is exactly what duplicated points on the map. Abort and surface it
+    // instead so nothing is silently duplicated.
     if (isMeterManualLayer(layer)) {
-      await supabase.from('meter').delete().eq('project_id', id).eq('layer_id', layer.id);
+      const { error: delError } = await supabase
+        .from('meter')
+        .delete()
+        .eq('project_id', id)
+        .or(`layer_id.eq.${layer.id},source_file_url.eq.${layer.file_url}`);
+      if (delError) {
+        alert(
+          `Your points were saved, but the meter markers could not be refreshed ` +
+          `(${delError.message}). Please reload the page and try again — no changes ` +
+          `were duplicated.`
+        );
+        setManualEditLayer(null);
+        loadLayers();
+        return;
+      }
       if (points.length > 0) {
         const usedUids = new Set();
         const meterRecords = points.map((p, idx) => {
@@ -833,7 +858,10 @@ export default function ProjectDetail() {
             source_file_url: file_url,
           };
         });
-        await supabase.from('meter').insert(meterRecords);
+        const { error: insError } = await supabase.from('meter').insert(meterRecords);
+        if (insError) {
+          alert(`Could not save meter markers: ${insError.message}. Please reload and try again.`);
+        }
       }
       loadMeters();
     }
