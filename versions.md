@@ -4,6 +4,13 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.010 — 2026-07-24
+- Project export/import now includes **customer annotations** (customer-view
+  comments/arrows/drawings) — previously they were left out of export, restore,
+  and duplicate, and weren't cleared on an overwrite-import. Applies to the
+  exportProjectData and importProjectData Edge Functions (requires an Edge
+  Function deploy, separate from the Vercel frontend deploy).
+
 ## 1.009 — 2026-07-24
 - Point numbering default color is now red (#ef4444) with white text. Saved
   styles still on the old default are migrated to red (users who explicitly

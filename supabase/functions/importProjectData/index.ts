@@ -68,7 +68,7 @@ async function bulkCreateConcurrent(table: string, records: any[], concurrency =
 }
 
 async function fetchSourceData(sourceProjectId: string) {
-  const [layers, meters, dmas, importLogs, networkNodes, networkLinks, mapNotes, isolatedPoints, imageOverlays, projectProgress] = await Promise.all([
+  const [layers, meters, dmas, importLogs, networkNodes, networkLinks, mapNotes, isolatedPoints, imageOverlays, projectProgress, customerAnnotations] = await Promise.all([
     admin.from('project_layer').select('*').eq('project_id', sourceProjectId).order('sort_order').then((r) => r.data || []),
     fetchAll('meter', sourceProjectId),
     admin.from('dma').select('*').eq('project_id', sourceProjectId).order('sort_order').then((r) => r.data || []),
@@ -79,11 +79,13 @@ async function fetchSourceData(sourceProjectId: string) {
     fetchAll('isolated_point', sourceProjectId),
     fetchAll('image_overlay', sourceProjectId),
     fetchAll('project_progress', sourceProjectId),
+    fetchAll('customer_annotation', sourceProjectId),
   ]);
   return {
     layers, meters, dmas,
     import_logs: importLogs, network_nodes: networkNodes, network_links: networkLinks,
     map_notes: mapNotes, isolated_points: isolatedPoints, image_overlays: imageOverlays, project_progress: projectProgress,
+    customer_annotations: customerAnnotations,
   };
 }
 
@@ -91,6 +93,7 @@ async function deleteAllProjectData(targetId: string) {
   const tables = [
     'project_layer', 'meter', 'consumption_reading', 'dma', 'import_log',
     'network_node', 'network_link', 'map_note', 'isolated_point', 'image_overlay', 'project_progress',
+    'customer_annotation',
   ];
   await Promise.all(tables.map((t) => admin.from(t).delete().eq('project_id', targetId)));
 }
@@ -332,6 +335,10 @@ Deno.serve(async (req) => {
     const logSource = data.import_logs || [];
     await bulkCreateConcurrent('import_log', logSource.map((l: any) => ({ ...strip(l), project_id: targetId })));
 
+    // Customer annotations (only a project_id FK; `data` jsonb is self-contained)
+    const customerAnnotationSource = data.customer_annotations || [];
+    await bulkCreateConcurrent('customer_annotation', customerAnnotationSource.map((a: any) => ({ ...strip(a), project_id: targetId })));
+
     // First chunk of consumption readings
     let firstReadingSource: any[];
     if (source_project_id) {
@@ -371,6 +378,7 @@ Deno.serve(async (req) => {
         image_overlays: overlaySource.length,
         project_progress: progressSource.length,
         import_logs: logSource.length,
+        customer_annotations: customerAnnotationSource.length,
       },
       skipped,
     });

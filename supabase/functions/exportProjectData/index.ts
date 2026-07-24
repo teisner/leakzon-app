@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const { data: project } = await admin.from('project').select('*').eq('id', project_id).single();
     if (!project) return json({ error: 'Project not found' }, 404);
 
-    const [layers, meters, readings, dmas, importLogs, networkNodes, networkLinks, mapNotes, isolatedPoints, imageOverlays, projectProgress] =
+    const [layers, meters, readings, dmas, importLogs, networkNodes, networkLinks, mapNotes, isolatedPoints, imageOverlays, projectProgress, customerAnnotations] =
       await Promise.all([
         fetchAll('project_layer', project_id, 'sort_order'),
         fetchAll('meter', project_id),
@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
         fetchAll('isolated_point', project_id),
         fetchAll('image_overlay', project_id),
         fetchAll('project_progress', project_id),
+        fetchAll('customer_annotation', project_id),
       ]);
 
     return json({
@@ -62,6 +63,7 @@ Deno.serve(async (req) => {
       isolated_points: isolatedPoints,
       image_overlays: imageOverlays,
       project_progress: projectProgress,
+      customer_annotations: customerAnnotations,
       stats: {
         layers: layers.length,
         meters: meters.length,
@@ -74,6 +76,7 @@ Deno.serve(async (req) => {
         isolated_points: isolatedPoints.length,
         image_overlays: imageOverlays.length,
         project_progress: projectProgress.length,
+        customer_annotations: customerAnnotations.length,
       },
     });
   } catch (error) {
