@@ -10,6 +10,8 @@ import { buildFeaturePopup } from "@/lib/featurePopup";
 import { isValveLayer, isFeatureIsolated, findIsolatedForFeature } from "@/lib/isolatedPoints";
 import BingTileLayer from "@/components/project/BingTileLayer";
 import MeterMarkers from "@/components/project/MeterMarkers";
+import PointNumberBadges from "@/components/project/PointNumberBadges";
+import { buildNumberablePoints } from "@/lib/pointNumbering";
 import CustomerModeLegend from "./CustomerModeLegend";
 import CustomerModeDmaPanel from "./CustomerModeDmaPanel";
 import CustomerModeAnnotationTools, { ANNOTATION_COLORS } from "./CustomerModeAnnotationTools";
@@ -59,6 +61,7 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
   const [visibleLayers, setVisibleLayers] = useState({});
   const [showDmas, setShowDmas] = useState(true);
   const [showDmaNames, setShowDmaNames] = useState(true);
+  const [showPointNumbers, setShowPointNumbers] = useState(false);
   const [mapSource, setMapSource] = useState("google");
   const [mapType, setMapType] = useState("terrain");
   const [showSourceMenu, setShowSourceMenu] = useState(false);
@@ -184,6 +187,13 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
 
   const shpLayers = layers.filter((l) => l.layer_type === "shp");
   const dataLayers = layers.filter((l) => l.layer_type === "data");
+
+  // Numbered points for the "Show Point Numbers" toggle — main/insertion
+  // meters, Ultrasonic Meters layer points, and isolated valves/points only.
+  const numberedPoints = useMemo(() => {
+    if (!showPointNumbers) return [];
+    return buildNumberablePoints({ meters, layers, isolatedPoints, geojsonCache });
+  }, [showPointNumbers, meters, layers, isolatedPoints, geojsonCache]);
 
   const handleFocusDma = (polygon) => {
     if (!mapRef.current || !polygon || polygon.length < 3) return;
@@ -461,6 +471,7 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
         )}
         <FitToBounds bounds={combinedBounds} />
         <MapResizer />
+        {showPointNumbers && <PointNumberBadges points={numberedPoints} />}
 
         {/* SHP / GeoJSON layers */}
         {shpLayers.map((layer) => {
@@ -658,6 +669,8 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
         onToggleDmas={() => setShowDmas((v) => !v)}
         showDmaNames={showDmaNames}
         onToggleDmaNames={() => setShowDmaNames((v) => !v)}
+        showPointNumbers={showPointNumbers}
+        onTogglePointNumbers={() => setShowPointNumbers((v) => !v)}
       />
 
       {/* DMA panel — right side */}

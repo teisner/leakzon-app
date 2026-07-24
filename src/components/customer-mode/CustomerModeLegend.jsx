@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, ChevronDown, MapPin } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, MapPin, ListOrdered } from "lucide-react";
 
 // Renders a legend symbol that visually matches the layer's map appearance
 function LayerSymbol({ layer }) {
@@ -49,7 +49,7 @@ function LayerSymbol({ layer }) {
   );
 }
 
-export default function CustomerModeLegend({ layers, dmas, visibleLayers, onToggleLayer, showDmas, onToggleDmas, showDmaNames, onToggleDmaNames }) {
+export default function CustomerModeLegend({ layers, dmas, visibleLayers, onToggleLayer, showDmas, onToggleDmas, showDmaNames, onToggleDmaNames, showPointNumbers, onTogglePointNumbers }) {
   const [minimized, setMinimized] = useState(false);
 
   const shpLayers = layers.filter((l) => l.layer_type === "shp");
@@ -113,6 +113,21 @@ export default function CustomerModeLegend({ layers, dmas, visibleLayers, onTogg
                 </span>
               </button>
             )}
+
+            <button
+              onClick={onTogglePointNumbers}
+              className={`w-full flex items-center justify-between gap-2 mb-2 pb-2 border-b border-border px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                showPointNumbers ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground hover:bg-muted"
+              }`}
+              title="Number main/insertion meters, Ultrasonic Meters, and isolated valves/points"
+            >
+              <span className="flex items-center gap-1.5">
+                <ListOrdered className="w-3 h-3" /> Point Numbers
+              </span>
+              <span className={`relative inline-flex h-3.5 w-6 rounded-full transition-colors ${showPointNumbers ? "bg-primary" : "bg-muted-foreground/40"}`}>
+                <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card transition-transform ${showPointNumbers ? "translate-x-3" : "translate-x-0.5"}`} />
+              </span>
+            </button>
 
             <div className="space-y-1.5 max-h-[50vh] overflow-y-auto">
               {allLayers.map((layer) => {

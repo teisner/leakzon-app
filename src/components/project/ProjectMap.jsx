@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap, Polygon, Marker, Tooltip, CircleMarker } from "react-leaflet";
 import L from "leaflet";
-import { Satellite, Mountain, Map as MapIcon, Eye, EyeOff, Maximize2, Square, Plus, Minus, Undo2, Check, X, Ruler, Trash2, MapPin, Pencil, RefreshCw, Globe, Sun, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
+import { Satellite, Mountain, Map as MapIcon, Eye, EyeOff, Maximize2, Square, Plus, Minus, Undo2, Check, X, Ruler, Trash2, MapPin, Pencil, RefreshCw, Globe, Sun, ChevronDown, ChevronRight, AlertTriangle, ListOrdered } from "lucide-react";
 import { MAP_SOURCES, SOURCE_KEYS } from "@/lib/mapSources";
 import { reprojectToWGS84 } from "@/lib/geoAnalysis";
 import { isPipeLayer, detectDiameterField, buildPipeConfig, getPipeStyle, ensureDiameterCounts } from "@/lib/pipeStyling";
@@ -27,6 +27,8 @@ import PinpointPanel from "@/components/project/PinpointPanel";
 import MapImageOverlay from "@/components/project/MapImageOverlay";
 
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
+import PointNumberBadges from "@/components/project/PointNumberBadges";
+import { buildNumberablePoints } from "@/lib/pointNumbering";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -182,6 +184,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   const [viewHideNotes, setViewHideNotes] = useState(false);
   const [viewHideArrows, setViewHideArrows] = useState(false);
   const [viewHideIsolated, setViewHideIsolated] = useState(false);
+  const [showPointNumbers, setShowPointNumbers] = useState(false);
   const [mapDimming, setMapDimming] = useState(() => {
     const saved = localStorage.getItem("mapDimming");
     if (saved !== null) return parseInt(saved, 10);
@@ -509,6 +512,13 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     return getBoundaryPolygonsLatLng(boundaryGeoJSON);
   }, [clipToBoundary, boundaryGeoJSON]);
 
+  // Numbered points for the "Show Point Numbers" toggle — main/insertion
+  // meters, Ultrasonic Meters layer points, and isolated valves/points only.
+  const numberedPoints = useMemo(() => {
+    if (!showPointNumbers) return [];
+    return buildNumberablePoints({ meters, layers, isolatedPoints, geojsonCache });
+  }, [showPointNumbers, meters, layers, isolatedPoints, geojsonCache]);
+
   const handleZoomFit = () => {
     if (!mapRef.current || !boundaryLayer?.bounds) return;
     const b = boundaryLayer.bounds;
@@ -683,6 +693,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         <RecenterMap lat={project.latitude} lng={project.longitude} />
         <FitToBounds bounds={combinedBounds} />
         <MapResizer />
+        {showPointNumbers && <PointNumberBadges points={numberedPoints} />}
         <BoxZoomHandler active={boxMode} onDone={() => setBoxMode(false)} />
         {/* Combined render — z-order follows panel order (top of panel = top of map).
             Descending sort so lowest sort_order renders last → appears on top in Leaflet. */}
@@ -1150,6 +1161,13 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           title="Highlight components outside boundary"
         >
           <AlertTriangle className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setShowPointNumbers((v) => !v)}
+          className={`flex items-center justify-center w-9 h-9 border-l border-border ${showPointNumbers ? "bg-blue-500 text-white hover:bg-blue-600" : "text-muted-foreground hover:bg-muted"}`}
+          title="Show point numbers (main/insertion meters, Ultrasonic Meters, isolated valves/points)"
+        >
+          <ListOrdered className="w-4 h-4" />
         </button>
         <MapScreenshot mapRef={mapRef} dmas={dmas} project={project} targetRef={rootRef} onToggleFocusDma={onToggleFocusDma} />
       </div>
