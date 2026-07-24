@@ -812,32 +812,55 @@ export default function ProjectDetail() {
     }).eq('id', layer.id);
 
     // Insertion Meters / Ultrasonic Meter layers: sync points as Main Meter
-    // records. Delete the layer's existing meters before re-inserting the
-    // edited set — matched by layer_id OR the layer's *previous* file_url
-    // (Base44-imported rows link by source_file_url and may predate the
-    // layer_id FK; `layer.file_url` here is the old value, since the update
-    // above ran on the DB but `layer` is the pre-edit object).
-    //
-    // Critically: if the delete fails (e.g. a momentarily-expired session
-    // silently downgrades the browser client to the anon role, which has no
-    // delete grant), we must NOT insert — inserting on top of undeleted rows
-    // is exactly what duplicated points on the map. Abort and surface it
-    // instead so nothing is silently duplicated.
+    // records. In production the earlier "delete by filter then insert"
+    // approach was silently deleting ZERO rows on every save (a filtered
+    // DELETE that returned no error but matched nothing), so each save piled
+    // 2 more duplicate meters onto the map. To make this bulletproof:
+    //   1. SELECT the layer's existing meter ids (both linkage styles —
+    //      layer_id, or the layer's previous file_url for Base44-imported
+    //      rows that predate the layer_id FK; `layer.file_url` is the old
+    //      value since `layer` is the pre-edit object).
+    //   2. DELETE them by primary key (the most reliable filter).
+    //   3. VERIFY they're actually gone before inserting. If any remain,
+    //      abort WITHOUT inserting — never duplicate silently.
     if (isMeterManualLayer(layer)) {
-      const { error: delError } = await supabase
-        .from('meter')
-        .delete()
-        .eq('project_id', id)
-        .or(`layer_id.eq.${layer.id},source_file_url.eq.${layer.file_url}`);
-      if (delError) {
-        alert(
-          `Your points were saved, but the meter markers could not be refreshed ` +
-          `(${delError.message}). Please reload the page and try again — no changes ` +
-          `were duplicated.`
-        );
+      // Collect existing meter ids for this layer via two simple equality
+      // selects (by layer_id, and by the layer's previous file_url for any
+      // legacy rows) — avoids a fragile `.or()` filter that embeds a full URL.
+      const idSet = new Set();
+      const { data: byLayer, error: selError } = await supabase
+        .from('meter').select('id').eq('project_id', id).eq('layer_id', layer.id);
+      if (selError) {
+        alert(`Your points were saved but meter markers couldn't be refreshed (${selError.message}). Please reload and try again — nothing was duplicated.`);
         setManualEditLayer(null);
         loadLayers();
         return;
+      }
+      (byLayer || []).forEach((r) => idSet.add(r.id));
+      if (layer.file_url) {
+        const { data: byUrl } = await supabase
+          .from('meter').select('id').eq('project_id', id).eq('source_file_url', layer.file_url);
+        (byUrl || []).forEach((r) => idSet.add(r.id));
+      }
+      const existingIds = [...idSet];
+      if (existingIds.length > 0) {
+        await supabase.from('meter').delete().in('id', existingIds);
+        // Verify the delete actually removed them — a no-op delete here is
+        // exactly what caused runaway duplication.
+        const { data: stillThere } = await supabase
+          .from('meter')
+          .select('id')
+          .in('id', existingIds);
+        if (stillThere && stillThere.length > 0) {
+          alert(
+            `Your points were saved, but the old meter markers could not be removed ` +
+            `(you may not have permission, or your session expired). Nothing was ` +
+            `duplicated. Please reload the page and try again.`
+          );
+          setManualEditLayer(null);
+          loadLayers();
+          return;
+        }
       }
       if (points.length > 0) {
         const usedUids = new Set();
