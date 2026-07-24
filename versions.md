@@ -4,6 +4,15 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.003 — 2026-07-24
+- Fixed deleting a layer silently failing (e.g. the Ultrasonic layer): a layer
+  can't be deleted while `meter.layer_id` or `isolated_point.layer_id` rows
+  reference it, and its meters may be referenced by `dma.main_meter_id`. Delete
+  now unwinds those references first (unlink DMAs, remove isolated points and
+  meters) regardless of layer type, then deletes the layer and surfaces any
+  error. Previously it deleted the layer first and only cleaned up meters for
+  `data`-type layers, so manual meter layers (type `shp`) never deleted.
+
 ## 1.002 — 2026-07-24
 - Fixed "No DMAs with a valid polygon to export" on the SHP/JSON export page:
   `parsePolygon` only checked `dma.polygon`, but the export page loads DMAs

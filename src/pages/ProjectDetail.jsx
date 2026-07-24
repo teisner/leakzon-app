@@ -724,13 +724,57 @@ export default function ProjectDetail() {
   };
 
   const handleDeleteLayer = async (layer) => {
-    await supabase.from('project_layer').delete().eq('id', layer.id);
-    // For data layers, also delete all meters and consumption readings sourced from this layer's file
-    if (layer.layer_type === "data" && layer.file_url) {
-      await supabase.from('consumption_reading').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
-      await supabase.from('meter').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
-      loadMeters();
+    // A project_layer can't be deleted while other rows reference it: both
+    // meter.layer_id and isolated_point.layer_id are ON DELETE NO ACTION
+    // foreign keys, and meters may in turn be referenced by dma.main_meter_id
+    // (also NO ACTION). So unwind those references first, in order, then
+    // delete the layer. (The old code deleted the layer first and only cleaned
+    // up meters for layer_type === "data" — so deleting a manual meter layer
+    // like Insertion/Ultrasonic, which is type "shp", always failed silently.)
+
+    // 1. Collect this layer's meters (by layer_id and by the layer's file_url).
+    const meterIdSet = new Set();
+    const { data: mByLayer } = await supabase
+      .from('meter').select('id').eq('project_id', id).eq('layer_id', layer.id);
+    (mByLayer || []).forEach((r) => meterIdSet.add(r.id));
+    if (layer.file_url) {
+      const { data: mByUrl } = await supabase
+        .from('meter').select('id').eq('project_id', id).eq('source_file_url', layer.file_url);
+      (mByUrl || []).forEach((r) => meterIdSet.add(r.id));
     }
+    const meterIds = [...meterIdSet];
+
+    // 2. Unlink any DMA whose main meter is one of these (frees the FK).
+    if (meterIds.length > 0) {
+      const { data: linkedDmas } = await supabase
+        .from('dma').select('id').eq('project_id', id).in('main_meter_id', meterIds);
+      if (linkedDmas && linkedDmas.length > 0) {
+        await supabase.from('dma').update({ main_meter_id: null }).in('id', linkedDmas.map((d) => d.id));
+      }
+    }
+
+    // 3. Delete isolated points that reference this layer (NOT NULL FK).
+    await supabase.from('isolated_point').delete().eq('layer_id', layer.id);
+
+    // 4. Delete consumption readings + meters for this layer (deleting meters
+    //    cascades their consumption_reading rows, but also clear any linked by
+    //    the file url directly, matching the previous behavior).
+    if (layer.file_url) {
+      await supabase.from('consumption_reading').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
+    }
+    if (meterIds.length > 0) {
+      await supabase.from('meter').delete().in('id', meterIds);
+    }
+
+    // 5. Finally delete the layer itself, and surface any failure.
+    const { error: delError } = await supabase.from('project_layer').delete().eq('id', layer.id);
+    if (delError) {
+      alert(`Could not delete the layer: ${delError.message}. Please reload and try again.`);
+    }
+
+    loadMeters();
+    loadDmas();
+    loadIsolatedPoints();
     loadLayers();
   };
 
