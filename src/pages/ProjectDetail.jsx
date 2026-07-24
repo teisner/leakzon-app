@@ -727,46 +727,61 @@ export default function ProjectDetail() {
     // A project_layer can't be deleted while other rows reference it: both
     // meter.layer_id and isolated_point.layer_id are ON DELETE NO ACTION
     // foreign keys, and meters may in turn be referenced by dma.main_meter_id
-    // (also NO ACTION). So unwind those references first, in order, then
-    // delete the layer. (The old code deleted the layer first and only cleaned
-    // up meters for layer_type === "data" — so deleting a manual meter layer
-    // like Insertion/Ultrasonic, which is type "shp", always failed silently.)
+    // (also NO ACTION). So unwind those references first, then delete the
+    // layer. Deletes are FILTER-based (not an id list): PostgREST caps reads
+    // at max_rows (1000), so collecting ids first would truncate and leave
+    // rows behind — the cause of the "violates foreign key" error on layers
+    // with many meters.
 
-    // 1. Collect this layer's meters (by layer_id and by the layer's file_url).
-    const meterIdSet = new Set();
-    const { data: mByLayer } = await supabase
-      .from('meter').select('id').eq('project_id', id).eq('layer_id', layer.id);
-    (mByLayer || []).forEach((r) => meterIdSet.add(r.id));
-    if (layer.file_url) {
-      const { data: mByUrl } = await supabase
-        .from('meter').select('id').eq('project_id', id).eq('source_file_url', layer.file_url);
-      (mByUrl || []).forEach((r) => meterIdSet.add(r.id));
-    }
-    const meterIds = [...meterIdSet];
+    // Deletes all rows matching a single-column filter on the meter table,
+    // repeating until none remain (a filtered delete can itself be capped by
+    // max_rows, so loop with a safety bound).
+    const deleteMetersWhere = async (col, val) => {
+      for (let i = 0; i < 500; i++) {
+        const { error } = await supabase.from('meter').delete().eq('project_id', id).eq(col, val);
+        if (error) return false;
+        const { data: left } = await supabase
+          .from('meter').select('id').eq('project_id', id).eq(col, val).limit(1);
+        if (!left || left.length === 0) return true;
+      }
+      return false;
+    };
 
-    // 2. Unlink any DMA whose main meter is one of these (frees the FK).
-    if (meterIds.length > 0) {
-      const { data: linkedDmas } = await supabase
-        .from('dma').select('id').eq('project_id', id).in('main_meter_id', meterIds);
-      if (linkedDmas && linkedDmas.length > 0) {
-        await supabase.from('dma').update({ main_meter_id: null }).in('id', linkedDmas.map((d) => d.id));
+    // 1. Unlink any DMA whose main meter belongs to this layer. Work from the
+    //    DMA side (few DMAs) so we're never limited by the meter read cap.
+    const { data: dmasWithMain } = await supabase
+      .from('dma').select('id, main_meter_id').eq('project_id', id).not('main_meter_id', 'is', null);
+    const mainMeterIds = (dmasWithMain || []).map((d) => d.main_meter_id);
+    if (mainMeterIds.length > 0) {
+      const onLayer = new Set();
+      const { data: byLayer } = await supabase
+        .from('meter').select('id').in('id', mainMeterIds).eq('layer_id', layer.id);
+      (byLayer || []).forEach((r) => onLayer.add(r.id));
+      if (layer.file_url) {
+        const { data: byUrl } = await supabase
+          .from('meter').select('id').in('id', mainMeterIds).eq('source_file_url', layer.file_url);
+        (byUrl || []).forEach((r) => onLayer.add(r.id));
+      }
+      const dmasToUnlink = (dmasWithMain || []).filter((d) => onLayer.has(d.main_meter_id)).map((d) => d.id);
+      if (dmasToUnlink.length > 0) {
+        await supabase.from('dma').update({ main_meter_id: null }).in('id', dmasToUnlink);
       }
     }
 
-    // 3. Delete isolated points that reference this layer (NOT NULL FK).
+    // 2. Delete isolated points that reference this layer (NOT NULL FK).
     await supabase.from('isolated_point').delete().eq('layer_id', layer.id);
 
-    // 4. Delete consumption readings + meters for this layer (deleting meters
-    //    cascades their consumption_reading rows, but also clear any linked by
-    //    the file url directly, matching the previous behavior).
+    // 3. Delete this layer's consumption readings + meters (filter deletes,
+    //    any row count). Deleting meters also cascades their readings.
     if (layer.file_url) {
       await supabase.from('consumption_reading').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
     }
-    if (meterIds.length > 0) {
-      await supabase.from('meter').delete().in('id', meterIds);
+    await deleteMetersWhere('layer_id', layer.id);
+    if (layer.file_url) {
+      await deleteMetersWhere('source_file_url', layer.file_url);
     }
 
-    // 5. Finally delete the layer itself, and surface any failure.
+    // 4. Finally delete the layer itself, and surface any remaining failure.
     const { error: delError } = await supabase.from('project_layer').delete().eq('id', layer.id);
     if (delError) {
       alert(`Could not delete the layer: ${delError.message}. Please reload and try again.`);

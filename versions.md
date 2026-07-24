@@ -4,6 +4,14 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.004 — 2026-07-24
+- Fixed layer deletion still failing on layers with many meters
+  ("violates foreign key constraint meter_layer_id_fkey"): the previous fix
+  collected meter ids via a read that PostgREST caps at 1000 rows, so layers
+  with >1000 meters left rows behind and stayed undeletable. Now deletes
+  meters by filter in a loop until none remain, and unlinks affected DMAs from
+  the DMA side so it's never limited by the meter read cap.
+
 ## 1.003 — 2026-07-24
 - Fixed deleting a layer silently failing (e.g. the Ultrasonic layer): a layer
   can't be deleted while `meter.layer_id` or `isolated_point.layer_id` rows
