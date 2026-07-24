@@ -843,7 +843,26 @@ export default function ProjectDetail() {
         (byUrl || []).forEach((r) => idSet.add(r.id));
       }
       const existingIds = [...idSet];
+
+      // Any DMA whose main_meter_id points at one of these meters must be
+      // unlinked before the delete: dma.main_meter_id has an ON DELETE
+      // NO ACTION foreign key, so Postgres refuses to delete a referenced
+      // meter and the whole batch delete rolls back (0 rows deleted) — this
+      // was the real cause of the runaway duplication. We record each DMA's
+      // link by the meter's uid so we can re-point it at the recreated meter
+      // after re-insert, preserving the DMA↔insertion-meter association.
+      let dmaRelink = [];
       if (existingIds.length > 0) {
+        const { data: existingMeters } = await supabase
+          .from('meter').select('id,uid').in('id', existingIds);
+        const idToUid = Object.fromEntries((existingMeters || []).map((m) => [m.id, m.uid]));
+        const { data: linkedDmas } = await supabase
+          .from('dma').select('id,main_meter_id').eq('project_id', id).in('main_meter_id', existingIds);
+        dmaRelink = (linkedDmas || []).map((d) => ({ dmaId: d.id, uid: idToUid[d.main_meter_id] }));
+        if (linkedDmas && linkedDmas.length > 0) {
+          await supabase.from('dma').update({ main_meter_id: null }).in('id', linkedDmas.map((d) => d.id));
+        }
+
         await supabase.from('meter').delete().in('id', existingIds);
         // Verify the delete actually removed them — a no-op delete here is
         // exactly what caused runaway duplication.
@@ -854,7 +873,7 @@ export default function ProjectDetail() {
         if (stillThere && stillThere.length > 0) {
           alert(
             `Your points were saved, but the old meter markers could not be removed ` +
-            `(you may not have permission, or your session expired). Nothing was ` +
+            `(they may be referenced elsewhere, or your session expired). Nothing was ` +
             `duplicated. Please reload the page and try again.`
           );
           setManualEditLayer(null);
@@ -881,12 +900,23 @@ export default function ProjectDetail() {
             source_file_url: file_url,
           };
         });
-        const { error: insError } = await supabase.from('meter').insert(meterRecords);
+        const { data: inserted, error: insError } = await supabase
+          .from('meter').insert(meterRecords).select('id,uid');
         if (insError) {
           alert(`Could not save meter markers: ${insError.message}. Please reload and try again.`);
+        } else if (dmaRelink.length > 0) {
+          // Re-point each previously-linked DMA at its recreated main meter,
+          // matched by uid.
+          for (const rl of dmaRelink) {
+            const newMeter = (inserted || []).find((m) => m.uid === rl.uid);
+            if (newMeter) {
+              await supabase.from('dma').update({ main_meter_id: newMeter.id }).eq('id', rl.dmaId);
+            }
+          }
         }
       }
       loadMeters();
+      loadDmas();
     }
 
     setManualEditLayer(null);

@@ -18,6 +18,11 @@ export default function ExportPanel({ project, dmas, projectId, onAnomalyExporte
     setShpExporting(true);
     try {
       await exportDmasShp(dmas, project);
+    } catch (err) {
+      // Previously this had no catch, so any Edge Function error was a silent
+      // unhandled rejection — the button just spun and "did nothing".
+      console.error("SHP export failed:", err);
+      alert(`Could not export shapefile: ${err?.message || "unknown error"}`);
     } finally {
       setShpExporting(false);
     }
