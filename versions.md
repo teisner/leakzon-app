@@ -4,6 +4,14 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.007 — 2026-07-24
+- Importing a meter-type layer (Main / Insertion / Ultrasonic Meters) as a
+  shapefile/GeoJSON now also creates `is_main` meter rows from its point
+  features — previously the shapefile import only created a display layer, so
+  those meters never appeared in the meter table, network inventory, DMA
+  main-meter linking, or point numbering. Applied to both the single-layer and
+  multi-layer (ZIP) import paths in UploadData and UploadLayerDialog.
+
 ## 1.006 — 2026-07-24
 - Made layer deletion much faster: removed an explicit consumption_reading
   delete that scanned all of a project's readings (by source_file_url) on every

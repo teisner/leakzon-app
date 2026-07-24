@@ -10,6 +10,8 @@ import { uploadFile } from "@/api/storageClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
+import { isMainMeterLayerName } from "@/lib/meterLayerDetection";
+import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
 import { downloadMeterTemplate } from "@/lib/meterTemplate";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import { detectLayerCategory } from "@/lib/layerCategoryDetection";
@@ -309,7 +311,7 @@ export default function UploadData() {
         setProgressLabel(t('upload.savingLayer'));
         setPhase("saving");
 
-        await supabase.from('project_layer').insert({
+        const { data: insertedLayer } = await supabase.from('project_layer').insert({
           project_id: id,
           name: layerName,
           layer_type_id: await resolveLayerTypeId(layerCategory || "Other"),
@@ -325,7 +327,18 @@ export default function UploadData() {
           altitude_field: analysis?.altitude_field || (analysis?.has_z_coordinates ? "z" : null),
           altitude_source: analysis?.altitude_source || null,
           altitude_unit: analysis?.altitude_unit || null,
-        });
+        }).select('id').single();
+
+        // Meter-type layers (Main/Insertion/Ultrasonic) also need is_main
+        // meter rows so they show in the meter table, network inventory, DMA
+        // linking, and point numbering — not just as a display layer.
+        if (insertedLayer?.id && isMainMeterLayerName(layerName, layerCategory)) {
+          try {
+            await createMetersFromGeoJSONUrl(file_url, { projectId: id, layerId: insertedLayer.id });
+          } catch (e) {
+            console.error("Failed to create meter rows for meter layer:", e);
+          }
+        }
 
         recordProgress(id, "gis_layers_uploaded");
         setProgress(100);
@@ -445,7 +458,7 @@ export default function UploadData() {
         setProgressLabel(t('upload.savingLayerName', { name: layer.name }));
         setProgress(Math.round((i / selectedLayers.length) * 90));
 
-        await supabase.from('project_layer').insert({
+        const { data: insertedZipLayer } = await supabase.from('project_layer').insert({
           project_id: id,
           name: layer.name,
           layer_type_id: await resolveLayerTypeId(layer.category || "Other"),
@@ -461,7 +474,15 @@ export default function UploadData() {
           altitude_field: layer.analysis?.altitude_field || (layer.analysis?.has_z_coordinates ? "z" : null),
           altitude_source: layer.analysis?.altitude_source || null,
           altitude_unit: layer.analysis?.altitude_unit || null,
-        });
+        }).select('id').single();
+
+        if (insertedZipLayer?.id && isMainMeterLayerName(layer.name, layer.category)) {
+          try {
+            await createMetersFromGeoJSONUrl(layer.fileUrl, { projectId: id, layerId: insertedZipLayer.id });
+          } catch (e) {
+            console.error("Failed to create meter rows for meter layer:", e);
+          }
+        }
 
         stats.layersImported++;
         stats.totalFeatures += layer.analysis?.featureCount || 0;

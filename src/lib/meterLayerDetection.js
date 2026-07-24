@@ -15,3 +15,15 @@ export function isMeterManualLayer(layer) {
 export function isInsertionManualLayer(layer) {
   return /insertion/i.test(layer?.name || "");
 }
+
+// True for layers whose point features represent main/insertion/ultrasonic
+// meters — i.e. layers that should also produce is_main=true rows in the
+// `meter` table (so they show in the meter table, network inventory, DMA
+// main-meter linking, and point numbering). Used when importing a shapefile/
+// GeoJSON layer, which otherwise only creates a display layer with no meters.
+export function isMainMeterLayerName(name, category) {
+  return (
+    /insertion|ultrasonic|main[\s_-]?meter/i.test(name || "") ||
+    ["Main Meters", "Insertion Meters", "Ultrasonic Meters"].includes(category || "")
+  );
+}
