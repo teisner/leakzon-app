@@ -16,6 +16,7 @@ import VersionUpdates from "@/components/project/VersionUpdates";
 import LanguageToggle from "@/components/LanguageToggle";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useLanguage } from "@/lib/i18n";
+import { APP_VERSION } from "@/lib/version";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 
 const DASHBOARD_CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -156,7 +157,7 @@ export default function Home() {
       <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
       <header className="bg-card border-b border-border shrink-0">
         <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start">
             <img
               src="/leakzon-logo-white.png"
               alt="LeakZon Onboarding Platform"
@@ -167,6 +168,9 @@ export default function Home() {
               alt="LeakZon Onboarding Platform"
               className="h-14 w-auto hidden dark:block"
             />
+            <span className="text-[9px] leading-none text-muted-foreground/70 mt-0.5 self-center tabular-nums">
+              v{APP_VERSION}
+            </span>
           </div>
           <div className="ml-4 pl-4 border-l border-border">
             <h1 className="text-xl font-bold text-foreground tracking-tight">{t('dashboard.title')}</h1>
