@@ -777,15 +777,18 @@ export default function ProjectDetail() {
     //    meters too (e.g. a "Main" and a "Sub" layer imported from the same
     //    CSV share a source_file_url). This guard is the fix for a data-loss
     //    bug where deleting one such layer wiped the other's meters.
+    //
+    //    Consumption readings are NOT deleted explicitly: consumption_reading
+    //    .meter_id is ON DELETE CASCADE, so deleting the meters removes their
+    //    readings via the indexed FK. The old explicit delete-by-source_file_url
+    //    scanned all of a project's readings on *every* layer delete (even
+    //    boundary/shp layers with no meters), which made deletes very slow.
     let fileIsSharedByAnotherLayer = false;
     if (layer.file_url) {
       const { data: siblings } = await supabase
         .from('project_layer').select('id').eq('project_id', id)
         .eq('file_url', layer.file_url).neq('id', layer.id);
       fileIsSharedByAnotherLayer = !!(siblings && siblings.length > 0);
-    }
-    if (layer.file_url && !fileIsSharedByAnotherLayer) {
-      await supabase.from('consumption_reading').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
     }
     await deleteMetersWhere('layer_id', layer.id);
     if (layer.file_url && !fileIsSharedByAnotherLayer) {

@@ -4,6 +4,13 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.006 — 2026-07-24
+- Made layer deletion much faster: removed an explicit consumption_reading
+  delete that scanned all of a project's readings (by source_file_url) on every
+  layer delete — even boundary/shp layers with no meters. Readings are already
+  removed via the ON DELETE CASCADE on consumption_reading.meter_id when the
+  layer's meters are deleted, so the extra scan was redundant and slow.
+
 ## 1.005 — 2026-07-24
 - Fixed a data-loss bug in layer deletion: deleting a layer removed meters by
   `source_file_url`, but two layers imported from the same file (e.g. a "Main"
