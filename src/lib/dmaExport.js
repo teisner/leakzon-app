@@ -2,7 +2,11 @@ import { invokeFunction } from "@/api/functionsClient";
 
 const parsePolygon = (dma) => {
   try {
-    const poly = typeof dma.polygon === "string" ? JSON.parse(dma.polygon) : dma.polygon;
+    // The canonical column is `polygon_json` (raw `dma` table select, e.g. on
+    // the export page). ProjectDetail aliases it to `polygon`; some legacy
+    // rows may use either — accept all so exports work from every screen.
+    const raw = dma.polygon_json ?? dma.polygon;
+    const poly = typeof raw === "string" ? JSON.parse(raw) : raw;
     return Array.isArray(poly) && poly.length >= 3 ? poly : null;
   } catch {
     return null;

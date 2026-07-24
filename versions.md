@@ -4,6 +4,13 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.002 — 2026-07-24
+- Fixed "No DMAs with a valid polygon to export" on the SHP/JSON export page:
+  `parsePolygon` only checked `dma.polygon`, but the export page loads DMAs
+  straight from the table where the column is `polygon_json` — so every DMA
+  was wrongly filtered out. Now reads `polygon_json` (falling back to
+  `polygon`), which also corrects the polygon data in the JSON export.
+
 ## 1.001 — 2026-07-24
 - Fixed manual meter layers (Insertion/Ultrasonic) duplicating points on save:
   the delete was blocked by the `dma.main_meter_id` foreign key when a DMA
