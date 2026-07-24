@@ -113,17 +113,40 @@ export function extractUltrasonicPoints(layers, meters, geojsonCache) {
   return points;
 }
 
+// A single meter row can legitimately satisfy more than one category filter
+// — e.g. a meter flagged is_main=true that also lives in a layer named
+// "Ultrasonic Insertion Meters" (a real, common meter-type name, not an edge
+// case) matches both the main-meter filter and the ultrasonic-layer regex.
+// Without de-duping, that one physical meter gets two numbers at the exact
+// same coordinate (reported as "number 1 & 2 should be one point"). Each
+// meter/isolated-point id is only ever assigned once; main/insertion takes
+// priority over ultrasonic since is_main is the more fundamental attribute.
 export function buildNumberablePoints({ meters, layers, isolatedPoints, geojsonCache }) {
-  const mainMeters = (meters || [])
-    .filter((m) => m.is_main && m.latitude != null && m.longitude != null)
-    .filter((m) => isMeterLayerVisible(m, layers))
-    .map((m) => ({ id: `meter-${m.id}`, category: "main", lat: m.latitude, lng: m.longitude }));
+  const seenIds = new Set();
+  const dedupe = (list) => {
+    const out = [];
+    for (const item of list) {
+      if (seenIds.has(item.id)) continue;
+      seenIds.add(item.id);
+      out.push(item);
+    }
+    return out;
+  };
 
-  const ultrasonic = extractUltrasonicPoints(layers, meters, geojsonCache);
+  const mainMeters = dedupe(
+    (meters || [])
+      .filter((m) => m.is_main && m.latitude != null && m.longitude != null)
+      .filter((m) => isMeterLayerVisible(m, layers))
+      .map((m) => ({ id: `meter-${m.id}`, category: "main", lat: m.latitude, lng: m.longitude }))
+  );
 
-  const isolated = (isolatedPoints || [])
-    .filter((ip) => ip.latitude != null && ip.longitude != null)
-    .map((ip) => ({ id: `isolated-${ip.id}`, category: "isolated", lat: ip.latitude, lng: ip.longitude }));
+  const ultrasonic = dedupe(extractUltrasonicPoints(layers, meters, geojsonCache));
+
+  const isolated = dedupe(
+    (isolatedPoints || [])
+      .filter((ip) => ip.latitude != null && ip.longitude != null)
+      .map((ip) => ({ id: `isolated-${ip.id}`, category: "isolated", lat: ip.latitude, lng: ip.longitude }))
+  );
 
   return assignPointNumbers([...mainMeters, ...ultrasonic, ...isolated]);
 }
