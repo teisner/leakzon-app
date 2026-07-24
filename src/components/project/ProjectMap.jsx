@@ -29,6 +29,7 @@ import MapImageOverlay from "@/components/project/MapImageOverlay";
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
+import { isMeterManualLayer } from "@/lib/meterLayerDetection";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -628,7 +629,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     }
   };
 
-  const isMeterLayer = manualEditLayer?.category === "Insertion Meters";
+  const isMeterLayer = isMeterManualLayer(manualEditLayer);
 
   const handleMeterPointPlaced = (id) => {
     setMeterPointId(id);

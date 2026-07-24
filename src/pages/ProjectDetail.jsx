@@ -32,6 +32,7 @@ import { findNearestDmas, buildIsolatedLayerGeoJSON } from "@/lib/isolatedPoints
 import { recordProgress } from "@/lib/progressTracker";
 import { reverseGeocode } from "@/lib/reverseGeocode";
 import { findNearestPipeDiameter } from "@/lib/nearestPipe";
+import { isMeterManualLayer, isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { useLanguage } from "@/lib/i18n";
 import ProjectSettingsPage from "@/components/project/ProjectSettingsPage";
 import VersionUpdates from "@/components/project/VersionUpdates";
@@ -810,8 +811,8 @@ export default function ProjectDetail() {
       bounds,
     }).eq('id', layer.id);
 
-    // Insertion Meters layers: sync points as Main Meter records
-    if (layer.category === "Insertion Meters") {
+    // Insertion Meters / Ultrasonic Meter layers: sync points as Main Meter records
+    if (isMeterManualLayer(layer)) {
       await supabase.from('meter').delete().eq('project_id', id).eq('layer_id', layer.id);
       if (points.length > 0) {
         const usedUids = new Set();
@@ -1044,7 +1045,7 @@ export default function ProjectDetail() {
 
     // Check if this is an insertion meter — only fetch pipe diameter for those
     const insertionLayerIds = new Set(
-      layers.filter((l) => l.category === "Insertion Meters").map((l) => l.id)
+      layers.filter(isInsertionManualLayer).map((l) => l.id)
     );
     const isInsertionMeter =
       pinpointMeter?.is_main &&

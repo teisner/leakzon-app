@@ -3,6 +3,7 @@ import { ArrowLeftRight, Droplets, MapPin, Lock } from "lucide-react";
 import { supabase } from "@/api/supabaseClient";
 import FlowChartCanvas from "./FlowChartCanvas";
 import { pointInPolygon } from "@/lib/polygonUtils";
+import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import NetworkMapPanel from "./NetworkMapPanel";
 import NetworkStory from "./NetworkStory";
 
@@ -197,7 +198,7 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
         const layer = layers.find((l) => l.id === m.layer_id);
         if (m.is_main) {
           items.push({ type: "main", relX: (m.longitude - minLng) / lngRange, relY: 1 - (m.latitude - minLat) / latRange });
-        } else if (layer?.category === "Insertion Meters") {
+        } else if (isInsertionManualLayer(layer)) {
           items.push({ type: "insertion", relX: (m.longitude - minLng) / lngRange, relY: 1 - (m.latitude - minLat) / latRange });
         }
       }

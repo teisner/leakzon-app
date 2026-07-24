@@ -4,6 +4,7 @@ import { reprojectToWGS84 } from "@/lib/geoAnalysis";
 import { isValveLayer } from "@/lib/isolatedPoints";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { parseDmaPolygons } from "@/lib/isolatedPoints";
+import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import WetworkTable from "./WetworkTable";
 
 const COMPONENT_TYPES = [
@@ -72,7 +73,7 @@ export default function WetworkInventory({ project, layers, dmas, meters, isolat
 
   const dmaPolygons = useMemo(() => parseDmaPolygons(dmas), [dmas]);
   const insertionLayerIds = useMemo(
-    () => new Set(layers.filter((l) => l.category === "Insertion Meters").map((l) => l.id)),
+    () => new Set(layers.filter(isInsertionManualLayer).map((l) => l.id)),
     [layers]
   );
 

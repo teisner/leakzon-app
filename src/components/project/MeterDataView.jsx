@@ -3,6 +3,7 @@ import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
+import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
   const tableRef = useRef(null);
 
   const insertionLayerIds = useMemo(() => {
-    return (layers || []).filter((l) => l.category === "Insertion Meters").map((l) => l.id);
+    return (layers || []).filter(isInsertionManualLayer).map((l) => l.id);
   }, [layers]);
 
   // Debounce search input
