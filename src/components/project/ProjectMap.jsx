@@ -514,10 +514,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
 
   // Numbered points for the "Show Point Numbers" toggle — main/insertion
   // meters, Ultrasonic Meters layer points, and isolated valves/points only.
+  // Isolated points are excluded while viewHideIsolated is on, matching the
+  // map's own suppression of their special styling.
   const numberedPoints = useMemo(() => {
     if (!showPointNumbers) return [];
-    return buildNumberablePoints({ meters, layers, isolatedPoints, geojsonCache });
-  }, [showPointNumbers, meters, layers, isolatedPoints, geojsonCache]);
+    return buildNumberablePoints({ meters, layers, isolatedPoints: viewHideIsolated ? [] : isolatedPoints, geojsonCache });
+  }, [showPointNumbers, meters, layers, isolatedPoints, viewHideIsolated, geojsonCache]);
 
   const handleZoomFit = () => {
     if (!mapRef.current || !boundaryLayer?.bounds) return;
