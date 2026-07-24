@@ -5,6 +5,7 @@ import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { pdfToPngFile } from "@/lib/pdfToImage";
+import { compressImageFile } from "@/lib/imageCompress";
 
 export default function ImageOverlayPanel({ projectId, overlays, editingOverlayId, onOverlaysChanged, onToggleEdit, croppingOverlayId, onToggleCrop, mapRef, locked }) {
   const [uploading, setUploading] = useState(false);
@@ -28,6 +29,11 @@ export default function ImageOverlayPanel({ projectId, overlays, editingOverlayI
       } else {
         displayName = file.name.replace(/\.(png|jpe?g)$/i, "");
       }
+
+      // Downscale/compress large images before upload so it's fast (the raw
+      // site plans/scans are often very large). No visible difference on a
+      // map overlay.
+      fileToUpload = await compressImageFile(fileToUpload);
 
       const { file_url } = await uploadFile({ file: fileToUpload });
 

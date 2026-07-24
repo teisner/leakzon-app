@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen } from "lucide-react";
+import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import changelogMd from "../../../versions.md?raw";
+import { APP_VERSION } from "@/lib/version";
 
 const REQUEST_TYPES = [
   { value: "feature_request", label: "New Feature", Icon: Lightbulb, color: "text-amber-500 border-amber-500/30 bg-amber-500/10" },
@@ -35,6 +38,7 @@ export default function VersionUpdates({ project, currentUser, projects }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   // Form state
   const [requestType, setRequestType] = useState("feature_request");
@@ -159,6 +163,26 @@ export default function VersionUpdates({ project, currentUser, projects }) {
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showForm ? "Cancel" : "New Request"}
           </Button>
+        </div>
+
+        {/* Changelog / What's New — renders versions.md */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowChangelog((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-muted/50 transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <History className="w-4 h-4 text-primary" />
+              Changelog — What's New
+              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">v{APP_VERSION}</span>
+            </span>
+            {showChangelog ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showChangelog && (
+            <div className="border-t border-border px-5 py-4 max-h-[420px] overflow-y-auto changelog-markdown">
+              <ReactMarkdown>{changelogMd}</ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {/* New Request Form */}

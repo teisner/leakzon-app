@@ -81,6 +81,26 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    if (action === 'extend') {
+      if (!link_id) return json({ error: 'link_id is required' }, 400);
+      const { data: existingLink } = await admin
+        .from('customer_view_link').select('*').eq('id', link_id).single();
+      if (!existingLink) return json({ error: 'Link not found' }, 404);
+      const addDays = Math.max(1, Math.min(365, parseInt(days) || 7));
+      // Extend from whichever is later — now or the current expiry — so an
+      // active link gains time and an already-expired one becomes valid again.
+      const base = new Date(Math.max(Date.now(), new Date(existingLink.expires_at).getTime()));
+      base.setDate(base.getDate() + addDays);
+      const { data: link, error } = await admin
+        .from('customer_view_link')
+        .update({ expires_at: base.toISOString(), is_active: true })
+        .eq('id', link_id)
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ link });
+    }
+
     return json({ error: 'Unknown action: ' + action }, 400);
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Internal error' }, 500);

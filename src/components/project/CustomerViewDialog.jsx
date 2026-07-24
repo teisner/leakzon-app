@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, ExternalLink, Ban, Plus, Check, Clock, Link2 } from "lucide-react";
+import { Copy, ExternalLink, Ban, Plus, Check, Clock, Link2, CalendarPlus } from "lucide-react";
 import { invokeFunction } from "@/api/functionsClient";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -66,6 +66,25 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
     }
   };
 
+  const handleExtend = async (linkId) => {
+    const addDays = Math.max(1, Math.min(365, parseInt(days) || 7));
+    try {
+      const res = await invokeFunction("manageCustomerViewLinks", {
+        action: "extend",
+        link_id: linkId,
+        days: addDays,
+      });
+      if (res.data?.error) {
+        toast({ variant: "destructive", title: "Cannot extend link", description: res.data.error });
+      } else {
+        toast({ title: "Link extended", description: `Added ${addDays} day${addDays === 1 ? "" : "s"}` });
+        await loadLinks();
+      }
+    } catch (err) {
+      toast({ variant: "destructive", title: "Failed to extend link", description: err?.response?.data?.error || err?.message });
+    }
+  };
+
   const handleDisable = async (linkId) => {
     try {
       await invokeFunction("manageCustomerViewLinks", {
@@ -122,7 +141,7 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
           <div className="flex items-end gap-2 p-3 rounded-lg border border-border bg-muted/30">
             <div className="flex-1">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Validity (days)
+                Days (create / extend)
               </label>
               <Input
                 type="number"
@@ -131,7 +150,7 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
                 className="h-9"
-                disabled={hasActiveLink || creating}
+                disabled={creating}
               />
             </div>
             <Button
@@ -230,16 +249,30 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
                           >
                             <ExternalLink className="w-4 h-4" />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-red-500 hover:text-red-600"
-                            onClick={() => handleDisable(link.id)}
-                            title="Disable link"
-                          >
-                            <Ban className="w-4 h-4" />
-                          </Button>
                         </>
+                      )}
+                      {/* Extend is available for active and expired (not user-disabled) links */}
+                      {!disabled && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-blue-600 hover:text-blue-700"
+                          onClick={() => handleExtend(link.id)}
+                          title={`Extend by ${days || 7} day${(parseInt(days) || 7) === 1 ? "" : "s"}${expired ? " (reactivates)" : ""}`}
+                        >
+                          <CalendarPlus className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {!disabled && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                          onClick={() => handleDisable(link.id)}
+                          title="Disable link"
+                        >
+                          <Ban className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
                   </div>

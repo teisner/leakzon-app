@@ -4,6 +4,15 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.011 — 2026-07-24
+- Customer view links can now be **extended**: a calendar-plus button on each
+  active (or expired) link adds the chosen number of days to its expiry —
+  extending an expired link reactivates it.
+- Added a **Changelog ("What's New")** panel at the top of Version Updates that
+  shows this file, so you can see recent changes and the current version.
+- **Carbon copy uploads are much faster**: large overlay images are downscaled
+  and compressed client-side before upload (no visible difference on the map).
+
 ## 1.010 — 2026-07-24
 - Project export/import now includes **customer annotations** (customer-view
   comments/arrows/drawings) — previously they were left out of export, restore,

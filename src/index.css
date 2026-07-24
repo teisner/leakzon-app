@@ -291,6 +291,21 @@
   line-height: 1;
 }
 
+/* Changelog markdown (versions.md rendered in Version Updates) */
+.changelog-markdown h1 { font-size: 1.1rem; font-weight: 700; margin: 0.25rem 0 0.5rem; }
+.changelog-markdown h2 {
+  font-size: 0.9rem; font-weight: 700; margin: 1rem 0 0.35rem;
+  padding-top: 0.6rem; border-top: 1px solid hsl(var(--border));
+}
+.changelog-markdown h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0.25rem; }
+.changelog-markdown p { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin: 0.35rem 0; }
+.changelog-markdown ul { list-style: disc; padding-left: 1.1rem; margin: 0.35rem 0; }
+.changelog-markdown li { font-size: 0.8rem; color: hsl(var(--foreground)); margin: 0.2rem 0; line-height: 1.45; }
+.changelog-markdown code {
+  font-size: 0.72rem; background: hsl(var(--muted)); padding: 0.05rem 0.3rem;
+  border-radius: 4px; font-family: ui-monospace, monospace;
+}
+
 /* Dark scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
