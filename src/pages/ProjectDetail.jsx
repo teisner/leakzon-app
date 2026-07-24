@@ -771,13 +771,24 @@ export default function ProjectDetail() {
     // 2. Delete isolated points that reference this layer (NOT NULL FK).
     await supabase.from('isolated_point').delete().eq('layer_id', layer.id);
 
-    // 3. Delete this layer's consumption readings + meters (filter deletes,
-    //    any row count). Deleting meters also cascades their readings.
+    // 3. Delete this layer's meters. Primary match is layer_id (precise to
+    //    this layer). We ONLY fall back to source_file_url when no *other*
+    //    layer shares that file — otherwise we'd delete a sibling layer's
+    //    meters too (e.g. a "Main" and a "Sub" layer imported from the same
+    //    CSV share a source_file_url). This guard is the fix for a data-loss
+    //    bug where deleting one such layer wiped the other's meters.
+    let fileIsSharedByAnotherLayer = false;
     if (layer.file_url) {
+      const { data: siblings } = await supabase
+        .from('project_layer').select('id').eq('project_id', id)
+        .eq('file_url', layer.file_url).neq('id', layer.id);
+      fileIsSharedByAnotherLayer = !!(siblings && siblings.length > 0);
+    }
+    if (layer.file_url && !fileIsSharedByAnotherLayer) {
       await supabase.from('consumption_reading').delete().eq('project_id', id).eq('source_file_url', layer.file_url);
     }
     await deleteMetersWhere('layer_id', layer.id);
-    if (layer.file_url) {
+    if (layer.file_url && !fileIsSharedByAnotherLayer) {
       await deleteMetersWhere('source_file_url', layer.file_url);
     }
 

@@ -4,6 +4,13 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.005 — 2026-07-24
+- Fixed a data-loss bug in layer deletion: deleting a layer removed meters by
+  `source_file_url`, but two layers imported from the same file (e.g. a "Main"
+  and a "Sub" meters layer from one CSV) share that URL, so deleting one wiped
+  the other's meters too. Meters are now deleted by `layer_id` (precise), and
+  by `source_file_url` only when no other layer shares that file.
+
 ## 1.004 — 2026-07-24
 - Fixed layer deletion still failing on layers with many meters
   ("violates foreign key constraint meter_layer_id_fkey"): the previous fix
