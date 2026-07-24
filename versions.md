@@ -4,6 +4,11 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.009 — 2026-07-24
+- Point numbering default color is now red (#ef4444) with white text. Saved
+  styles still on the old default are migrated to red (users who explicitly
+  chose another color keep theirs).
+
 ## 1.008 — 2026-07-24
 - Point numbering: order now reads cleanly left-to-right, top-to-bottom — rows
   are grouped by comparing each point to the previous one (rolling reference),

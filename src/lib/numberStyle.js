@@ -10,7 +10,12 @@ export const NUMBER_COLORS = [
   "#8b5cf6", "#a855f7", "#ec4899", "#ffffff",
 ];
 
-export const DEFAULT_NUMBER_STYLE = { size: 16, color: "#1e293b", overrides: {} };
+export const DEFAULT_NUMBER_STYLE = { size: 16, color: "#ef4444", overrides: {} };
+
+// Previous default (dark slate). Saved styles still on this exact color — i.e.
+// users who never explicitly picked a color — are migrated to the new red
+// default so the "red with white text" default reaches them too.
+const LEGACY_DEFAULT_COLOR = "#1e293b";
 
 const key = (projectId) => `leakzon-number-style-${projectId}`;
 
@@ -19,9 +24,11 @@ export function loadNumberStyle(projectId) {
     const raw = localStorage.getItem(key(projectId));
     if (!raw) return { ...DEFAULT_NUMBER_STYLE };
     const parsed = JSON.parse(raw);
+    let color = parsed.color || DEFAULT_NUMBER_STYLE.color;
+    if (!parsed.v && color === LEGACY_DEFAULT_COLOR) color = DEFAULT_NUMBER_STYLE.color;
     return {
       size: typeof parsed.size === "number" ? parsed.size : DEFAULT_NUMBER_STYLE.size,
-      color: parsed.color || DEFAULT_NUMBER_STYLE.color,
+      color,
       overrides: parsed.overrides && typeof parsed.overrides === "object" ? parsed.overrides : {},
     };
   } catch {
@@ -31,7 +38,8 @@ export function loadNumberStyle(projectId) {
 
 export function saveNumberStyle(projectId, style) {
   try {
-    localStorage.setItem(key(projectId), JSON.stringify(style));
+    // Stamp v:1 so the legacy-default → red migration only runs once.
+    localStorage.setItem(key(projectId), JSON.stringify({ ...style, v: 1 }));
   } catch { /* ignore quota/serialization errors */ }
 }
 
