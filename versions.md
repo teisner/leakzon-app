@@ -4,6 +4,15 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.008 — 2026-07-24
+- Point numbering: order now reads cleanly left-to-right, top-to-bottom — rows
+  are grouped by comparing each point to the previous one (rolling reference),
+  so a row with gradual vertical spread stays together instead of splitting.
+- Added a "Number Style" control (palette icon in the map toolbar, shown when
+  numbering is on): change badge size (slider) and color (16 colors), applied
+  to all numbers or only selected ones. Click a number on the map to select it.
+  Settings persist per project and also apply in the customer view.
+
 ## 1.007 — 2026-07-24
 - Importing a meter-type layer (Main / Insertion / Ultrasonic Meters) as a
   shapefile/GeoJSON now also creates `is_main` meter rows from its point

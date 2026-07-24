@@ -31,7 +31,11 @@ function estimateRowBandMeters(sortedByLatDesc) {
   if (gaps.length === 0) return FALLBACK_ROW_BAND_METERS;
   gaps.sort((a, b) => a - b);
   const median = gaps[Math.floor(gaps.length / 2)];
-  return Math.min(Math.max(median * 2.5, MIN_ROW_BAND_METERS), MAX_ROW_BAND_METERS);
+  // A conservative band: only points within ~1.2× the median vertical gap of
+  // a row's top point count as the same row. Too large a factor merges
+  // visually-separate rows (making numbering zig-zag); too small splits a
+  // single row. This keeps the order a clean top-to-bottom, left-to-right read.
+  return Math.min(Math.max(median * 2, MIN_ROW_BAND_METERS), MAX_ROW_BAND_METERS);
 }
 
 export function assignPointNumbers(points) {
@@ -41,21 +45,25 @@ export function assignPointNumbers(points) {
   const sorted = [...withCoords].sort((a, b) => b.lat - a.lat);
   const bandDeg = estimateRowBandMeters(sorted) / METERS_PER_DEGREE_LAT;
 
+  // Group into rows by comparing each point to the PREVIOUS one (a rolling
+  // reference), not the row's topmost point. This keeps a row together even
+  // when it has gradual internal latitude spread (its total extent can exceed
+  // the band), while still breaking to a new row at a real vertical gap.
   const rows = [];
   let currentRow = [];
-  let rowTopLat = null;
+  let prevLat = null;
   for (const p of sorted) {
-    if (rowTopLat === null || rowTopLat - p.lat <= bandDeg) {
-      if (rowTopLat === null) rowTopLat = p.lat;
+    if (prevLat === null || prevLat - p.lat <= bandDeg) {
       currentRow.push(p);
     } else {
       rows.push(currentRow);
       currentRow = [p];
-      rowTopLat = p.lat;
     }
+    prevLat = p.lat;
   }
   if (currentRow.length) rows.push(currentRow);
 
+  // Within each row: left-to-right (ascending longitude).
   const ordered = rows.flatMap((row) => [...row].sort((a, b) => a.lng - b.lng));
   return ordered.map((p, i) => ({ ...p, number: i + 1 }));
 }

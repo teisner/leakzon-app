@@ -28,8 +28,10 @@ import MapImageOverlay from "@/components/project/MapImageOverlay";
 
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
+import NumberStyleControls from "@/components/project/NumberStyleControls";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
 import { isMeterManualLayer } from "@/lib/meterLayerDetection";
+import { loadNumberStyle, saveNumberStyle, applyStyleProp } from "@/lib/numberStyle";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -186,6 +188,9 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   const [viewHideArrows, setViewHideArrows] = useState(false);
   const [viewHideIsolated, setViewHideIsolated] = useState(false);
   const [showPointNumbers, setShowPointNumbers] = useState(false);
+  const [numberStyle, setNumberStyle] = useState(() => loadNumberStyle(project?.id));
+  const [numberScope, setNumberScope] = useState("all");
+  const [selectedNumberIds, setSelectedNumberIds] = useState(() => new Set());
   const [mapDimming, setMapDimming] = useState(() => {
     const saved = localStorage.getItem("mapDimming");
     if (saved !== null) return parseInt(saved, 10);
@@ -522,6 +527,22 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     return buildNumberablePoints({ meters, layers, isolatedPoints: viewHideIsolated ? [] : isolatedPoints, geojsonCache });
   }, [showPointNumbers, meters, layers, isolatedPoints, viewHideIsolated, geojsonCache]);
 
+  // Persist number styling per project; apply size/color to all or selected.
+  useEffect(() => {
+    if (project?.id) saveNumberStyle(project.id, numberStyle);
+  }, [project?.id, numberStyle]);
+
+  const applyNumberStyle = (prop, value) => {
+    setNumberStyle((s) => applyStyleProp(s, prop, value, numberScope, selectedNumberIds));
+  };
+  const toggleNumberSelect = (pointId) => {
+    setSelectedNumberIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pointId)) next.delete(pointId); else next.add(pointId);
+      return next;
+    });
+  };
+
   const handleZoomFit = () => {
     if (!mapRef.current || !boundaryLayer?.bounds) return;
     const b = boundaryLayer.bounds;
@@ -696,7 +717,14 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         <RecenterMap lat={project.latitude} lng={project.longitude} />
         <FitToBounds bounds={combinedBounds} />
         <MapResizer />
-        {showPointNumbers && <PointNumberBadges points={numberedPoints} />}
+        {showPointNumbers && (
+          <PointNumberBadges
+            points={numberedPoints}
+            style={numberStyle}
+            selectedIds={selectedNumberIds}
+            onToggleSelect={toggleNumberSelect}
+          />
+        )}
         <BoxZoomHandler active={boxMode} onDone={() => setBoxMode(false)} />
         {/* Combined render — z-order follows panel order (top of panel = top of map).
             Descending sort so lowest sort_order renders last → appears on top in Leaflet. */}
@@ -1172,6 +1200,16 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         >
           <ListOrdered className="w-4 h-4" />
         </button>
+        {showPointNumbers && (
+          <NumberStyleControls
+            style={numberStyle}
+            scope={numberScope}
+            setScope={setNumberScope}
+            selectedCount={selectedNumberIds.size}
+            onApply={applyNumberStyle}
+            onClearSelection={() => setSelectedNumberIds(new Set())}
+          />
+        )}
         <MapScreenshot mapRef={mapRef} dmas={dmas} project={project} targetRef={rootRef} onToggleFocusDma={onToggleFocusDma} />
       </div>
 

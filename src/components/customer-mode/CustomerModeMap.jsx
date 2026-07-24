@@ -12,6 +12,7 @@ import BingTileLayer from "@/components/project/BingTileLayer";
 import MeterMarkers from "@/components/project/MeterMarkers";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
+import { loadNumberStyle } from "@/lib/numberStyle";
 import CustomerModeLegend from "./CustomerModeLegend";
 import CustomerModeDmaPanel from "./CustomerModeDmaPanel";
 import CustomerModeAnnotationTools, { ANNOTATION_COLORS } from "./CustomerModeAnnotationTools";
@@ -62,6 +63,7 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
   const [showDmas, setShowDmas] = useState(true);
   const [showDmaNames, setShowDmaNames] = useState(true);
   const [showPointNumbers, setShowPointNumbers] = useState(false);
+  const [numberStyle] = useState(() => loadNumberStyle(project?.id));
   const [mapSource, setMapSource] = useState("google");
   const [mapType, setMapType] = useState("terrain");
   const [showSourceMenu, setShowSourceMenu] = useState(false);
@@ -471,7 +473,7 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
         )}
         <FitToBounds bounds={combinedBounds} />
         <MapResizer />
-        {showPointNumbers && <PointNumberBadges points={numberedPoints} />}
+        {showPointNumbers && <PointNumberBadges points={numberedPoints} style={numberStyle} />}
 
         {/* SHP / GeoJSON layers */}
         {shpLayers.map((layer) => {
