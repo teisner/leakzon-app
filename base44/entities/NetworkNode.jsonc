@@ -1,0 +1,42 @@
+{
+  "name": "NetworkNode",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this node belongs to"
+    },
+    "node_type": {
+      "type": "string",
+      "enum": [
+        "source",
+        "dma",
+        "orphans"
+      ],
+      "description": "Type of network node: source (water source), dma (district metered area), or orphans (unassigned meters)"
+    },
+    "dma_id": {
+      "type": "string",
+      "description": "ID of the DMA this node represents (null for source/orphans nodes)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the node"
+    },
+    "pos_x": {
+      "type": "number",
+      "default": 0,
+      "description": "X position on the canvas"
+    },
+    "pos_y": {
+      "type": "number",
+      "default": 0,
+      "description": "Y position on the canvas"
+    }
+  },
+  "required": [
+    "project_id",
+    "node_type",
+    "name"
+  ]
+}

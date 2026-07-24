@@ -1,0 +1,45 @@
+{
+  "name": "Refresh Dashboard Stats",
+  "description": "Periodically recomputes per-project meter/DMA counts and writes them to the ProjectStats entity so the dashboard loads instantly.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "refresh_dashboard_stats",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "refresh_stats": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "refreshProjectStats",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Refresh project stats",
+            "description": "Recompute and store dashboard stats"
+          }
+        }
+      }
+    ]
+  },
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/30 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Jerusalem",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

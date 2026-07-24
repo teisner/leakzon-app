@@ -1,0 +1,32 @@
+{
+  "name": "ProjectStats",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this stats record belongs to"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Denormalized project name for quick lookup"
+    },
+    "meter_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of meters in this project"
+    },
+    "meter_assigned": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of sub-meters assigned to DMAs (sum of DMA meter_counts)"
+    },
+    "dma_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of DMAs in this project"
+    }
+  },
+  "required": [
+    "project_id"
+  ]
+}

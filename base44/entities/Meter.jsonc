@@ -1,0 +1,116 @@
+{
+  "name": "Meter",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this meter belongs to"
+    },
+    "uid": {
+      "type": "string",
+      "description": "Primary index UID \u2014 the meter number/identifier used for matching consumption data"
+    },
+    "endpoint_id": {
+      "type": "string",
+      "description": "Endpoint ID \u2014 device endpoint identifier"
+    },
+    "additional_ids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Source column name"
+          },
+          "value": {
+            "type": "string",
+            "description": "ID value from that column"
+          }
+        }
+      },
+      "description": "Additional ID columns imported from the file (all IDs except the primary index UID)"
+    },
+    "is_main": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a main meter (true) or sub-meter (false)"
+    },
+    "payer_name": {
+      "type": "string",
+      "description": "Customer or payer name"
+    },
+    "address": {
+      "type": "string",
+      "description": "Service address"
+    },
+    "city": {
+      "type": "string",
+      "description": "City where the meter is located"
+    },
+    "state": {
+      "type": "string",
+      "description": "State or province where the meter is located"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country where the meter is located"
+    },
+    "provider": {
+      "type": "string",
+      "description": "Water provider or supplier"
+    },
+    "communication_type": {
+      "type": "string",
+      "description": "Communication technology type (e.g. GSM, LoRa)"
+    },
+    "dma_name": {
+      "type": "string",
+      "description": "DMA / Zone name from imported meter data \u2014 used to auto-group and link meters to DMAs"
+    },
+    "diameter": {
+      "type": "number",
+      "description": "Meter/pipe diameter in mm (from import data if available)"
+    },
+    "is_active": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "default": null,
+      "description": "Whether the meter is active \u2014 null when no status was provided during import (displayed as N/A)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude coordinate"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude coordinate"
+    },
+    "altitude": {
+      "type": "number",
+      "description": "Altitude/elevation in meters above sea level (from import data if available)"
+    },
+    "location_source": {
+      "type": "string",
+      "enum": [
+        "geocoded",
+        "estimated"
+      ],
+      "description": "How the location was obtained: null=imported with GIS, geocoded=resolved via Google Maps, estimated=interpolated from same-street meters"
+    },
+    "source_file_url": {
+      "type": "string",
+      "description": "URL of the original uploaded data file"
+    },
+    "layer_id": {
+      "type": "string",
+      "description": "ID of the ProjectLayer this meter belongs to"
+    }
+  },
+  "required": [
+    "project_id",
+    "uid"
+  ]
+}

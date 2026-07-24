@@ -1,0 +1,136 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "ID of the assigned owner"
+    },
+    "owner_name": {
+      "type": "string",
+      "description": "Denormalized owner name for display"
+    },
+    "utility_name": {
+      "type": "string",
+      "description": "Name of the utility"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country name"
+    },
+    "city": {
+      "type": "string",
+      "description": "City name"
+    },
+    "state": {
+      "type": "string",
+      "description": "State (for US projects)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude of the city center"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude of the city center"
+    },
+    "water_unit": {
+      "type": "string",
+      "enum": [
+        "m3",
+        "Gallons"
+      ],
+      "default": "m3",
+      "description": "Water measurement unit"
+    },
+    "distance_unit": {
+      "type": "string",
+      "enum": [
+        "Km",
+        "Miles"
+      ],
+      "default": "Km",
+      "description": "Distance measurement unit"
+    },
+    "date_format": {
+      "type": "string",
+      "enum": [
+        "US",
+        "EU"
+      ],
+      "default": "EU",
+      "description": "Date format preference"
+    },
+    "service_connections": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of service connections"
+    },
+    "num_dma": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of DMAs"
+    },
+    "assigned_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "IDs of Project Users who can view this project"
+    },
+    "anomaly_reports_exported": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether any anomaly report (non-All Meters export) has been generated"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the onboarding process has been completed and data is locked"
+    },
+    "locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the project is manually locked in view-only mode \u2014 disables all add/edit/delete/update actions"
+    },
+    "locked_by_name": {
+      "type": "string",
+      "description": "Name of the user who locked the project"
+    },
+    "locked_date": {
+      "type": "string",
+      "description": "ISO timestamp when the project was locked"
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this project has been archived"
+    },
+    "boundary_deviation_feet": {
+      "type": "number",
+      "default": 60,
+      "description": "Boundary deviation distance in feet \u2014 the proximity radius used when focusing on a DMA on the map"
+    },
+    "completion_radius_yards": {
+      "type": "number",
+      "default": 500,
+      "description": "Radius in yards for nearby meter average calculation in consumption completion"
+    },
+    "parent_project_name": {
+      "type": "string",
+      "description": "Free-text name of a parent project/group this project belongs to (e.g. same utility, different locations)"
+    }
+  },
+  "required": [
+    "name",
+    "owner_id",
+    "utility_name",
+    "country",
+    "city"
+  ]
+}

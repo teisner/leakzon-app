@@ -1,0 +1,27 @@
+{
+  "name": "NetworkLink",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this link belongs to"
+    },
+    "from_node_id": {
+      "type": "string",
+      "description": "ID of the source node (upstream)"
+    },
+    "to_node_id": {
+      "type": "string",
+      "description": "ID of the target node (downstream)"
+    },
+    "port_config": {
+      "type": "string",
+      "description": "JSON string of optimized port directions: {\"d1\":{\"x\":1,\"y\":0},\"d2\":{\"x\":-1,\"y\":0}}"
+    }
+  },
+  "required": [
+    "project_id",
+    "from_node_id",
+    "to_node_id"
+  ]
+}

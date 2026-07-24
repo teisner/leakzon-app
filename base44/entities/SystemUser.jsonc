@@ -1,0 +1,64 @@
+{
+  "name": "SystemUser",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the user"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number (without country code)"
+    },
+    "country_code": {
+      "type": "string",
+      "default": "972",
+      "description": "Country calling code (e.g. 972 for Israel, 1 for USA)"
+    },
+    "country_iso": {
+      "type": "string",
+      "description": "ISO 2-letter country code for flag display"
+    },
+    "username": {
+      "type": "string",
+      "description": "Login username"
+    },
+    "user_type": {
+      "type": "string",
+      "enum": [
+        "LeakZon",
+        "Super User",
+        "Project User",
+        "Admin"
+      ],
+      "default": "LeakZon",
+      "description": "User role/type"
+    },
+    "password_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the 6-digit PIN password (empty if not yet set)"
+    },
+    "temp_password_hash": {
+      "type": "string",
+      "description": "Hash of temporary password for reset flow"
+    },
+    "temp_password_expires": {
+      "type": "string",
+      "description": "ISO timestamp when temp password expires"
+    },
+    "last_login": {
+      "type": "string",
+      "description": "ISO timestamp of the user's last successful login"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "username"
+  ]
+}

@@ -1,0 +1,285 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 82 51% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 82 51% 51%;
+    --chart-1: 187 100% 42%;
+    --chart-2: 122 39% 49%;
+    --chart-3: 54 100% 62%;
+    --chart-4: 4 89% 58%;
+    --chart-5: 200 80% 50%;
+    --radius: 0.5rem;
+    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 82 51% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 82 51% 51%;
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 82 51% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 78%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 4 89% 58%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 82 51% 51%;
+    --chart-1: 187 100% 42%;
+    --chart-2: 122 39% 49%;
+    --chart-3: 54 100% 62%;
+    --chart-4: 4 89% 58%;
+    --chart-5: 200 80% 50%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 78%;
+    --sidebar-primary: 82 51% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 82 51% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+/* Pulsing highlight ring for searched meter */
+@keyframes meter-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.leaflet-path.meter-highlight-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: meter-pulse 1.6s ease-out infinite;
+}
+
+/* Animated water flow inside network pipes */
+@keyframes water-flow {
+  to { stroke-dashoffset: -24; }
+}
+.water-flow-line {
+  animation: water-flow 0.8s linear infinite;
+}
+
+/* Typewriter blinking cursor */
+@keyframes typewriter-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.typewriter-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  background: hsl(var(--primary));
+  vertical-align: text-bottom;
+  animation: typewriter-blink 0.8s step-end infinite;
+}
+
+/* DMA label on map */
+.dma-label-marker { }
+.dma-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: hsl(0 0% 100% / 0.92);
+  color: hsl(222 47% 11%);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
+  letter-spacing: 0.01em;
+  transform: translate(-50%, -50%);
+}
+.dma-label .dma-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
+}
+.dark .dma-label {
+  background: hsl(0 0% 14% / 0.92);
+  color: hsl(0 0% 95%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08);
+}
+.dark .dma-label .dma-dot {
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.4);
+}
+
+/* Leaflet feature popup */
+.feature-popup table {
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 160px;
+}
+.feature-popup td {
+  padding: 3px 8px;
+  vertical-align: top;
+}
+.feature-popup .popup-key {
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.feature-popup .popup-val {
+  color: #0f172a;
+  font-weight: 400;
+}
+
+/* Blinking highlight for out-of-boundary components */
+@keyframes out-boundary-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.leaflet-path.out-boundary-highlight {
+  animation: out-boundary-blink 0.35s ease-in-out infinite;
+}
+
+/* Map annotation markers */
+.annotation-flag {
+  cursor: pointer;
+  transition: transform 0.15s;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+}
+.annotation-flag:hover {
+  transform: scale(1.25);
+}
+.annotation-flag.highlighted {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+  animation: annotation-pulse 1.2s ease-out infinite;
+}
+
+.annotation-arrow-head {
+  font-size: 18px;
+  color: #ef4444;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.annotation-arrow-head.highlighted {
+  color: #f59e0b;
+  animation: annotation-pulse 1.2s ease-out infinite;
+}
+
+@keyframes annotation-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* Live angle label while drawing water lines */
+.line-angle-label {
+  pointer-events: none;
+}
+.line-angle-label-text {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(37, 99, 235, 0.85);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Pipe diameter label — centered above the water line */
+.pipe-diameter-label {
+  pointer-events: none;
+}
+.pipe-diameter-label-text {
+  display: inline-block;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(0 0% 11%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 25%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 35%);
+}

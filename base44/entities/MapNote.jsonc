@@ -1,0 +1,44 @@
+{
+  "name": "MapNote",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this annotation belongs to"
+    },
+    "note_type": {
+      "type": "string",
+      "enum": [
+        "note",
+        "arrow"
+      ],
+      "description": "Type of map annotation: note (point with text) or arrow (directional line)"
+    },
+    "text": {
+      "type": "string",
+      "description": "Annotation text/label"
+    },
+    "start_lat": {
+      "type": "number",
+      "description": "Start latitude \u2014 note location or arrow start point"
+    },
+    "start_lng": {
+      "type": "number",
+      "description": "Start longitude"
+    },
+    "end_lat": {
+      "type": "number",
+      "description": "End latitude (arrow end point only)"
+    },
+    "end_lng": {
+      "type": "number",
+      "description": "End longitude (arrow end point only)"
+    }
+  },
+  "required": [
+    "project_id",
+    "note_type",
+    "start_lat",
+    "start_lng"
+  ]
+}

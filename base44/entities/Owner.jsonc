@@ -1,0 +1,27 @@
+{
+  "name": "Owner",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Full name of the owner"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "role": {
+      "type": "string",
+      "description": "Role or title"
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ]
+}

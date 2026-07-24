@@ -1,0 +1,32 @@
+{
+  "name": "CustomerViewLink",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this link belongs to"
+    },
+    "token": {
+      "type": "string",
+      "description": "Unique token used in the shareable link URL"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "ISO timestamp when this link expires"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this link is still active (manually disabled links become inactive)"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Name of the admin who created this link"
+    }
+  },
+  "required": [
+    "project_id",
+    "token",
+    "expires_at"
+  ]
+}

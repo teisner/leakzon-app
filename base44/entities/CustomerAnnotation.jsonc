@@ -1,0 +1,33 @@
+{
+  "name": "CustomerAnnotation",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this annotation belongs to"
+    },
+    "annotation_type": {
+      "type": "string",
+      "enum": [
+        "comment",
+        "arrow",
+        "drawing"
+      ],
+      "description": "Type of customer annotation"
+    },
+    "data": {
+      "type": "string",
+      "description": "JSON string of the full annotation object (coordinates, color, text, width, points, etc.)"
+    },
+    "viewed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the admin has viewed this annotation"
+    }
+  },
+  "required": [
+    "project_id",
+    "annotation_type",
+    "data"
+  ]
+}

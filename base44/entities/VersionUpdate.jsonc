@@ -1,0 +1,54 @@
+{
+  "name": "VersionUpdate",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this update request is related to (optional \u2014 null means it's a general request not tied to a specific project)"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "feature_request",
+        "update_existing",
+        "bug_report"
+      ],
+      "description": "Type of version update request: feature_request (new feature), update_existing (modify existing feature), bug_report (report a bug)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title or summary of the request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-text detailed description of the request or bug"
+    },
+    "screenshot_url": {
+      "type": "string",
+      "description": "URL of an uploaded PNG screenshot (optional)"
+    },
+    "submitted_by_name": {
+      "type": "string",
+      "description": "Name of the user who submitted the request"
+    },
+    "submitted_by_id": {
+      "type": "string",
+      "description": "ID of the user who submitted the request"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Current status of the request"
+    }
+  },
+  "required": [
+    "request_type",
+    "description"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "ImageOverlay",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this overlay belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the image overlay"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL of the uploaded PNG image"
+    },
+    "bounds": {
+      "type": "object",
+      "properties": {
+        "north": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "west": {
+          "type": "number"
+        }
+      },
+      "description": "Geographic bounds where the image is placed on the map"
+    },
+    "opacity": {
+      "type": "number",
+      "default": 0.7,
+      "description": "Image transparency (0-1)"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the image overlay is visible on the map"
+    }
+  },
+  "required": [
+    "project_id",
+    "name",
+    "file_url"
+  ]
+}

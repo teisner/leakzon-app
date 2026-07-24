@@ -1,0 +1,44 @@
+{
+  "name": "ConsumptionReading",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this reading belongs to"
+    },
+    "meter_id": {
+      "type": "string",
+      "description": "ID of the matched meter"
+    },
+    "meter_uid": {
+      "type": "string",
+      "description": "UID of the matched meter (denormalized for display)"
+    },
+    "reading_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the reading (long format)"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "Period label from column header (wide format)"
+    },
+    "consumption": {
+      "type": "number",
+      "description": "Consumption value"
+    },
+    "source_file_url": {
+      "type": "string",
+      "description": "URL of the source file"
+    },
+    "source_file_name": {
+      "type": "string",
+      "description": "Name of the source file"
+    }
+  },
+  "required": [
+    "project_id",
+    "meter_id",
+    "consumption"
+  ]
+}

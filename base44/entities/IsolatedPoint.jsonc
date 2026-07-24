@@ -1,0 +1,47 @@
+{
+  "name": "IsolatedPoint",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this isolated point belongs to"
+    },
+    "layer_id": {
+      "type": "string",
+      "description": "ID of the ProjectLayer (valve layer) this point belongs to"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude of the valve"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude of the valve"
+    },
+    "dma1_id": {
+      "type": "string",
+      "description": "ID of the first DMA this isolation point sits between"
+    },
+    "dma2_id": {
+      "type": "string",
+      "description": "ID of the second DMA this isolation point sits between"
+    },
+    "feature_properties": {
+      "type": "string",
+      "description": "JSON string of the valve feature's properties for display"
+    },
+    "color": {
+      "type": "string",
+      "default": "#92c141",
+      "description": "Fill color of the isolated point on the map"
+    }
+  },
+  "required": [
+    "project_id",
+    "layer_id",
+    "latitude",
+    "longitude",
+    "dma1_id",
+    "dma2_id"
+  ]
+}

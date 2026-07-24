@@ -1,0 +1,40 @@
+{
+  "name": "ImportLog",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this log belongs to"
+    },
+    "import_type": {
+      "type": "string",
+      "default": "consumption",
+      "description": "Type of import that generated this log"
+    },
+    "uid_value": {
+      "type": "string",
+      "description": "The UID value that could not be matched"
+    },
+    "row_data": {
+      "type": "string",
+      "description": "JSON string of the full row data for reference"
+    },
+    "source_file_url": {
+      "type": "string",
+      "description": "URL of the source file"
+    },
+    "source_file_name": {
+      "type": "string",
+      "description": "Name of the source file"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Description of the error"
+    }
+  },
+  "required": [
+    "project_id",
+    "uid_value",
+    "error_message"
+  ]
+}

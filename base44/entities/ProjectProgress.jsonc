@@ -1,0 +1,31 @@
+{
+  "name": "ProjectProgress",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "ID of the project this progress entry belongs to"
+    },
+    "activity_type": {
+      "type": "string",
+      "description": "Type of activity: project_created, boundary_set, gis_layers_uploaded, meters_imported, dmas_created, consumption_imported, data_exported, onboarding_completed"
+    },
+    "title": {
+      "type": "string",
+      "description": "Display title of the milestone"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional details about this activity"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the user who performed the activity"
+    }
+  },
+  "required": [
+    "project_id",
+    "activity_type",
+    "title"
+  ]
+}

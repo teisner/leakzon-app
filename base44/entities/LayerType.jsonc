@@ -1,0 +1,18 @@
+{
+  "name": "LayerType",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the layer category (e.g. Water Lines, Valves)"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a system-provided default category"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
