@@ -6,6 +6,14 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.023 — 2026-07-25
+**Point numbers limited to the focused DMA when zooming to a DMA**
+- With a DMA focused ("Zoom DMA on map"), point numbering now shows only the
+  points belonging to that DMA — inside its polygon or within the project's
+  boundary-deviation proximity, plus the DMA's linked main meter even if it sits
+  further out. All other numbers are hidden, and the remaining points are
+  renumbered 1..N for that DMA. Clearing the focus restores full numbering.
+
 ## 1.022 — 2026-07-25
 **Map layer z-order now follows the panel exactly; DMAs always at the bottom**
 - DMA polygons now always render **beneath every layer** (they previously drew on

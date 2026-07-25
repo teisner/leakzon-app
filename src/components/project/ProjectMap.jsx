@@ -29,7 +29,7 @@ import MapImageOverlay from "@/components/project/MapImageOverlay";
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import NumberStyleControls from "@/components/project/NumberStyleControls";
-import { buildNumberablePoints } from "@/lib/pointNumbering";
+import { buildNumberablePoints, assignPointNumbers } from "@/lib/pointNumbering";
 import { isMeterManualLayer } from "@/lib/meterLayerDetection";
 import { loadNumberStyle, saveNumberStyle, applyStyleProp } from "@/lib/numberStyle";
 import { collectValvePoints, findBorderValves } from "@/lib/borderValves";
@@ -557,8 +557,20 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   // map's own suppression of their special styling.
   const numberedPoints = useMemo(() => {
     if (!showPointNumbers) return [];
-    return buildNumberablePoints({ meters, layers, isolatedPoints: viewHideIsolated ? [] : isolatedPoints, geojsonCache });
-  }, [showPointNumbers, meters, layers, isolatedPoints, viewHideIsolated, geojsonCache]);
+    const all = buildNumberablePoints({ meters, layers, isolatedPoints: viewHideIsolated ? [] : isolatedPoints, geojsonCache });
+    if (!focusedDmaData) return all;
+    // A DMA is focused ("Zoom DMA on map"): number only the points that belong
+    // to it — inside the polygon or within the project's boundary-deviation
+    // proximity (same radius the map uses to filter layer features), plus the
+    // DMA's linked main meter even if it sits further out. Everything else is
+    // hidden, then the remainder is renumbered 1..N for that DMA.
+    const relevant = all.filter((p) => {
+      const meterId = p.id.startsWith("meter-") ? p.id.slice("meter-".length) : null;
+      if (meterId && focusedDmaData.linkedMainMeterIds.has(meterId)) return true;
+      return isPointInOrNearDma(p.lat, p.lng, focusedDmaData.polygons, proximityMeters);
+    });
+    return assignPointNumbers(relevant);
+  }, [showPointNumbers, meters, layers, isolatedPoints, viewHideIsolated, geojsonCache, focusedDmaData, proximityMeters]);
 
   // Valves sitting at borders between two DMAs (candidate isolation valves).
   const borderValvePoints = useMemo(() => {
