@@ -79,6 +79,38 @@ function FitToBounds({ bounds }) {
   return null;
 }
 
+// Explicit Leaflet panes so z-order is deterministic instead of depending on
+// the order Leaflet happened to add layers in. Without this, toggling a layer's
+// visibility re-adds it last → it jumps to the top of the stack, and dragging in
+// the panel had no effect on already-mounted layers.
+//
+// Stack (Leaflet defaults in brackets): tiles [200] < DMA polygons (395) <
+// layer panes (400 + rank, rank 0 = bottom) < highlights (490) <
+// shadows [500] < markers [600] < tooltips [650] < popups [700].
+export const DMA_PANE = "dma-pane";
+export const HIGHLIGHT_PANE = "highlight-pane";
+export const layerPaneName = (rank) => `layer-pane-${rank}`;
+
+function MapPanes({ layerCount }) {
+  const map = useMap();
+  useEffect(() => {
+    const ensure = (name, zIndex) => {
+      let pane = map.getPane(name);
+      if (!pane) pane = map.createPane(name);
+      pane.style.zIndex = String(zIndex);
+      return pane;
+    };
+    ensure(DMA_PANE, 395);
+    // A few spare panes so adding a layer doesn't need a re-render to exist.
+    // Clamped so layer panes always stay below the highlight/shadow panes.
+    for (let i = 0; i < Math.max(layerCount, 1) + 8; i++) {
+      ensure(layerPaneName(i), 400 + Math.min(i, 85));
+    }
+    ensure(HIGHLIGHT_PANE, 490);
+  }, [map, layerCount]);
+  return null;
+}
+
 // Applies a brightness filter to the map's tile pane (tiles only, not overlays/markers).
 function TileDimmer({ dimming }) {
   const map = useMap();
@@ -675,6 +707,15 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     setMeterPointId(null);
   };
 
+  // Stable pane rank per layer, computed over ALL layers (not just the visible
+  // ones) so showing/hiding a layer never reshuffles anyone's z-order — only
+  // an actual reorder (which changes sort_order) does.
+  const layerPaneRank = useMemo(() => {
+    const ranks = {};
+    [...layers].sort(mapRenderSort).forEach((l, i) => { ranks[l.id] = i; });
+    return ranks;
+  }, [layers]);
+
   const getLayerKey = (layer) => {
     const pipeKey = layer.pipe_config
       ? `${layer.pipe_config.uniform ? "uniform" : "diameter"}|${layer.pipe_config.diameters.map((d) => `${d.value}-${d.visible}-${d.color}-${d.weight}`).join("|")}`
@@ -714,6 +755,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             maxZoom={20}
           />
         )}
+        <MapPanes layerCount={layers.length} />
         <TileDimmer dimming={mapDimming} />
         <RecenterMap lat={project.latitude} lng={project.longitude} />
         <FitToBounds bounds={combinedBounds} />
@@ -731,12 +773,15 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             key={`bv-${i}`}
             center={[p.lat, p.lng]}
             radius={13}
+            pane={HIGHLIGHT_PANE}
             pathOptions={{ color: "#f59e0b", weight: 3, fillColor: "#f59e0b", fillOpacity: 0.25, className: "meter-highlight-pulse" }}
           />
         ))}
         <BoxZoomHandler active={boxMode} onDone={() => setBoxMode(false)} />
-        {/* Combined render — z-order follows panel order (top of panel = top of map).
-            Descending sort so lowest sort_order renders last → appears on top in Leaflet. */}
+        {/* Combined render — z-order follows panel order (top of panel = top of
+            map), enforced via per-layer panes (see MapPanes) so it holds even
+            when layers are re-added by a visibility toggle or a drag reorder.
+            DMA polygons always render beneath all of these. */}
         {layers
           .filter((l) => {
             if (!l.visible || l.id === manualEditLayer?.id || l.id === editBoundary?.id) return false;
@@ -750,6 +795,9 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           })
           .sort(mapRenderSort)
           .map((layer) => {
+            // Each layer draws into its own pane (rank 0 = bottom) so z-order
+            // comes from the panel order, not from the order Leaflet added them.
+            const layerPane = layerPaneName(layerPaneRank[layer.id] ?? 0);
             if (layer.layer_type === "data") {
               const layerMeters = (meters || []).filter(
                 (m) => m.layer_id ? m.layer_id === layer.id : (m.source_file_url && m.source_file_url === layer.file_url)
@@ -775,6 +823,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   highlightedUid={highlightedUid}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
+                  pane={layerPane}
                 />
               );
             }
@@ -845,6 +894,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             <GeoJSON
               key={`${getLayerKey(layer)}-${drawMode}-${!!editDma}-${isolatedMode}-${isolatedPoints?.length || 0}-${viewHideIsolated}-${focusedDmaIds?.join(",") || "none"}-${proximityMeters}`}
               data={data}
+              pane={layerPane}
               style={layerStyle}
               onEachFeature={(feature, lyr) => {
                 const ip = (!viewHideIsolated && isValveLayer(layer)) ? findIsolatedForFeature(feature, isolatedPoints) : null;
@@ -893,8 +943,11 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                 }
               }}
               pointToLayer={(feature, latlng) => {
+                // A custom pointToLayer does NOT inherit the GeoJSON's pane, so
+                // every point layer sets it explicitly to keep this layer's
+                // points in its own z-order slot.
                 if (layerHasMeters) {
-                  return L.circleMarker(latlng, { radius: 0, opacity: 0, fillOpacity: 0, interactive: false });
+                  return L.circleMarker(latlng, { radius: 0, opacity: 0, fillOpacity: 0, interactive: false, pane: layerPane });
                 }
                 if (!viewHideIsolated && isValveLayer(layer) && isFeatureIsolated(feature, isolatedPoints)) {
                   const ip = findIsolatedForFeature(feature, isolatedPoints);
@@ -904,6 +957,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                     weight: 3,
                     fillColor: ip?.color || "#92c141",
                     fillOpacity: 0.9,
+                    pane: layerPane,
                   });
                 }
                 if (isolatedMode && isValveLayer(layer)) {
@@ -913,11 +967,13 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                     weight: 2,
                     fillColor: "#f59e0b",
                     fillOpacity: 0.9,
+                    pane: layerPane,
                   });
                 }
                 if (layer.icon_url) {
                   const iconSize = layer.point_config?.icon_size || 28;
                   return L.marker(latlng, {
+                    pane: layerPane,
                     icon: L.icon({
                       iconUrl: layer.icon_url,
                       iconSize: [iconSize, iconSize],
@@ -930,6 +986,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                 const shape = pc.shape || "circle";
                 if (shape !== "circle") {
                   return L.marker(latlng, {
+                    pane: layerPane,
                     icon: createShapeIcon(shape, layer.color, pc.radius || 6, pc.fill_style),
                   });
                 }
@@ -939,11 +996,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   weight: 2,
                   fillColor: isOutline ? "transparent" : layer.color,
                   fillOpacity: isOutline ? 0 : 0.8,
+                  pane: layerPane,
                 });
               }}
             />
             {pipe?.show_diameter_labels && (
-              <PipeDiameterLabels data={data} pipeConfig={pipe} />
+              <PipeDiameterLabels data={data} pipeConfig={pipe} pane={layerPane} />
             )}
             {layerHasMeters && (() => {
               const layerMeters = (meters || []).filter(
@@ -969,6 +1027,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   highlightedUid={highlightedUid}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
+                  pane={layerPane}
                 />
               );
             })()}
@@ -986,8 +1045,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           const centroid = poly.reduce((acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng], [0, 0]).map((v) => v / poly.length);
           return (
             <React.Fragment key={`dma-${dma.id}`}>
+              {/* DMA polygons always sit beneath every layer (DMA_PANE). Their
+                  name labels stay in the default marker pane so they remain
+                  readable on top. */}
               <Polygon
                 positions={poly}
+                pane={DMA_PANE}
                 pathOptions={{ color: dma.color, fillColor: dma.color, fillOpacity: dma.transparency ?? 0.3, weight: 2 }}
               />
               {(showDmaLabels || isolatedMode) && (

@@ -45,7 +45,7 @@ function extractMidpoints(geometry) {
   return points;
 }
 
-export default function PipeDiameterLabels({ data, pipeConfig }) {
+export default function PipeDiameterLabels({ data, pipeConfig, pane }) {
   if (!data || !pipeConfig?.diameter_field) return null;
   const field = pipeConfig.diameter_field;
   const diameters = pipeConfig.diameters || [];
@@ -68,6 +68,7 @@ export default function PipeDiameterLabels({ data, pipeConfig }) {
           position={[lat, lng]}
           interactive={false}
           keyboard={false}
+          {...(pane ? { pane } : {})}
           icon={L.divIcon({
             className: "pipe-diameter-label",
             html: `<span class="pipe-diameter-label-text">${label}</span>`,

@@ -6,6 +6,20 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.022 — 2026-07-25
+**Map layer z-order now follows the panel exactly; DMAs always at the bottom**
+- DMA polygons now always render **beneath every layer** (they previously drew on
+  top, shading the layers above them). DMA name labels stay on top so they remain
+  readable.
+- Map z-order now matches the layers panel exactly, top to bottom. Previously
+  meter (data) layers were forced above all shapefile layers, which silently
+  overrode manual ordering — dragging a shapefile layer above a meter layer had
+  no effect and the panel re-grouped after the drop.
+- **Dragging a layer in the panel now really changes its z-order**, and
+  **hide/unhide only changes visibility, never the order** — unhiding a layer no
+  longer makes it jump to the top. Each layer draws into its own dedicated
+  Leaflet pane, so stacking is explicit instead of depending on load order.
+
 ## 1.021 — 2026-07-25
 **Fixed "LeakZon" users seeing no projects (global-access authorization)**
 - The RLS/authorization rules only granted global project access to "Admin" and

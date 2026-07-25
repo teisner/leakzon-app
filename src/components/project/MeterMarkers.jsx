@@ -3,7 +3,9 @@ import { CircleMarker, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
 import { createShapeIcon } from "@/lib/shapeIcons";
 
-export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain }) {
+export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, pane }) {
+  // Optional Leaflet pane so these markers land in their layer's z-order slot.
+  const paneProp = pane ? { pane } : {};
   const validMeters = useMemo(
     () => (meters || []).filter((m) => m.latitude != null && m.longitude != null),
     [meters]
@@ -63,6 +65,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
     <CircleMarker
       key={`bh-${m.id}`}
       center={[m.latitude, m.longitude]}
+      {...paneProp}
       radius={(radius || 5) + 8}
       pathOptions={{ color: "#f97316", weight: 3, fillColor: "#f97316", fillOpacity: 0.2, className: "meter-highlight-pulse" }}
     />
@@ -75,6 +78,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
           <Marker
             key={m.id}
             position={[m.latitude, m.longitude]}
+            {...paneProp}
             icon={L.icon({ iconUrl, iconSize: [28, 28], iconAnchor: [14, 14] })}
           >
             {buildPopup(m)}
@@ -85,6 +89,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
           <CircleMarker
             key={`hl-${m.id}`}
             center={[m.latitude, m.longitude]}
+            {...paneProp}
             radius={(radius || 5) + 6}
             pathOptions={{ color: "#fbbf24", weight: 3, fillColor: "transparent", fillOpacity: 0, dashArray: "4,2", className: "meter-highlight-pulse" }}
           />
@@ -98,7 +103,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
     return (
       <>
         {validMeters.map((m) => (
-          <Marker key={m.id} position={[m.latitude, m.longitude]} icon={icon}>
+          <Marker key={m.id} position={[m.latitude, m.longitude]} {...paneProp} icon={icon}>
             {buildPopup(m)}
           </Marker>
         ))}
@@ -107,6 +112,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
           <CircleMarker
             key={`hl-${m.id}`}
             center={[m.latitude, m.longitude]}
+            {...paneProp}
             radius={(radius || 5) + 6}
             pathOptions={{ color: "#fbbf24", weight: 3, fillColor: "transparent", fillOpacity: 0, dashArray: "4,2", className: "meter-highlight-pulse" }}
           />
@@ -124,6 +130,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
           <CircleMarker
             key={m.id}
             center={[m.latitude, m.longitude]}
+            {...paneProp}
             radius={hl ? radius + 3 : radius}
             pathOptions={{
               color: hl ? "#fbbf24" : isEstimated ? "#000000" : color,
@@ -141,6 +148,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
         <CircleMarker
           key={`hl-ring-${m.id}`}
           center={[m.latitude, m.longitude]}
+          {...paneProp}
           radius={radius + 6}
           pathOptions={{ color: "#fbbf24", weight: 2, fillColor: "transparent", fillOpacity: 0, dashArray: "4,2", className: "meter-highlight-pulse" }}
         />
