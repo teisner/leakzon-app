@@ -79,7 +79,13 @@ export default function LayersPanel({ layers, meters, onToggleVisibility, onDele
         <div className="flex items-center gap-2 p-3">
           {/* Drag handle — only for non-boundary */}
           {!boundary && provided && (
-            <span {...provided.dragHandleProps} className="shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground">
+            <span
+              {...(provided.dragHandleProps || {})}
+              className={`shrink-0 ${locked
+                ? "cursor-not-allowed text-muted-foreground/25"
+                : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground"}`}
+              title={locked ? "Project locked — layer order can't be changed" : "Drag to reorder"}
+            >
               <GripVertical className="w-4 h-4" />
             </span>
           )}
@@ -287,7 +293,7 @@ export default function LayersPanel({ layers, meters, onToggleVisibility, onDele
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2">
                     {otherLayers.map((layer, index) => (
-                      <Draggable key={layer.id} draggableId={layer.id} index={index}>
+                      <Draggable key={layer.id} draggableId={layer.id} index={index} isDragDisabled={locked}>
                         {(prov, snapshot) => renderLayerRow(layer, index, prov, snapshot)}
                       </Draggable>
                     ))}

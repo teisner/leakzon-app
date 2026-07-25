@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.035 — 2026-07-25
+**Layer reordering is disabled on locked projects**
+- Layers can no longer be dragged to change their map z-order while a project is
+  locked. Previously the drag still ran and simply did nothing on drop; now the
+  row isn't draggable at all and the handle is dimmed with a tooltip explaining
+  why.
+
 ## 1.034 — 2026-07-25
 **Removed the Data Completion feature**
 - Removed Data Completion everywhere: the wand button and estimated-values line
