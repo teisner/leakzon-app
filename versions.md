@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.020 — 2026-07-25
+**Sort projects on the dashboard (name / last used / progress, both directions)**
+- Added a sort control to the projects dashboard: sort by name (A–Z / Z–A),
+  last used (newest / oldest), or progress % — the assigned-meters percentage
+  from the card gauge — high→low or low→high. Defaults to last used (newest).
+
 ## 1.019 — 2026-07-25
 **DMA panel: "Find border valves" highlight; removed "Isolation DMA View"**
 - Removed the "Isolation DMA View" toggle from the DMA panel.

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Plus, Droplets, FolderOpen, Users as UsersIcon, LogOut, LayoutGrid, RefreshCw, Globe, ChevronDown, Archive, Search } from "lucide-react";
+import { Plus, Droplets, FolderOpen, Users as UsersIcon, LogOut, LayoutGrid, RefreshCw, Globe, ChevronDown, Archive, Search, ArrowDownUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,32 @@ import ComponentDefaultsSettings from "@/components/dashboard/ComponentDefaultsS
 
 const DASHBOARD_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Assigned-meters percentage shown on the card gauge (assigned / imported).
+const projectPct = (p) => {
+  const imp = p.imported_meters ?? 0;
+  const asg = p.service_connections ?? 0;
+  return imp > 0 ? asg / imp : 0;
+};
+const projectTime = (p) => new Date(p.updated_at || p.created_at || 0).getTime();
+
+const SORT_OPTIONS = [
+  { key: "name_asc", label: "Name (A–Z)" },
+  { key: "name_desc", label: "Name (Z–A)" },
+  { key: "last_used_desc", label: "Last used (newest)" },
+  { key: "last_used_asc", label: "Last used (oldest)" },
+  { key: "percentage_desc", label: "Progress (high → low)" },
+  { key: "percentage_asc", label: "Progress (low → high)" },
+];
+
+const SORT_COMPARATORS = {
+  name_asc: (a, b) => (a.name || "").localeCompare(b.name || ""),
+  name_desc: (a, b) => (b.name || "").localeCompare(a.name || ""),
+  last_used_desc: (a, b) => projectTime(b) - projectTime(a),
+  last_used_asc: (a, b) => projectTime(a) - projectTime(b),
+  percentage_desc: (a, b) => projectPct(b) - projectPct(a),
+  percentage_asc: (a, b) => projectPct(a) - projectPct(b),
+};
+
 export default function Home() {
   const { t } = useLanguage();
   const [projects, setProjects] = useState([]);
@@ -35,6 +61,8 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [countryFilter, setCountryFilter] = useState(null);
   const [showCountryMenu, setShowCountryMenu] = useState(false);
+  const [sortKey, setSortKey] = useState("last_used_desc");
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const colClassMap = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6" };
   const [loggedInUser, setLoggedInUser] = useState(() => {
@@ -276,6 +304,32 @@ export default function Home() {
                     </>
                   )}
                 </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSortMenu((v) => !v)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border bg-card text-muted-foreground border-border hover:bg-muted transition-colors"
+                  >
+                    <ArrowDownUp className="w-3.5 h-3.5" />
+                    {SORT_OPTIONS.find((o) => o.key === sortKey)?.label || "Sort"}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {showSortMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+                      <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg p-1 z-50 min-w-[200px]">
+                        {SORT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => { setSortKey(opt.key); setShowSortMenu(false); }}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${sortKey === opt.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button
                   onClick={handleForceRefresh}
                   disabled={refreshing}
@@ -308,6 +362,8 @@ export default function Home() {
               {displayProjects
                 .filter((p) => !countryFilter || (p.country || "Unknown") === countryFilter)
                 .filter((p) => !searchQuery.trim() || p.name?.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                .slice()
+                .sort(SORT_COMPARATORS[sortKey] || SORT_COMPARATORS.name_asc)
                 .map((p) => (
                 <ProjectCard
                   key={p.id}
