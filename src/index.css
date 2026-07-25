@@ -291,6 +291,52 @@
   line-height: 1;
 }
 
+/* Water-fill loader — the LeakZon wordmark filling up while loading.
+   The logo PNG's alpha channel masks everything, so the letters act as the
+   glass and the gradient below is the water. */
+.water-logo {
+  position: relative;
+  overflow: hidden;
+  /* Unfilled part of the lettering */
+  background: hsl(var(--muted-foreground) / 0.22);
+  -webkit-mask: url("/leakzon-logo-transparent.png") center / contain no-repeat;
+  mask: url("/leakzon-logo-transparent.png") center / contain no-repeat;
+}
+.water-logo-fill {
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(180deg, #3fbee5 0%, #1b87c1 100%);
+  animation: water-rise 2.8s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+}
+/* Wave crest riding on the surface of the water */
+.water-logo-fill::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 10px;
+  background: radial-gradient(circle at 10px -4px, transparent 10px, #3fbee5 10px) repeat-x;
+  background-size: 20px 14px;
+  animation: water-wave 1.6s linear infinite;
+}
+@keyframes water-rise {
+  0%   { height: 0; }
+  70%  { height: 104%; }
+  100% { height: 104%; }
+}
+@keyframes water-wave {
+  from { transform: translateX(0); }
+  to   { transform: translateX(20px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .water-logo-fill { animation: none; height: 60%; }
+  .water-logo-fill::before { animation: none; }
+}
+
 /* Changelog markdown (versions.md rendered in Version Updates) */
 .changelog-markdown h1 { font-size: 1.1rem; font-weight: 700; margin: 0.25rem 0 0.5rem; }
 .changelog-markdown h2 {

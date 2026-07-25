@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.030 — 2026-07-25
+**Project loading shows the LeakZon logo filling with water**
+- Opening a project now shows the LeakZon wordmark slowly filling with water
+  instead of a spinning circle. The logo's own transparency is used as a mask,
+  so the water is clipped to the letters and it works on light and dark
+  backgrounds. Honours "reduce motion" and keeps a screen-reader label.
+
 ## 1.029 — 2026-07-25
 **Layer settings is now a floating, draggable panel**
 - The layer settings dialog is no longer a blocking modal — it's a floating

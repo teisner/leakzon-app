@@ -35,6 +35,7 @@ import { findNearestPipeDiameter } from "@/lib/nearestPipe";
 import { isMeterManualLayer, isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { useLanguage } from "@/lib/i18n";
 import ProjectSettingsPage from "@/components/project/ProjectSettingsPage";
+import WaterLogoLoader from "@/components/WaterLogoLoader";
 import VersionUpdates from "@/components/project/VersionUpdates";
 import CustomerAnnotationPanel from "@/components/project/CustomerAnnotationPanel";
 import CustomerViewDialog from "@/components/project/CustomerViewDialog";
@@ -1339,7 +1340,7 @@ export default function ProjectDetail() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
+        <WaterLogoLoader label={t('project.loading')} />
       </div>
     );
   }
