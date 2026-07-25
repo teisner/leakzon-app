@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.036 — 2026-07-25
+**Version number moved to the bottom of the side menu**
+- The version now sits at the bottom of the side menu, below the lock control
+  and separated by a divider, shown as "Ver 1.036" — instead of under the logo.
+  Applied to both the dashboard and project side menus, and it stays readable
+  when the menu is collapsed.
+
 ## 1.035 — 2026-07-25
 **Layer reordering is disabled on locked projects**
 - Layers can no longer be dragged to change their map z-order while a project is

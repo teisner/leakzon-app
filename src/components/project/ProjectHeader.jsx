@@ -6,7 +6,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
-import { APP_VERSION } from "@/lib/version";
 
 export default function ProjectHeader({ project, onZoomToProject, onLogoClick, children, siblingProjects = [], locked, currentUser }) {
   const navigate = useNavigate();
@@ -34,9 +33,6 @@ export default function ProjectHeader({ project, onZoomToProject, onLogoClick, c
             onClick={onLogoClick}
             className={`h-9 w-auto hidden dark:block ${onLogoClick ? "cursor-pointer" : ""}`}
           />
-          <span className="text-[8px] leading-none text-muted-foreground/70 mt-0.5 tabular-nums">
-            v{APP_VERSION}
-          </span>
         </div>
 
         <div className="h-8 w-px bg-border mx-1" />

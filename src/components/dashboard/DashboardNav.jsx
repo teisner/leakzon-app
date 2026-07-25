@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { LayoutDashboard, Users as UsersIcon, Archive, GitPullRequest, Settings } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
+import { APP_VERSION } from "@/lib/version";
 
 export default function DashboardNav({ activeTab, onChange, currentUser }) {
   const { t } = useLanguage();
@@ -67,6 +68,11 @@ export default function DashboardNav({ activeTab, onChange, currentUser }) {
             closed: t('sidebar.closed'),
           }}
         />
+        <div className="mt-2 pt-2 border-t border-border">
+          <p className={`text-[10px] text-muted-foreground/70 tabular-nums ${expanded ? "px-3" : "text-center"}`}>
+            Ver {APP_VERSION}
+          </p>
+        </div>
       </div>
     </nav>
   );

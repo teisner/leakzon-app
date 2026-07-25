@@ -16,7 +16,6 @@ import VersionUpdates from "@/components/project/VersionUpdates";
 import LanguageToggle from "@/components/LanguageToggle";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useLanguage } from "@/lib/i18n";
-import { APP_VERSION } from "@/lib/version";
 import DashboardNav from "@/components/dashboard/DashboardNav";
 import ComponentDefaultsSettings from "@/components/dashboard/ComponentDefaultsSettings";
 
@@ -197,9 +196,6 @@ export default function Home() {
               alt="LeakZon Onboarding Platform"
               className="h-14 w-auto hidden dark:block"
             />
-            <span className="text-[9px] leading-none text-muted-foreground/70 mt-0.5 self-center tabular-nums">
-              v{APP_VERSION}
-            </span>
           </div>
           <div className="ml-4 pl-4 border-l border-border">
             <h1 className="text-xl font-bold text-foreground tracking-tight">{t('dashboard.title')}</h1>
