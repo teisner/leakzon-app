@@ -1,10 +1,19 @@
 # LeakZon — Version History
 
 Version format: `1.NNN` (three digits after the dot). Every change bumps the
-version by `0.001` and adds an entry here (newest first). The current version
-is defined in `src/lib/version.js` and shown under the logo in the app.
+version by `0.001` and adds an entry here (newest first). Each entry starts with
+a one-line **headline** summarizing the main change, followed by the detailed
+notes. The current version is defined in `src/lib/version.js` and shown under
+the logo in the app.
+
+## 1.017 — 2026-07-25
+**Changelog now has a one-line headline per version**
+- versions.md entries now begin with a bold headline that sums up the main
+  change, followed by the detailed bullets (same details as before). Existing
+  entries were updated to the new format.
 
 ## 1.016 — 2026-07-25
+**Fixed project lock/unlock not saving**
 - Fixed project lock/unlock not working: the toggle wrote a `locked_by_name`
   field that isn't a real column (the schema uses `locked_by_id`), so the whole
   update was rejected and the lock never saved. Now writes `locked_by_id`,
@@ -12,12 +21,14 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   an error if a project update fails instead of silently doing nothing.
 
 ## 1.015 — 2026-07-25
+**Dashboard: Settings moved to sidebar bottom; lock icon by the DMA count**
 - Dashboard: moved Settings to the bottom of the sidebar (just above the lock
   control) and switched it to the standard gear icon.
 - Project cards: the "locked" indicator now appears inline just before the
   "N DMAs" count (instead of the top-left corner), shown to everyone.
 
 ## 1.014 — 2026-07-25
+**Default shape / size / color per component type (dashboard Settings)**
 - New **Settings** area in the main dashboard (admins): set the default shape,
   size and color for each component type — Main, Sub Main, Insertion Meters,
   Ultrasonic Meter, and Valves. These defaults are applied automatically to new
@@ -25,16 +36,19 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   layers aren't changed; settings are saved per browser.
 
 ## 1.013 — 2026-07-25
+**A main meter can serve more than one DMA**
 - A main meter (any type) can now be assigned to **more than one DMA** — e.g.
   one meter serving both "North" and "North Central". Assigning a main meter to
   a DMA no longer unlinks it from other DMAs, and the insertion-meter list /
   network inventory now show all DMAs a shared meter serves.
 
 ## 1.012 — 2026-07-25
+**New application icon**
 - New application icon (favicon, browser tab, apple-touch-icon, and PWA/
   home-screen icon) using the LeakZon map-pin logo.
 
 ## 1.011 — 2026-07-24
+**Extend share links, in-app changelog, faster carbon-copy upload**
 - Customer view links can now be **extended**: a calendar-plus button on each
   active (or expired) link adds the chosen number of days to its expiry —
   extending an expired link reactivates it.
@@ -44,6 +58,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   and compressed client-side before upload (no visible difference on the map).
 
 ## 1.010 — 2026-07-24
+**Project export/import now includes customer annotations**
 - Project export/import now includes **customer annotations** (customer-view
   comments/arrows/drawings) — previously they were left out of export, restore,
   and duplicate, and weren't cleared on an overwrite-import. Applies to the
@@ -51,11 +66,13 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   Function deploy, separate from the Vercel frontend deploy).
 
 ## 1.009 — 2026-07-24
+**Point-number default color is now red**
 - Point numbering default color is now red (#ef4444) with white text. Saved
   styles still on the old default are migrated to red (users who explicitly
   chose another color keep theirs).
 
 ## 1.008 — 2026-07-24
+**Point-number ordering fix + size/color controls**
 - Point numbering: order now reads cleanly left-to-right, top-to-bottom — rows
   are grouped by comparing each point to the previous one (rolling reference),
   so a row with gradual vertical spread stays together instead of splitting.
@@ -65,6 +82,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   Settings persist per project and also apply in the customer view.
 
 ## 1.007 — 2026-07-24
+**Meter-type shapefile imports now create meter rows**
 - Importing a meter-type layer (Main / Insertion / Ultrasonic Meters) as a
   shapefile/GeoJSON now also creates `is_main` meter rows from its point
   features — previously the shapefile import only created a display layer, so
@@ -73,6 +91,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   multi-layer (ZIP) import paths in UploadData and UploadLayerDialog.
 
 ## 1.006 — 2026-07-24
+**Faster layer deletion**
 - Made layer deletion much faster: removed an explicit consumption_reading
   delete that scanned all of a project's readings (by source_file_url) on every
   layer delete — even boundary/shp layers with no meters. Readings are already
@@ -80,6 +99,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   layer's meters are deleted, so the extra scan was redundant and slow.
 
 ## 1.005 — 2026-07-24
+**Fixed data loss when deleting a layer that shares a file**
 - Fixed a data-loss bug in layer deletion: deleting a layer removed meters by
   `source_file_url`, but two layers imported from the same file (e.g. a "Main"
   and a "Sub" meters layer from one CSV) share that URL, so deleting one wiped
@@ -87,6 +107,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   by `source_file_url` only when no other layer shares that file.
 
 ## 1.004 — 2026-07-24
+**Fixed layer deletion failing on layers with >1000 meters**
 - Fixed layer deletion still failing on layers with many meters
   ("violates foreign key constraint meter_layer_id_fkey"): the previous fix
   collected meter ids via a read that PostgREST caps at 1000 rows, so layers
@@ -95,6 +116,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   the DMA side so it's never limited by the meter read cap.
 
 ## 1.003 — 2026-07-24
+**Fixed silent layer-delete failures (foreign-key references)**
 - Fixed deleting a layer silently failing (e.g. the Ultrasonic layer): a layer
   can't be deleted while `meter.layer_id` or `isolated_point.layer_id` rows
   reference it, and its meters may be referenced by `dma.main_meter_id`. Delete
@@ -104,6 +126,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   `data`-type layers, so manual meter layers (type `shp`) never deleted.
 
 ## 1.002 — 2026-07-24
+**Fixed "No DMAs with a valid polygon to export"**
 - Fixed "No DMAs with a valid polygon to export" on the SHP/JSON export page:
   `parsePolygon` only checked `dma.polygon`, but the export page loads DMAs
   straight from the table where the column is `polygon_json` — so every DMA
@@ -111,6 +134,7 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   `polygon`), which also corrects the polygon data in the JSON export.
 
 ## 1.001 — 2026-07-24
+**Fixed meter duplication on save + silent SHP export**
 - Fixed manual meter layers (Insertion/Ultrasonic) duplicating points on save:
   the delete was blocked by the `dma.main_meter_id` foreign key when a DMA
   referenced one of the meters. Now unlinks affected DMAs, deletes, re-inserts,
@@ -120,5 +144,6 @@ is defined in `src/lib/version.js` and shown under the logo in the app.
   for the after-`await` case that some browsers block.
 
 ## 1.000 — 2026-07-24
+**Introduced the version number and this changelog**
 - Introduced the version number (shown in small text under the logo, upper-left)
   and this changelog.

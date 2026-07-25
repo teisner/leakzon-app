@@ -15,9 +15,10 @@ do not wait to be told "please deploy".** Deploy = commit the change and
 1. Make the edit(s).
 2. **Bump the version**: increment `APP_VERSION` in `src/lib/version.js` by
    `0.001` (format `1.NNN`, three digits after the dot — e.g. 1.000 → 1.001)
-   and add a matching dated entry to `versions.md` (newest first) describing
-   the change. The version shows in small text under the logo (dashboard +
-   project header).
+   and add a matching dated entry to `versions.md` (newest first). Each entry
+   is: `## <version> — <date>`, then a **bold one-line headline** summarizing
+   the main change, then the detailed bullets. The version shows in small text
+   under the logo (dashboard + project header).
 3. `npm run build` to confirm it compiles.
 4. `git add` the changed files, `git commit` with a clear message, `git push origin main`.
 5. Tell the user it's pushed and Vercel is deploying.
