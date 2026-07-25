@@ -30,9 +30,15 @@ export function assignPointNumbers(points) {
   const withCoords = points.filter((p) => p.lat != null && p.lng != null);
   if (withCoords.length === 0) return [];
 
-  const lats = withCoords.map((p) => p.lat);
-  const north = Math.max(...lats);
-  const south = Math.min(...lats);
+  // Plain loop, not Math.max(...lats): spreading a large array as arguments
+  // overflows the call stack (a GeoJSON-backed layer can contribute a lot of
+  // points), which would blank the map.
+  let north = -Infinity;
+  let south = Infinity;
+  for (const p of withCoords) {
+    if (p.lat > north) north = p.lat;
+    if (p.lat < south) south = p.lat;
+  }
   const span = north - south;
   const bands = rowBandCount(withCoords.length);
   const bandHeight = span / bands;
@@ -54,6 +60,67 @@ export function assignPointNumbers(points) {
   return ordered.map((p, i) => ({ ...p, number: i + 1 }));
 }
 
+// Builds the flat, numberable point list for the point-numbering toggle,
+// scoped exactly to the three categories the feature covers: main/insertion
+// meters (is_main === true — same concept, two names, per product decision),
+// points belonging to an "Ultrasonic Meters" project layer, and isolated
+// valves/points. Regular sub-meters and other layer types are intentionally
+// excluded.
+export function isUltrasonicLayer(layer) {
+  return layer?.category === "Ultrasonic Meters" || /ultrasonic/i.test(layer?.name || "");
+}
+
+// Resolves the project_layer a meter belongs to, using the same fallback
+// join ProjectMap/CustomerModeMap use when rendering (layer_id FK, falling
+// back to a source_file_url match for meters imported before that FK
+// existed). Meters whose owning layer is currently hidden must not be
+// numbered — there's nothing on the map for that badge to point at.
+function isMeterLayerVisible(meter, layers) {
+  const layer = (layers || []).find((l) =>
+    meter.layer_id ? l.id === meter.layer_id : meter.source_file_url && l.file_url === meter.source_file_url
+  );
+  return layer ? layer.visible !== false : true;
+}
+
+// Extracts numberable points from "Ultrasonic Meters" layers. If the layer is
+// backed by real meter rows (layer_id FK), use those (live lat/lng); otherwise
+// fall back to the raw GeoJSON Point features already loaded into the map's
+// geojsonCache (keyed by layer.id), same source ProjectMap/CustomerModeMap
+// use for rendering.
+export function extractUltrasonicPoints(layers, meters, geojsonCache) {
+  const points = [];
+  for (const layer of (layers || []).filter((l) => isUltrasonicLayer(l) && l.visible !== false)) {
+    const layerMeters = (meters || []).filter((m) => m.layer_id === layer.id);
+    if (layerMeters.length > 0) {
+      for (const m of layerMeters) {
+        points.push({ id: `meter-${m.id}`, category: "ultrasonic", lat: m.latitude, lng: m.longitude });
+      }
+      continue;
+    }
+    const raw = geojsonCache?.[layer.id];
+    if (!raw || raw.error) continue;
+    const features = raw.features || (raw.type === "Feature" ? [raw] : []);
+    features.forEach((f, i) => {
+      const geomType = f.geometry?.type;
+      if (geomType !== "Point" && geomType !== "MultiPoint") return;
+      const coords = geomType === "Point" ? [f.geometry.coordinates] : f.geometry.coordinates;
+      (coords || []).forEach(([lng, lat], j) => {
+        if (lat == null || lng == null) return;
+        points.push({ id: `layer-${layer.id}-${i}-${j}`, category: "ultrasonic", lat, lng });
+      });
+    });
+  }
+  return points;
+}
+
+// A single meter row can legitimately satisfy more than one category filter
+// — e.g. a meter flagged is_main=true that also lives in a layer named
+// "Ultrasonic Insertion Meters" (a real, common meter-type name, not an edge
+// case) matches both the main-meter filter and the ultrasonic-layer regex.
+// Without de-duping, that one physical meter gets two numbers at the exact
+// same coordinate (reported as "number 1 & 2 should be one point"). Each
+// meter/isolated-point id is only ever assigned once; main/insertion takes
+// priority over ultrasonic since is_main is the more fundamental attribute.
 export function buildNumberablePoints({ meters, layers, isolatedPoints, geojsonCache }) {
   const seenIds = new Set();
   const dedupe = (list) => {

@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.028 — 2026-07-25
+**Fixed black screen when turning point numbering on (regression from 1.025)**
+- Turning on point numbering crashed the app to a blank screen. The 1.025
+  numbering rewrite accidentally removed three helper functions that the
+  point-building code still called (`isMeterLayerVisible`,
+  `extractUltrasonicPoints`, `isUltrasonicLayer`), so it threw immediately.
+  Restored them; numbering order from 1.025 is unchanged.
+- Also fixed a second crash found while verifying this: the latitude range was
+  computed with `Math.max(...lats)`, which overflows the call stack on layers
+  contributing a lot of points. Now uses a plain loop (verified with 200k points).
+
 ## 1.027 — 2026-07-25
 **Configurable isolation valve distance for "Find border valves"**
 - New **Isolation Points → Isolation Valve Distance** setting in Project
