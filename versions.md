@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.027 — 2026-07-25
+**Configurable isolation valve distance for "Find border valves"**
+- New **Isolation Points → Isolation Valve Distance** setting in Project
+  Settings: how close two valves on opposite sides of a DMA boundary must be to
+  count as a candidate isolation point. It drives the DMA panel's "Find border
+  valves" highlight, so you can widen or tighten the search per project.
+- Shown in the project's own distance unit and defaults accordingly —
+  **60 m** for metric projects, **200 ft** for imperial ones. Stored in metres,
+  so switching the project's distance unit re-labels the value without changing
+  the actual distance.
+
 ## 1.026 — 2026-07-25
 **White & black shape colors, plus a separate outline color**
 - Added **white** and **black** to the color palette, and unified it: the same

@@ -1,5 +1,6 @@
 import React from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Wand2, Lock, Unlock } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Wand2, Lock, Unlock, Shield } from "lucide-react";
+import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { Switch } from "@/components/ui/switch";
 
 function SegmentedToggle({ value, options, onChange }) {
@@ -43,6 +44,10 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
   const handleUpdate = (field, value) => {
     onUpdate({ [field]: value });
   };
+
+  // Shown in the project's own distance unit (m for metric, ft for imperial);
+  // stored canonically in metres.
+  const { value: isolationValue, unit: isolationUnit } = isolationDistanceDisplay(project);
 
   const handleToggleLock = () => {
     if (locked) {
@@ -167,6 +172,35 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                   className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <span className="text-sm text-muted-foreground font-medium">ft</span>
+              </div>
+            </SettingRow>
+          </div>
+        </div>
+
+        {/* Isolation Points card */}
+        <div className="mt-4">
+          <h2 className="text-sm font-bold text-foreground mb-1 px-1">Isolation Points</h2>
+          <div className={`bg-card border border-border rounded-xl px-5 ${locked ? "pointer-events-none opacity-60" : ""}`}>
+            <SettingRow
+              icon={Shield}
+              title="Isolation Valve Distance"
+              description={`How close two valves on opposite sides of a DMA boundary must be to count as a candidate isolation point — used by "Find border valves"`}
+            >
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={isolationUnit === "ft" ? 3000 : 1000}
+                  value={isolationValue}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                      handleUpdate("isolation_distance_meters", displayToMeters(project, val));
+                    }
+                  }}
+                  className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground font-medium">{isolationUnit}</span>
               </div>
             </SettingRow>
           </div>

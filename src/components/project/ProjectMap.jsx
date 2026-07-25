@@ -34,6 +34,7 @@ import { isMeterManualLayer } from "@/lib/meterLayerDetection";
 import { loadNumberStyle, saveNumberStyle, applyStyleProp } from "@/lib/numberStyle";
 import { collectValvePoints, findBorderValves } from "@/lib/borderValves";
 import { resolvePointColors } from "@/lib/colorPalette";
+import { isolationDistanceMeters } from "@/lib/isolationDistance";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -576,8 +577,15 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   // Valves sitting at borders between two DMAs (candidate isolation valves).
   const borderValvePoints = useMemo(() => {
     if (!highlightBorderValves) return [];
-    return findBorderValves(collectValvePoints(layers, geojsonCache), parseDmaPolygons(dmas));
-  }, [highlightBorderValves, layers, geojsonCache, dmas]);
+    // Pairing distance comes from the project's "Isolation Valve Distance"
+    // setting (metres; unit-aware default of 60 m / 200 ft when unset).
+    const pairMeters = isolationDistanceMeters(project);
+    return findBorderValves(
+      collectValvePoints(layers, geojsonCache),
+      parseDmaPolygons(dmas),
+      { pairMeters, maxAssignMeters: pairMeters * 2 }
+    );
+  }, [highlightBorderValves, layers, geojsonCache, dmas, project]);
 
   // Persist number styling per project; apply size/color to all or selected.
   useEffect(() => {
