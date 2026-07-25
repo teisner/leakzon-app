@@ -7,9 +7,10 @@
   "theme_color": "#1b87c1",
   "icons": [
     {
-      "src": "/leakzon-logo-transparent.png",
-      "sizes": "1024x385",
-      "type": "image/png"
+      "src": "/app-icon.png",
+      "sizes": "411x414",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

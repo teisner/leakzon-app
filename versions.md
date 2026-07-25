@@ -4,6 +4,10 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.012 — 2026-07-25
+- New application icon (favicon, browser tab, apple-touch-icon, and PWA/
+  home-screen icon) using the LeakZon map-pin logo.
+
 ## 1.011 — 2026-07-24
 - Customer view links can now be **extended**: a calendar-plus button on each
   active (or expired) link adds the chosen number of days to its expiry —
