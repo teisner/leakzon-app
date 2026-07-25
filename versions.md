@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.031 — 2026-07-25
+**Dashboard "Projects" icon now matches the project page**
+- The Projects item in the dashboard sidebar uses the same grid icon as the
+  "back to projects" button inside a project, so one glyph means "projects"
+  throughout the app (was a folder icon).
+
 ## 1.030 — 2026-07-25
 **Project loading shows the LeakZon logo filling with water**
 - Opening a project now shows the LeakZon wordmark slowly filling with water

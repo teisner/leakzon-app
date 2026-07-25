@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { FolderOpen, Users as UsersIcon, Archive, GitPullRequest, Settings } from "lucide-react";
+// LayoutDashboard matches the "back to projects" icon in ProjectHeader, so
+// the same glyph means "projects" in both the dashboard and a project page.
+import { LayoutDashboard, Users as UsersIcon, Archive, GitPullRequest, Settings } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
 
@@ -19,7 +21,7 @@ export default function DashboardNav({ activeTab, onChange, currentUser }) {
   const expanded = mode === "open";
 
   const items = [
-    { key: "projects", label: t('dashboard.projects'), Icon: FolderOpen },
+    { key: "projects", label: t('dashboard.projects'), Icon: LayoutDashboard },
     { key: "archive", label: t('dashboard.archive'), Icon: Archive },
     { key: "users", label: t('dashboard.users'), Icon: UsersIcon },
     ...(canViewVersionUpdates ? [{ key: "versionUpdates", label: t('dashboard.versionUpdates'), Icon: GitPullRequest }] : []),
