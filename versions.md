@@ -6,6 +6,18 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.025 — 2026-07-25
+**Fixed point numbering running right-to-left**
+- Numbering now genuinely reads left-to-right, top-to-bottom. The row grouping
+  capped its band at 60 m, so on real projects spanning kilometres every point
+  became its own "row" and the order collapsed to pure north-south, ignoring
+  left-to-right entirely. Rows are now fixed horizontal stripes (about √n of
+  them), ordered north-first and left-to-right within each stripe — verified
+  against real project data and against horizontal-line, vertical-line and grid
+  layouts.
+- Badges in a tight cluster now also read left-to-right: the lower number takes
+  the left slot instead of being nudged right (which read as "2 1").
+
 ## 1.024 — 2026-07-25
 **Focused-DMA numbering keeps each point's global number**
 - Point numbers stay numbered across all points (as if every DMA were visible),

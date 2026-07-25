@@ -5,11 +5,15 @@ import L from "leaflet";
 // never sits directly on top of (and hides) the marker/icon it labels. Later
 // entries are only used when an earlier one collides with an already-placed
 // badge.
+// Left-hand offsets come first so that in a tight cluster the lower number
+// takes the left slot and the next one is pushed right — the badges then read
+// left-to-right ("1 2"), matching the numbering order. With right-first offsets
+// they read reversed ("2 1").
 const CANDIDATE_OFFSETS = [
-  [14, -14], [-14, -14], [14, 14], [-14, 14],
-  [22, 0], [-22, 0], [0, -22], [0, 22],
-  [22, -22], [-22, -22], [22, 22], [-22, 22],
-  [32, -10], [-32, -10], [32, 10], [-32, 10],
+  [-14, -14], [14, -14], [-14, 14], [14, 14],
+  [-22, 0], [22, 0], [0, -22], [0, 22],
+  [-22, -22], [22, -22], [-22, 22], [22, 22],
+  [-32, -10], [32, -10], [-32, 10], [32, 10],
 ];
 
 // Places number badges in screen (layer-point) space for the current zoom,
