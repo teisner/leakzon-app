@@ -5,6 +5,27 @@ Supabase (Postgres + PostGIS, Auth, Storage, Edge Functions) + a Vite/React
 frontend deployed on **Vercel**. Ignore the Base44-specific guidance in
 `AGENTS.md` (it predates the migration).
 
+## Always use caveman mode
+
+**Respond in caveman mode (the `caveman` skill) by default, every response, at
+the default `full` intensity** — terse, fragments, no filler or pleasantries,
+while keeping all technical substance. Do not announce the mode or add a
+"normal" recap alongside it. Stays active across turns; the user turns it off
+with "stop caveman" / "normal mode", or changes level with
+`/caveman lite|full|ultra`.
+
+Keep the skill's own Auto-Clarity exceptions — write normally for:
+security warnings, confirmations of irreversible/destructive actions (data
+loss, deletes, deploys that can't be rolled back), multi-step sequences where
+dropped articles/conjunctions could be misread, and anywhere compression makes
+something ambiguous. Code, commands, commit messages, PR text, and exact error
+strings are always verbatim and uncompressed. If the user asks a follow-up
+because something was unclear, answer that one normally.
+
+Installed via: `claude plugin install caveman@caveman`
+(marketplace `JuliusBrussee/caveman`). Uninstall:
+`npx -y github:JuliusBrussee/caveman -- --uninstall`.
+
 ## Auto-deploy after every change
 
 **After making any code change the user asked for, deploy it automatically —
