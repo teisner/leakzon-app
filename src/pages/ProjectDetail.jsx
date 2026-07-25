@@ -38,6 +38,10 @@ import ProjectSettingsPage from "@/components/project/ProjectSettingsPage";
 import VersionUpdates from "@/components/project/VersionUpdates";
 import CustomerAnnotationPanel from "@/components/project/CustomerAnnotationPanel";
 import CustomerViewDialog from "@/components/project/CustomerViewDialog";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const BOUNDARY_COLOR = "#6b7280";
 
@@ -131,6 +135,11 @@ export default function ProjectDetail() {
   const [showWizard, setShowWizard] = useState(false);
   const [sidePanelTab, setSidePanelTab] = useState("layers");
   const [networkFilter, setNetworkFilter] = useState(null);
+  // Prompt to mark "Design Network Flow" done when leaving the network view
+  // after making changes, if it isn't already marked in the wizard.
+  const [networkDirty, setNetworkDirty] = useState(false);
+  const [networkDesignDone, setNetworkDesignDone] = useState(true);
+  const [showNetworkDonePrompt, setShowNetworkDonePrompt] = useState(false);
   const [imageOverlays, setImageOverlays] = useState([]);
   const [editingOverlayId, setEditingOverlayId] = useState(null);
   const [croppingOverlayId, setCroppingOverlayId] = useState(null);
@@ -521,6 +530,18 @@ export default function ProjectDetail() {
       .then(({ data }) => setIsolatedPoints(data || []));
   };
 
+  // Whether the "Design Network Flow" wizard step is already marked done
+  // (a project_progress row with activity_type = 'network_designed').
+  const loadNetworkDesignDone = () => {
+    supabase
+      .from('project_progress')
+      .select('id')
+      .eq('project_id', id)
+      .eq('activity_type', 'network_designed')
+      .limit(1)
+      .then(({ data }) => setNetworkDesignDone((data || []).length > 0));
+  };
+
   const loadAnnotations = () => {
     supabase
       .from('map_note')
@@ -707,6 +728,7 @@ export default function ProjectDetail() {
         loadDmas();
         loadImageOverlays();
         loadIsolatedPoints();
+        loadNetworkDesignDone();
         loadAnnotations();
         loadCustomerAnnotations();
       })
@@ -1144,9 +1166,27 @@ export default function ProjectDetail() {
   };
 
   const handleViewModeChange = (mode, panelTab) => {
+    // Leaving the network design view after making changes, and the wizard's
+    // "Design Network Flow" step isn't marked done yet → ask if they're done.
+    if (viewMode === "network" && mode !== "network" && networkDirty && !networkDesignDone) {
+      setShowNetworkDonePrompt(true);
+    }
     if (mode !== "data") setNetworkFilter(null);
     setViewMode(mode);
     if (panelTab) setSidePanelTab(panelTab);
+  };
+
+  const handleConfirmNetworkDone = async () => {
+    await recordProgress(id, "network_designed");
+    setNetworkDesignDone(true);
+    setNetworkDirty(false);
+    setShowNetworkDonePrompt(false);
+  };
+
+  const handleDismissNetworkDone = () => {
+    // Don't nag on every subsequent leave until new changes are made.
+    setNetworkDirty(false);
+    setShowNetworkDonePrompt(false);
   };
 
   const handleUpdateProjectSettings = async (data) => {
@@ -1473,7 +1513,7 @@ export default function ProjectDetail() {
           ) : viewMode === "versionUpdates" ? (
             <VersionUpdates project={project} currentUser={currentUser} projects={allProjects} />
           ) : viewMode === "network" ? (
-            <NetworkDesign project={project} dmas={dmas} layers={layers} meters={meters} onNodeClick={handleNetworkNodeClick} locked={isLocked} />
+            <NetworkDesign project={project} dmas={dmas} layers={layers} meters={meters} onNodeClick={handleNetworkNodeClick} locked={isLocked} onModified={() => setNetworkDirty(true)} />
           ) : viewMode === "inventory" ? (
             <WetworkInventory project={project} layers={layers} dmas={dmas} meters={meters} isolatedPoints={isolatedPoints} />
           ) : (
@@ -1604,6 +1644,23 @@ export default function ProjectDetail() {
         projectId={id}
         projectName={project?.name}
       />
+
+      {/* Prompt on leaving the network design view after making changes */}
+      <AlertDialog open={showNetworkDonePrompt} onOpenChange={(v) => { if (!v) handleDismissNetworkDone(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finished designing the network flow?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You made changes to the network design for "{project?.name}". Would you like to mark
+              the "Design Network Flow" onboarding step as done?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDismissNetworkDone}>Not yet</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmNetworkDone}>Yes, mark as done</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import NetworkMapPanel from "./NetworkMapPanel";
 import NetworkStory from "./NetworkStory";
 
-export default function NetworkDesign({ project, dmas, layers, meters, onNodeClick, locked }) {
+export default function NetworkDesign({ project, dmas, layers, meters, onNodeClick, locked, onModified }) {
   const [nodes, setNodes] = useState([]);
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,11 +87,13 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
       .select()
       .single();
     setNodes((prev) => [...prev, node]);
+    onModified?.();
   };
 
   const handleNodeDragEnd = async (nodeId, x, y) => {
     setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, pos_x: x, pos_y: y } : n)));
     await supabase.from('network_node').update({ pos_x: x, pos_y: y }).eq('id', nodeId);
+    onModified?.();
   };
 
   const handleDeleteNode = async (nodeId) => {
@@ -102,6 +104,7 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
     await supabase.from('network_node').delete().eq('id', nodeId);
     setNodes((prev) => prev.filter((n) => n.id !== nodeId));
     setLinks((prev) => prev.filter((l) => l.from_node_id !== nodeId && l.to_node_id !== nodeId));
+    onModified?.();
   };
 
   const handleAddLink = async (fromId, toId) => {
@@ -113,11 +116,13 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
       .select()
       .single();
     setLinks((prev) => [...prev, link]);
+    onModified?.();
   };
 
   const handleDeleteLink = async (linkId) => {
     await supabase.from('network_link').delete().eq('id', linkId);
     setLinks((prev) => prev.filter((l) => l.id !== linkId));
+    onModified?.();
   };
 
   // --- Resize handle ---
@@ -228,6 +233,7 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
           supabase.from('network_link').update({ port_config: p }).eq('id', linkId)
         )
       );
+      onModified?.();
     } catch (err) {
       console.error("Failed to persist optimization:", err);
     }

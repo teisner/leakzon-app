@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.018 — 2026-07-25
+**Prompt to mark "Design Network Flow" done when leaving the view after changes**
+- If you make changes in the Network Design view and then switch to another view
+  while the onboarding wizard's "Design Network Flow" step isn't marked done yet,
+  a dialog now asks whether you're finished and offers to mark that step as done.
+  Choosing "Not yet" won't nag again until you make further changes.
+
 ## 1.017 — 2026-07-25
 **Changelog now has a one-line headline per version**
 - versions.md entries now begin with a bold headline that sums up the main
