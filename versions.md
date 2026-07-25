@@ -6,6 +6,15 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.029 — 2026-07-25
+**Layer settings is now a floating, draggable panel**
+- The layer settings dialog is no longer a blocking modal — it's a floating
+  panel you can drag by its header (same behaviour as the onboarding wizard), so
+  the map stays visible and usable while you restyle a layer.
+- The frame now fits its content: sized to the widest element (the colour
+  palette) instead of a fixed modal width, capped to the viewport, with the body
+  scrolling and the header/footer pinned — so nothing is clipped.
+
 ## 1.028 — 2026-07-25
 **Fixed black screen when turning point numbering on (regression from 1.025)**
 - Turning on point numbering crashed the app to a blank screen. The 1.025

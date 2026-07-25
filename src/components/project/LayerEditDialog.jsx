@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Upload, Trash2, Loader2, Plus, Minus, Mountain } from "lucide-react";
+import { Upload, Trash2, Loader2, Plus, Minus, Mountain, GripVertical, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { uploadFile } from "@/api/storageClient";
@@ -68,6 +67,46 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lastLayer, setLastLayer] = useState(null);
+  // Floating/draggable panel (same interaction as the onboarding wizard) so the
+  // map stays visible and usable while restyling a layer.
+  const [pos, setPos] = useState(() => ({
+    x: Math.max(16, Math.round((window.innerWidth - 460) / 2)),
+    y: 80,
+  }));
+  const dragRef = useRef(null);
+  const dragState = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleMove = (e) => {
+      if (!dragState.current) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const maxX = window.innerWidth - 100;
+      const maxY = window.innerHeight - 60;
+      setPos({
+        x: Math.max(0, Math.min(clientX - dragState.current.offsetX, maxX)),
+        y: Math.max(0, Math.min(clientY - dragState.current.offsetY, maxY)),
+      });
+    };
+    const handleUp = () => { dragState.current = null; };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleMove);
+    window.addEventListener("touchend", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleUp);
+    };
+  }, [open]);
+
+  const handleDragStart = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragState.current = { offsetX: clientX - pos.x, offsetY: clientY - pos.y };
+  };
 
   useEffect(() => {
     if (layer) {
@@ -85,7 +124,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
   }, [layer]);
 
   const effectiveLayer = layer || lastLayer;
-  if (!effectiveLayer) return null;
+  if (!open || !effectiveLayer) return null;
 
   const isPipe = !!pipeConfig;
   const isPoint = effectiveLayer.geometry_types?.some(
@@ -134,13 +173,38 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('layerEdit.title', { name: effectiveLayer.name })}</DialogTitle>
-        </DialogHeader>
+    <div
+      ref={dragRef}
+      className="fixed z-[9999] bg-card border-2 border-primary rounded-xl shadow-2xl flex flex-col"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        // Sized to the content (the colour palette is the widest element) and
+        // never wider/taller than the viewport — the body scrolls instead.
+        width: "min(calc(100vw - 32px), 460px)",
+        maxHeight: "calc(100vh - 100px)",
+      }}
+    >
+      {/* Header — draggable */}
+      <div
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        className="flex items-center gap-2 px-4 py-2.5 border-b border-border cursor-grab active:cursor-grabbing select-none shrink-0"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+        <p className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+          {t('layerEdit.title', { name: effectiveLayer.name })}
+        </p>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+          title={t('layerEdit.cancel')}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
 
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
           {/* Altitude info */}
           {effectiveLayer.altitude_field && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
@@ -392,14 +456,13 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('layerEdit.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
-            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {t('layerEdit.save')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="flex justify-end gap-2 px-4 py-3 border-t border-border shrink-0">
+        <Button variant="outline" onClick={() => onOpenChange(false)}>{t('layerEdit.cancel')}</Button>
+        <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+          {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          {t('layerEdit.save')}
+        </Button>
+      </div>
+    </div>
   );
 }
