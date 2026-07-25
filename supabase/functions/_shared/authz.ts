@@ -55,7 +55,9 @@ export async function getCallerUser(req: Request): Promise<CallerUser | null> {
 }
 
 export function isAdminOrSuper(user: CallerUser | null): boolean {
-  return user?.user_type === 'Admin' || user?.user_type === 'Super User';
+  // LeakZon is the platform-owner type (and the default) — full access, same
+  // as Admin / Super User. Mirrors the is_admin_or_super() SQL used by RLS.
+  return user?.user_type === 'LeakZon' || user?.user_type === 'Admin' || user?.user_type === 'Super User';
 }
 
 // Mirrors the has_project_access() Postgres function used by RLS, for

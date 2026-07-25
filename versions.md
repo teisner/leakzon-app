@@ -6,6 +6,15 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.021 — 2026-07-25
+**Fixed "LeakZon" users seeing no projects (global-access authorization)**
+- The RLS/authorization rules only granted global project access to "Admin" and
+  "Super User", not "LeakZon" — so LeakZon users (the platform-owner type, and
+  the default) saw "No Projects yet." Added LeakZon to the privileged set in
+  both the database RLS function and the Edge Function auth helper (backend
+  migration + Edge Function redeploy). Affected users should log out and back
+  in to pick up the change.
+
 ## 1.020 — 2026-07-25
 **Sort projects on the dashboard (name / last used / progress, both directions)**
 - Added a sort control to the projects dashboard: sort by name (A–Z / Z–A),
