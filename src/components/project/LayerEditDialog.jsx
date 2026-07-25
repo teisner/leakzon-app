@@ -10,6 +10,7 @@ import { resolveLayerTypeId } from "@/lib/layerType";
 import { SHAPE_OPTIONS } from "@/lib/shapeIcons";
 import { useLanguage } from "@/lib/i18n";
 import LayerColorPicker from "./LayerColorPicker";
+import { COMPONENTS, matchComponentKey, componentPointConfig, componentColor } from "@/lib/componentDefaults";
 
 const CATEGORY_OPTIONS = [
   "Water Lines",
@@ -172,6 +173,27 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
     setSaving(false);
   };
 
+  // If this layer matches a component type configured in the dashboard
+  // Settings (by its current name/category), offer to pull that type's shape,
+  // size, fill and colours in — overwriting whatever this layer has now.
+  const defaultsKey = matchComponentKey(name, category);
+  const defaultsLabel = COMPONENTS.find((c) => c.key === defaultsKey)?.label;
+
+  const applyComponentDefaults = () => {
+    const pc = componentPointConfig(name, category);
+    const col = componentColor(name, category);
+    if (col) setColor(col);
+    if (pc) {
+      setPointConfig((prev) => {
+        const next = { ...(prev || {}), ...pc };
+        // Defaults with no outline colour mean "same as shape" — clear any
+        // existing override rather than leaving a stale one behind.
+        if (!pc.stroke_color) delete next.stroke_color;
+        return next;
+      });
+    }
+  };
+
   return (
     <div
       ref={dragRef}
@@ -256,6 +278,16 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
           {/* Dot style (point layers, no custom icon) */}
           {isPoint && !iconUrl && (
             <div>
+              {defaultsKey && (
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Defaults exist for <span className="font-medium text-foreground">{defaultsLabel}</span> in dashboard Settings.
+                  </p>
+                  <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={applyComponentDefaults}>
+                    Apply
+                  </Button>
+                </div>
+              )}
               <Label>{t('layerEdit.shape')}</Label>
               <div className="flex gap-2 mt-2">
                 {SHAPE_OPTIONS.map((opt) => (

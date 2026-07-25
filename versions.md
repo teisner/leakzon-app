@@ -6,6 +6,16 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.037 — 2026-07-25
+**Pull a layer's style from the dashboard component defaults**
+- When editing a layer that matches a component type configured in dashboard
+  Settings (Main, Sub Main, Insertion Meters, Ultrasonic Meter, Valves), the
+  layer settings now offer an **Apply** button that pulls that type's shape,
+  size, fill and colours in, overwriting the layer's current style. Nothing is
+  saved until you press Save, so you can still adjust or cancel.
+- The prompt follows the layer's current name/category, so changing the category
+  in the dialog updates which defaults are offered.
+
 ## 1.036 — 2026-07-25
 **Version number moved to the bottom of the side menu**
 - The version now sits at the bottom of the side menu, below the lock control
