@@ -149,6 +149,7 @@ export default function ProjectDetail() {
   const [isolatedPoints, setIsolatedPoints] = useState([]);
   const [isolatedDialogValve, setIsolatedDialogValve] = useState(null);
   const [isolationViewMode, setIsolationViewMode] = useState(false);
+  const [highlightBorderValves, setHighlightBorderValves] = useState(false);
 
   // Map annotations state
   const [annotations, setAnnotations] = useState([]);
@@ -1447,6 +1448,7 @@ export default function ProjectDetail() {
                 onValveClick={handleValveClick}
                 onDeleteIsolatedPoint={handleDeleteIsolatedPoint}
                 onExitIsolatedMode={handleToggleIsolatedMode}
+                highlightBorderValves={highlightBorderValves}
                 isolationViewMode={isolationViewMode}
                 onToggleMeterMain={handleToggleMeterMain}
                 annotations={annotations}
@@ -1551,8 +1553,8 @@ export default function ProjectDetail() {
               onToggleHighlightUnassigned={() => setHighlightUnassigned((v) => !v)}
               isolatedMode={isolatedMode}
               onToggleIsolatedMode={handleToggleIsolatedMode}
-              isolationViewMode={isolationViewMode}
-              onToggleIsolationView={handleToggleIsolationView}
+              highlightBorderValves={highlightBorderValves}
+              onToggleHighlightBorderValves={() => setHighlightBorderValves((v) => !v)}
               isolatedPoints={isolatedPoints}
               onDeleteIsolatedPoint={handleDeleteIsolatedPoint}
               onZoomToIsolated={handleZoomToIsolated}

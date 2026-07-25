@@ -32,6 +32,7 @@ import NumberStyleControls from "@/components/project/NumberStyleControls";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
 import { isMeterManualLayer } from "@/lib/meterLayerDetection";
 import { loadNumberStyle, saveNumberStyle, applyStyleProp } from "@/lib/numberStyle";
+import { collectValvePoints, findBorderValves } from "@/lib/borderValves";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -161,7 +162,7 @@ function BoxZoomHandler({ active, onDone }) {
   return null;
 }
 
-export default function ProjectMap({ project, layers, meters, mapType, setMapType, mapSource, setMapSource, onToggleVisibility, mapRef, onLayerUpdated, clipToBoundary, dmas, onDmaCreated, drawMode, setDrawMode, drawTarget, onBoundaryDrawn, editDma, setEditDma, estimationTarget, onDragProposed, manualEditLayer, onSaveManualLayer, onCancelManualLayer, focusedDmaIds, onToggleFocusDma, highlightedMeterIds, focusMeter, editBoundary, onBoundaryEditSave, onBoundaryEditCancel, onRedrawBoundary, onRefetchBoundary, refetchingBoundary, pinpointMeter, pinpointCoords, onPinpointPlaced, pinpointAddress, pinpointLoading, onPinpointConfirm, onPinpointCancel, pinpointDiameter, onPinpointDiameterChange, imageOverlays, editingOverlayId, onImageOverlayBoundsChange, croppingOverlayId, onCropApplied, onCropCancel, isolatedMode, isolatedPoints, onValveClick, onDeleteIsolatedPoint, onExitIsolatedMode, onToggleMeterMain, isolationViewMode, annotations, annotationMode, onAnnotationClick, onArrowFirstClick, onArrowSecondClick, arrowStart, highlightedAnnotationId, onCancelAnnotation,   annotationsHidden, hiddenAnnotationIds, focusIsolatedPoint, customerAnnotations, customerAnnotationsHidden, hiddenCustomerAnnotationIds }) {
+export default function ProjectMap({ project, layers, meters, mapType, setMapType, mapSource, setMapSource, onToggleVisibility, mapRef, onLayerUpdated, clipToBoundary, dmas, onDmaCreated, drawMode, setDrawMode, drawTarget, onBoundaryDrawn, editDma, setEditDma, estimationTarget, onDragProposed, manualEditLayer, onSaveManualLayer, onCancelManualLayer, focusedDmaIds, onToggleFocusDma, highlightedMeterIds, focusMeter, editBoundary, onBoundaryEditSave, onBoundaryEditCancel, onRedrawBoundary, onRefetchBoundary, refetchingBoundary, pinpointMeter, pinpointCoords, onPinpointPlaced, pinpointAddress, pinpointLoading, onPinpointConfirm, onPinpointCancel, pinpointDiameter, onPinpointDiameterChange, imageOverlays, editingOverlayId, onImageOverlayBoundsChange, croppingOverlayId, onCropApplied, onCropCancel, isolatedMode, isolatedPoints, onValveClick, onDeleteIsolatedPoint, onExitIsolatedMode, onToggleMeterMain, highlightBorderValves, isolationViewMode, annotations, annotationMode, onAnnotationClick, onArrowFirstClick, onArrowSecondClick, arrowStart, highlightedAnnotationId, onCancelAnnotation,   annotationsHidden, hiddenAnnotationIds, focusIsolatedPoint, customerAnnotations, customerAnnotationsHidden, hiddenCustomerAnnotationIds }) {
   const proximityMeters = feetToMeters(project?.boundary_deviation_feet ?? DEFAULT_PROXIMITY_FEET);
   const [geojsonCache, setGeojsonCache] = useState({});
   const [highlightedUid, setHighlightedUid] = useState(null);
@@ -527,6 +528,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     return buildNumberablePoints({ meters, layers, isolatedPoints: viewHideIsolated ? [] : isolatedPoints, geojsonCache });
   }, [showPointNumbers, meters, layers, isolatedPoints, viewHideIsolated, geojsonCache]);
 
+  // Valves sitting at borders between two DMAs (candidate isolation valves).
+  const borderValvePoints = useMemo(() => {
+    if (!highlightBorderValves) return [];
+    return findBorderValves(collectValvePoints(layers, geojsonCache), parseDmaPolygons(dmas));
+  }, [highlightBorderValves, layers, geojsonCache, dmas]);
+
   // Persist number styling per project; apply size/color to all or selected.
   useEffect(() => {
     if (project?.id) saveNumberStyle(project.id, numberStyle);
@@ -719,6 +726,14 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             onToggleSelect={toggleNumberSelect}
           />
         )}
+        {highlightBorderValves && borderValvePoints.map((p, i) => (
+          <CircleMarker
+            key={`bv-${i}`}
+            center={[p.lat, p.lng]}
+            radius={13}
+            pathOptions={{ color: "#f59e0b", weight: 3, fillColor: "#f59e0b", fillOpacity: 0.25, className: "meter-highlight-pulse" }}
+          />
+        ))}
         <BoxZoomHandler active={boxMode} onDone={() => setBoxMode(false)} />
         {/* Combined render — z-order follows panel order (top of panel = top of map).
             Descending sort so lowest sort_order renders last → appears on top in Leaflet. */}

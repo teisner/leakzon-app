@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Trash2, Hexagon, BarChart3, PenTool, MapPinOff, Pencil, Focus, Link2, GitCompare, Shield, Filter, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, RefreshCw, MapPin } from "lucide-react";
+import { Eye, EyeOff, Trash2, Hexagon, BarChart3, PenTool, MapPinOff, Pencil, Focus, Link2, GitCompare, Shield, GitFork, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, RefreshCw, MapPin } from "lucide-react";
 import { supabase } from "@/api/supabaseClient";
 import { pointInPolygon, formatPolygonArea } from "@/lib/polygonUtils";
+import { isValveLayer } from "@/lib/isolatedPoints";
 import DmaConsumptionDialog from "./DmaConsumptionDialog";
 import DmaMasterChart from "./DmaMasterChart";
 import IsolatedPointsList from "./IsolatedPointsList";
@@ -30,7 +31,7 @@ const parsePolygon = (dma) => {
   }
 };
 
-export default function DmaPanel({ dmas, meters, layers, onChanged, onStartDraw, onEditDma, project, focusedDmaIds, onToggleFocusDma, locked, highlightUnassigned, onToggleHighlightUnassigned, isolatedMode, onToggleIsolatedMode, isolatedPoints, onDeleteIsolatedPoint, onZoomToIsolated, isolationViewMode, onToggleIsolationView, onZoomToInsertionMeter }) {
+export default function DmaPanel({ dmas, meters, layers, onChanged, onStartDraw, onEditDma, project, focusedDmaIds, onToggleFocusDma, locked, highlightUnassigned, onToggleHighlightUnassigned, isolatedMode, onToggleIsolatedMode, isolatedPoints, onDeleteIsolatedPoint, onZoomToIsolated, highlightBorderValves, onToggleHighlightBorderValves, onZoomToInsertionMeter }) {
   const { t } = useLanguage();
   const [chartDma, setChartDma] = useState(null);
   const [showMasterChart, setShowMasterChart] = useState(false);
@@ -113,9 +114,9 @@ export default function DmaPanel({ dmas, meters, layers, onChanged, onStartDraw,
         </p>
       )}
 
-      {/* Isolated points + Isolation DMA View — grouped container */}
+      {/* Isolated points + Find Border Valves — grouped container */}
       <div className={`rounded-xl border-2 p-2 space-y-2 transition-colors ${
-        isolatedMode || isolationViewMode
+        isolatedMode || highlightBorderValves
           ? "border-primary/50 bg-primary/5"
           : "border-border"
       }`}>
@@ -143,21 +144,22 @@ export default function DmaPanel({ dmas, meters, layers, onChanged, onStartDraw,
           )}
         </button>
 
-        {/* Isolation DMA View — compact sub-toggle beneath Isolated Points */}
+        {/* Find border valves — highlights valves at boundaries between DMAs
+            (candidate isolation valves), to speed up marking them. */}
         <button
-          onClick={() => onToggleIsolationView?.()}
-          disabled={locked}
-          className={`w-full text-left rounded-lg py-1.5 px-2.5 flex items-center gap-2 transition-colors border ${
-            isolationViewMode
-              ? "bg-primary/10 border-primary/40"
+          onClick={() => onToggleHighlightBorderValves?.()}
+          disabled={(dmas || []).length < 2 || !(layers || []).some(isValveLayer) || locked}
+          className={`w-full text-left rounded-lg py-2 px-2.5 flex items-center gap-2 transition-colors border ${
+            highlightBorderValves
+              ? "bg-amber-500/10 border-amber-500/50"
               : "bg-muted/30 border-border/60 hover:bg-muted/60"
-          } ${locked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-          title="Display only water lines, valves, and main meters"
+          } ${(dmas || []).length < 2 || !(layers || []).some(isValveLayer) || locked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          title="Highlight valves near the borders between DMAs — likely isolation valves"
         >
-          <Filter className={`w-3.5 h-3.5 shrink-0 ${isolationViewMode ? "text-primary" : "text-muted-foreground"}`} />
-          <span className={`text-xs font-medium ${isolationViewMode ? "text-primary" : "text-muted-foreground"}`}>Isolation DMA View</span>
-          <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${isolationViewMode ? "text-primary bg-primary/15" : "text-muted-foreground/60 bg-muted"}`}>
-            {isolationViewMode ? "ON" : "OFF"}
+          <GitFork className={`w-4 h-4 shrink-0 ${highlightBorderValves ? "text-amber-600" : "text-muted-foreground"}`} />
+          <span className={`text-xs font-medium ${highlightBorderValves ? "text-amber-600" : "text-muted-foreground"}`}>Find border valves</span>
+          <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${highlightBorderValves ? "text-amber-600 bg-amber-500/15" : "text-muted-foreground/60 bg-muted"}`}>
+            {highlightBorderValves ? "ON" : "OFF"}
           </span>
         </button>
       </div>

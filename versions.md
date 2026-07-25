@@ -6,6 +6,15 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.019 — 2026-07-25
+**DMA panel: "Find border valves" highlight; removed "Isolation DMA View"**
+- Removed the "Isolation DMA View" toggle from the DMA panel.
+- Added "Find border valves" in the isolation-points section: it highlights
+  valves sitting at borders between two DMAs (pairs of valves close to each
+  other but on opposite sides of a shared boundary) — the likely isolation
+  valves — to speed up marking them as isolated points. Needs at least two DMAs
+  and a valve layer.
+
 ## 1.018 — 2026-07-25
 **Prompt to mark "Design Network Flow" done when leaving the view after changes**
 - If you make changes in the Network Design view and then switch to another view
