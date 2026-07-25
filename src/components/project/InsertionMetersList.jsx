@@ -23,10 +23,9 @@ export default function InsertionMetersList({ insertionMeters, dmas, onZoomTo, e
   const dmaPolygons = (dmas || []).map(parsePolygon).filter(Boolean);
 
   const getDmaName = (meter) => {
-    // First check if any DMA has this meter linked as its main meter
-    for (let i = 0; i < (dmas || []).length; i++) {
-      if (dmas[i].main_meter_id === meter.id) return dmas[i].name;
-    }
+    // A main meter can be linked to more than one DMA — show all of them.
+    const linked = (dmas || []).filter((d) => d.main_meter_id === meter.id).map((d) => d.name);
+    if (linked.length > 0) return linked.join(", ");
     // Then check point-in-polygon
     if (!meter?.latitude || !meter?.longitude) return "—";
     for (let i = 0; i < (dmas || []).length; i++) {

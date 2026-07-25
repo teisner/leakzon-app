@@ -4,6 +4,12 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.013 — 2026-07-25
+- A main meter (any type) can now be assigned to **more than one DMA** — e.g.
+  one meter serving both "North" and "North Central". Assigning a main meter to
+  a DMA no longer unlinks it from other DMAs, and the insertion-meter list /
+  network inventory now show all DMAs a shared meter serves.
+
 ## 1.012 — 2026-07-25
 - New application icon (favicon, browser tab, apple-touch-icon, and PWA/
   home-screen icon) using the LeakZon map-pin logo.

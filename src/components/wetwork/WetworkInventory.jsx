@@ -173,9 +173,10 @@ export default function WetworkInventory({ project, layers, dmas, meters, isolat
           (m) => m.is_main && insertionLayerIds.has(m.layer_id)
         );
         for (const m of insertionMeters) {
-          const linkedDma = dmas.find((d) => d.main_meter_id === m.id);
-          const dmaIds = linkedDma
-            ? [linkedDma.id]
+          // A main meter can be linked to more than one DMA — include all.
+          const linkedDmaIds = dmas.filter((d) => d.main_meter_id === m.id).map((d) => d.id);
+          const dmaIds = linkedDmaIds.length > 0
+            ? linkedDmaIds
             : (m.latitude != null ? findDmaIds(m.latitude, m.longitude, dmaPolygons) : []);
           built.push({
             id: `ins-${m.id}`,

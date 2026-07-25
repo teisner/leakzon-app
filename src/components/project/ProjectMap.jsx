@@ -595,16 +595,10 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     if (!editDma || editPoints.length < 3) return;
     const boundaryPolys = getBoundaryPolygonsLatLng(boundaryGeoJSON);
     const count = countMetersInPolygon(meters, editPoints, boundaryPolys);
-    // If linking a main meter, unlink it from any other DMA first
-    if (editMainMeterId) {
-      const conflictingDmas = (dmas || []).filter((d) => d.id !== editDma.id && d.main_meter_id === editMainMeterId);
-      if (conflictingDmas.length > 0) {
-        await supabase
-          .from('dma')
-          .update({ main_meter_id: null })
-          .in('id', conflictingDmas.map((d) => d.id));
-      }
-    }
+    // A main meter (any type) can serve more than one DMA — e.g. one meter
+    // feeding both "North" and "North Central". We intentionally do NOT unlink
+    // it from other DMAs here, so the same main_meter_id can be shared across
+    // DMAs. (dma.main_meter_id has no unique constraint, so this is allowed.)
     // meter_count isn't stored anymore — it's computed live via the
     // dma_enriched view.
     await supabase.from('dma').update({
