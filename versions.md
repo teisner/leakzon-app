@@ -4,6 +4,12 @@ Version format: `1.NNN` (three digits after the dot). Every change bumps the
 version by `0.001` and adds an entry here (newest first). The current version
 is defined in `src/lib/version.js` and shown under the logo in the app.
 
+## 1.015 — 2026-07-25
+- Dashboard: moved Settings to the bottom of the sidebar (just above the lock
+  control) and switched it to the standard gear icon.
+- Project cards: the "locked" indicator now appears inline just before the
+  "N DMAs" count (instead of the top-left corner), shown to everyone.
+
 ## 1.014 — 2026-07-25
 - New **Settings** area in the main dashboard (admins): set the default shape,
   size and color for each component type — Main, Sub Main, Insertion Meters,

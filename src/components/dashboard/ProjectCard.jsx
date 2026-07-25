@@ -64,12 +64,6 @@ export default function ProjectCard({ project, onClick, onEdit, onDelete, onUndo
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {project.locked && (
-        <div className="absolute top-4 left-4 z-20 flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-500" title="Project locked">
-          <Lock className="w-3.5 h-3.5" />
-        </div>
-      )}
-
       <div className={`relative z-10 flex ${scale.gap}`}>
         {/* Left column — project info */}
         <div className="flex-1 min-w-0 flex flex-col">
@@ -111,9 +105,17 @@ export default function ProjectCard({ project, onClick, onEdit, onDelete, onUndo
             <User className={`${scale.locIcon} text-primary/70`} />
             <span>{project.owner_name || t('card.unassigned')}</span>
           </div>
-          <div className="mt-auto pt-4">
+          <div className="mt-auto pt-4 flex items-center gap-1.5">
+            {project.locked && (
+              <span
+                className="flex items-center justify-center w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-500 shrink-0"
+                title="Project locked"
+              >
+                <Lock className="w-3 h-3" />
+              </span>
+            )}
             <span className={`${scale.dmaNum} font-bold text-foreground tabular-nums`}>{project.num_dma ?? 0}</span>
-            <span className={`${scale.dmaLabel} text-muted-foreground ml-1.5`}>{t('panel.dmas')}</span>
+            <span className={`${scale.dmaLabel} text-muted-foreground`}>{t('panel.dmas')}</span>
           </div>
         </div>
 
