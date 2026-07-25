@@ -6,6 +6,16 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.034 — 2026-07-25
+**Removed the Data Completion feature**
+- Removed Data Completion everywhere: the wand button and estimated-values line
+  on the meter consumption chart, its results panel, and the "Data Completion →
+  Nearby Meter Radius" project setting. The `calculateConsumptionCompletion`
+  Edge Function was deleted from the repo too.
+- Kept the chart's data-quality highlighting (blank readings, and zero values
+  followed by a spike) — those markers stand on their own and aren't part of
+  the removed feature.
+
 ## 1.033 — 2026-07-25
 **Map legend renamed to "Legend" and rolls up smoothly when closed**
 - The map legend panel is now titled **Legend** (was "Map Layers").

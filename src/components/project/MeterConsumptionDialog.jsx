@@ -2,15 +2,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, TrendingUp, Wand2, AlertCircle } from "lucide-react";
+import { Loader2, BarChart3, TrendingUp } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
-import {
-  BarChart, Bar, AreaChart, Area, ComposedChart, Line, ReferenceArea, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, AreaChart, Area, ComposedChart, ReferenceArea, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWeatherPeaks } from "@/lib/weatherData";
 import { WeatherTooltip, renderWeatherDot } from "./WeatherPeakDot";
 import { hasContinuousDailyData } from "@/lib/consumptionAnalysis";
-import CompletionDetails from "./CompletionDetails";
 
 function getReadingDate(r) {
   if (r.reading_date) {
@@ -70,18 +67,11 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
   const [viewMode, setViewMode] = useState("ami");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
-  const [completionEnabled, setCompletionEnabled] = useState(false);
-  const [completionData, setCompletionData] = useState(null);
-  const [completionLoading, setCompletionLoading] = useState(false);
-  const [completionError, setCompletionError] = useState(null);
 
   useEffect(() => {
     if (!open || !meter) return;
     setLoading(true);
     setReadings([]);
-    setCompletionEnabled(false);
-    setCompletionData(null);
-    setCompletionError(null);
     invokeFunction("getMeterConsumption", { meter_id: meter.id })
       .then((res) => setReadings(res.data?.readings || []))
       .catch(() => setReadings([]))
@@ -168,10 +158,10 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   const { peaks, weatherData, loadingWeather } = useWeatherPeaks(viewMode === "amr" ? [] : filtered, project?.city, project?.country);
 
-  // ─── Completion eligibility detection ──────────────────────────
-  // Condition 1: Blank/missing data readings (days with no data)
-  // Condition 2: Zero values followed by very high consumption (accumulated reading)
-  const { isEligible, eligibleDates, highlightRanges } = useMemo(() => {
+  // ─── Data-quality highlighting ─────────────────────────────────
+  // Marks two things on the chart: blank/missing readings, and zero values
+  // followed by a very high reading (an accumulated reading).
+  const { hasDataIssues, highlightRanges } = useMemo(() => {
     const labels = filtered.map(r => r._date ? format(r._date, "MMM dd, yyyy") : getReadingLabel(r));
     const nonZeroVals = filtered.filter(r => !r.isMissing && r.consumption > 0).map(r => r.consumption);
     const sorted = [...nonZeroVals].sort((a, b) => a - b);
@@ -185,14 +175,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
         pairs.push({ zeroIndex: i, highIndex: i + 1 });
       }
     }
-    const dateSet = new Set();
-    filtered.forEach(r => { if (r.isMissing && r._date) dateSet.add(format(r._date, "yyyy-MM-dd")); });
-    pairs.forEach((_, idx) => {
-      const zeroIdx = pairs[idx].zeroIndex;
-      const highIdx = pairs[idx].highIndex;
-      if (filtered[zeroIdx]?._date) dateSet.add(format(filtered[zeroIdx]._date, "yyyy-MM-dd"));
-      if (filtered[highIdx]?._date) dateSet.add(format(filtered[highIdx]._date, "yyyy-MM-dd"));
-    });
     const ranges = [];
     filtered.forEach((r, i) => {
       if (r.isMissing && r._date) {
@@ -210,70 +192,23 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
       ranges.push({ x1: highLabel, x2: highNext, color: "#a855f7", type: "non-zero" });
     });
     const hasBlank = filtered.some(r => r.isMissing);
-    return { isEligible: hasBlank || pairs.length > 0, eligibleDates: Array.from(dateSet), highlightRanges: ranges };
+    return { hasDataIssues: hasBlank || pairs.length > 0, highlightRanges: ranges };
   }, [filtered]);
 
-  const eligibleDatesKey = eligibleDates.join(",");
-
-  useEffect(() => {
-    if (!completionEnabled || eligibleDates.length === 0 || !meter || meter.is_main) {
-      setCompletionData(null);
-      setCompletionError(null);
-      return;
-    }
-    setCompletionLoading(true);
-    setCompletionError(null);
-    setCompletionData(null);
-    invokeFunction("calculateConsumptionCompletion", {
-      meter_id: meter.id,
-      project_id: project?.id || meter.project_id,
-      missing_dates: eligibleDates,
-      radius_yards: project?.completion_radius_yards ?? 500,
-    })
-      .then((res) => {
-        const data = res.data || res;
-        if (data?.error) throw new Error(data.error);
-        setCompletionData(data);
-      })
-      .catch((err) => {
-        setCompletionData(null);
-        const msg = err?.message || err?.error || (typeof err === "string" ? err : "Unknown error");
-        setCompletionError(msg);
-      })
-      .finally(() => setCompletionLoading(false));
-  }, [completionEnabled, eligibleDatesKey, meter, project]);
-
-  const completionLookup = useMemo(() => {
-    const lookup = {};
-    if (!completionData?.results) return lookup;
-    for (const r of completionData.results) { if (r.final != null) lookup[r.date] = r.final; }
-    return lookup;
-  }, [completionData]);
-
-  const spreadAdjustments = useMemo(() => completionData?.spread_adjustments || {}, [completionData]);
 
   // ─── Chart data ─────────────────────────────────────────────────
   const chartData = useMemo(() => {
     return filtered.map((r, i) => {
       const dateStr = r._date ? format(r._date, "yyyy-MM-dd") : null;
-      const spreadVal = dateStr ? spreadAdjustments[dateStr] : null;
-      const completionVal = dateStr ? completionLookup[dateStr] : null;
-      let completed = null;
-      if (completionEnabled) {
-        if (spreadVal != null) completed = spreadVal;
-        else if (completionVal != null && (r.isMissing || r.consumption === 0)) completed = completionVal;
-        else completed = r.consumption;
-      }
       return {
         label: r._date ? format(r._date, "MMM dd, yyyy") : getReadingLabel(r),
         consumption: r.consumption,
-        completed,
         dateStr,
         peakType: peaks.highs.has(i) ? "high" : peaks.lows.has(i) ? "low" : null,
         weather: dateStr ? weatherData[dateStr] : null,
       };
     });
-  }, [filtered, peaks, weatherData, completionEnabled, completionLookup, spreadAdjustments]);
+  }, [filtered, peaks, weatherData]);
 
   const monthlyChartData = useMemo(() => {
     if (!hasDates) return [];
@@ -358,18 +293,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                     />
                   </div>
                 )}
-                {viewMode === "ami" && isEligible && (
-                  <Button
-                    size="icon"
-                    variant={completionEnabled ? "default" : "outline"}
-                    onClick={() => setCompletionEnabled(!completionEnabled)}
-                    disabled={meter.is_main || completionLoading}
-                    className="h-8 w-8 ml-auto"
-                    title="Data Completion"
-                  >
-                    {completionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-                  </Button>
-                )}
                 </>)}
               </div>
             )}
@@ -413,10 +336,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                           <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
-                        <linearGradient id="completionGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                        </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={30} />
@@ -426,9 +345,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                         <ReferenceArea key={i} x1={range.x1} x2={range.x2} fill={range.color} fillOpacity={0.12} stroke={range.color} strokeOpacity={0.3} strokeDasharray="3 3" />
                       ))}
                       <Area type="monotone" dataKey="consumption" stroke="#3b82f6" strokeWidth={2} fill="url(#consumptionGradient)" dot={renderWeatherDot} activeDot={{ r: 6 }} />
-                      {completionEnabled && completionData && (
-                        <Line type="monotone" dataKey="completed" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} connectNulls={true} />
-                      )}
                     </ComposedChart>
                   ) : (
                     <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -447,26 +363,7 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
               </div>
             )}
 
-            {completionEnabled && completionLoading && (
-              <div className="border border-amber-200 dark:border-amber-800/50 rounded-lg p-3 bg-amber-50/50 dark:bg-amber-950/10">
-                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Calculating completion values…
-                </p>
-              </div>
-            )}
-
-            {completionEnabled && completionError && !completionLoading && (
-              <div className="border border-red-200 dark:border-red-800/50 rounded-lg p-3 bg-red-50/50 dark:bg-red-950/10">
-                <p className="text-xs font-semibold text-red-700 dark:text-red-400 flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  Completion calculation failed
-                </p>
-                <p className="text-[10px] text-red-600 dark:text-red-400 mt-1 font-mono break-all">{completionError}</p>
-              </div>
-            )}
-
-            {viewMode === "ami" && isEligible && highlightRanges.length > 0 && (
+            {viewMode === "ami" && hasDataIssues && highlightRanges.length > 0 && (
               <div className="flex items-center gap-3 text-xs flex-wrap">
                 {highlightRanges.some(r => r.type === "zero") && (
                   <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
@@ -479,10 +376,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                   </span>
                 )}
               </div>
-            )}
-
-            {completionEnabled && completionData && !completionLoading && (
-              <CompletionDetails data={completionData} />
             )}
 
             {viewMode === "ami" && loadingWeather && (

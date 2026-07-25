@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Wand2, Lock, Unlock, Shield } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { Switch } from "@/components/ui/switch";
 
@@ -201,33 +201,6 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                   className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <span className="text-sm text-muted-foreground font-medium">{isolationUnit}</span>
-              </div>
-            </SettingRow>
-          </div>
-        </div>
-
-        {/* Data Completion card */}
-        <div className="mt-4">
-          <h2 className="text-sm font-bold text-foreground mb-1 px-1">Data Completion</h2>
-          <div className={`bg-card border border-border rounded-xl px-5 ${locked ? "pointer-events-none opacity-60" : ""}`}>
-            <SettingRow
-              icon={Wand2}
-              title="Nearby Meter Radius"
-              description="Radius (in yards) used to find nearby meters for consumption completion averages"
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={50}
-                  max={5000}
-                  value={project.completion_radius_yards ?? 500}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val) && val >= 0) handleUpdate("completion_radius_yards", val);
-                  }}
-                  className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <span className="text-sm text-muted-foreground font-medium">yd</span>
               </div>
             </SettingRow>
           </div>
