@@ -1688,8 +1688,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
 
         {(shpLayers.length > 0 || allDataLayers.length > 0 || (dmas || []).length > 0) && (
           <div className="bg-card/95 backdrop-blur rounded-xl shadow-lg border border-border p-3 w-[230px]">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-foreground/90">Map Layers</p>
+            <div className={`flex items-center justify-between transition-[margin] duration-300 ${legendMinimized ? "mb-0" : "mb-2"}`}>
+              <p className="text-xs font-semibold text-foreground/90">Legend</p>
               <button
                 onClick={() => setLegendMinimized((v) => !v)}
                 className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -1698,7 +1698,10 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                 <ChevronDown className="w-3.5 h-3.5 transition-transform duration-300 ease-in-out" style={{ transform: legendMinimized ? 'rotate(-90deg)' : 'rotate(0deg)' }} />
               </button>
             </div>
-            {!legendMinimized && (<>
+            {/* Roll-up: grid-rows 1fr -> 0fr animates to the content's own
+                height, which a plain max-height transition can't do. */}
+            <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${legendMinimized ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}>
+            <div className="overflow-hidden min-h-0">
             <button
               onClick={() => setShowDmaLabels((v) => !v)}
               className={`w-full flex items-center justify-between gap-2 mb-2 pb-2 border-b border-border px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${showDmaLabels ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground hover:bg-muted"}`}
@@ -1756,7 +1759,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             <div className="border-t border-border mt-2 pt-2">
               <ViewSelector projectId={project.id} layers={layers} onApplyView={handleApplyView} />
             </div>
-            </>)}
+            </div>
+            </div>
           </div>
         )}
       </div>

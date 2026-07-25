@@ -62,8 +62,8 @@ export default function CustomerModeLegend({ layers, dmas, visibleLayers, onTogg
   return (
     <div className="absolute top-3 left-3 z-[1000]">
       <div className="bg-zinc-700/95 backdrop-blur rounded-xl shadow-lg border border-border p-3 w-[230px]">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-foreground/90">Map Layers</p>
+        <div className={`flex items-center justify-between transition-[margin] duration-300 ${minimized ? "mb-0" : "mb-2"}`}>
+          <p className="text-xs font-semibold text-foreground/90">Legend</p>
           <button
             onClick={() => setMinimized((v) => !v)}
             className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -76,8 +76,9 @@ export default function CustomerModeLegend({ layers, dmas, visibleLayers, onTogg
           </button>
         </div>
 
-        {!minimized && (
-          <>
+        {/* Roll-up animation — see ProjectMap legend for the grid-rows trick. */}
+        <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${minimized ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}>
+          <div className="overflow-hidden min-h-0">
             {dmas.length > 0 && (
               <button
                 onClick={onToggleDmas}
@@ -150,8 +151,8 @@ export default function CustomerModeLegend({ layers, dmas, visibleLayers, onTogg
                 );
               })}
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

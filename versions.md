@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.033 — 2026-07-25
+**Map legend renamed to "Legend" and rolls up smoothly when closed**
+- The map legend panel is now titled **Legend** (was "Map Layers").
+- Collapsing it now rolls up with a smooth animation instead of vanishing, and
+  the header tightens as it closes. Applied to both the project map and the
+  customer view.
+
 ## 1.032 — 2026-07-25
 **Fixed layer category dropdown not opening (regression from 1.029)**
 - The category dropdown in layer settings appeared not to open. Making that
