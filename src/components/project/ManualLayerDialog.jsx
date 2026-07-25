@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/i18n";
 import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
+import { componentPointConfig, componentColor } from "@/lib/componentDefaults";
 import LayerColorPicker from "./LayerColorPicker";
 
 const CATEGORIES = [
@@ -51,7 +52,7 @@ export default function ManualLayerDialog({ open, onOpenChange, projectId, onCre
         layer_type_id,
         layer_type: "shp",
         file_url,
-        color,
+        color: componentColor(name.trim(), category) || color,
         visible: true,
         is_manual: true,
         feature_count: 0,
@@ -59,7 +60,7 @@ export default function ManualLayerDialog({ open, onOpenChange, projectId, onCre
         properties: isWaterLine ? ["diameter"] : ["name"],
         bounds: null,
         sort_order: nextSortOrder ?? 0,
-        ...(isWaterLine ? {} : { point_config: { shape: "circle", fill_style: "filled", radius: 7 } }),
+        ...(isWaterLine ? {} : { point_config: componentPointConfig(name.trim(), category) || { shape: "circle", fill_style: "filled", radius: 7 } }),
       }).select().single();
 
       onCreated?.(layer);

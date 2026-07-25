@@ -18,6 +18,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useLanguage } from "@/lib/i18n";
 import { APP_VERSION } from "@/lib/version";
 import DashboardNav from "@/components/dashboard/DashboardNav";
+import ComponentDefaultsSettings from "@/components/dashboard/ComponentDefaultsSettings";
 
 const DASHBOARD_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -199,6 +200,8 @@ export default function Home() {
         <div className="px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "versionUpdates" ? (
           <VersionUpdates currentUser={loggedInUser} projects={projects} />
+        ) : activeTab === "settings" ? (
+          <ComponentDefaultsSettings />
         ) : activeTab === "users" ? (
           <UsersSection currentUser={loggedInUser} />
         ) : loading ? (

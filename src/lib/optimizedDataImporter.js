@@ -3,6 +3,7 @@ import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { runBatchesInParallel } from "@/lib/parallelBatch";
+import { componentPointConfig, componentColor } from "@/lib/componentDefaults";
 
 function buildCSVString(headers, rows) {
   const escapeCell = (cell) => {
@@ -94,12 +95,14 @@ export async function importOptimizedMeterData(meterData, projectId, onProgress)
         layer_type_id,
         layer_type: "data",
         file_url,
+        color: componentColor(group.name, group.category) || undefined,
         visible: true,
         sort_order: 0,
         feature_count: group.rows.length,
         geometry_types: ["Point"],
         properties: meterData.headers,
         bounds: null,
+        point_config: componentPointConfig(group.name, group.category) || undefined,
       })
       .select()
       .single();

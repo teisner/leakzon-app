@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FolderOpen, Users as UsersIcon, Archive, GitPullRequest } from "lucide-react";
+import { FolderOpen, Users as UsersIcon, Archive, GitPullRequest, Settings2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
 
@@ -23,6 +23,7 @@ export default function DashboardNav({ activeTab, onChange, currentUser }) {
     { key: "archive", label: t('dashboard.archive'), Icon: Archive },
     { key: "users", label: t('dashboard.users'), Icon: UsersIcon },
     ...(canViewVersionUpdates ? [{ key: "versionUpdates", label: t('dashboard.versionUpdates'), Icon: GitPullRequest }] : []),
+    ...(canViewVersionUpdates ? [{ key: "settings", label: "Settings", Icon: Settings2 }] : []),
   ];
 
   return (

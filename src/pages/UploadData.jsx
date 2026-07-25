@@ -12,6 +12,7 @@ import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { isMainMeterLayerName } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
+import { componentPointConfig, componentColor } from "@/lib/componentDefaults";
 import { downloadMeterTemplate } from "@/lib/meterTemplate";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import { detectLayerCategory } from "@/lib/layerCategoryDetection";
@@ -317,13 +318,14 @@ export default function UploadData() {
           layer_type_id: await resolveLayerTypeId(layerCategory || "Other"),
           layer_type: layerType,
           file_url,
-          color: layerColor,
+          color: componentColor(layerName, layerCategory) || layerColor,
           visible: true,
           sort_order: layers.length ?? 0,
           feature_count: analysis?.featureCount || 0,
           geometry_types: analysis?.geometryTypes || [],
           properties: analysis?.propertyNames || [],
           bounds: analysis?.bounds || null,
+          point_config: componentPointConfig(layerName, layerCategory) || undefined,
           altitude_field: analysis?.altitude_field || (analysis?.has_z_coordinates ? "z" : null),
           altitude_source: analysis?.altitude_source || null,
           altitude_unit: analysis?.altitude_unit || null,
@@ -464,13 +466,14 @@ export default function UploadData() {
           layer_type_id: await resolveLayerTypeId(layer.category || "Other"),
           layer_type: "shp",
           file_url: layer.fileUrl,
-          color: layer.color,
+          color: componentColor(layer.name, layer.category) || layer.color,
           visible: true,
           sort_order: sortOffset + i,
           feature_count: layer.analysis?.featureCount || 0,
           geometry_types: layer.analysis?.geometryTypes || [],
           properties: layer.analysis?.propertyNames || [],
           bounds: layer.analysis?.bounds || null,
+          point_config: componentPointConfig(layer.name, layer.category) || undefined,
           altitude_field: layer.analysis?.altitude_field || (layer.analysis?.has_z_coordinates ? "z" : null),
           altitude_source: layer.analysis?.altitude_source || null,
           altitude_unit: layer.analysis?.altitude_unit || null,
