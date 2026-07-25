@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Settings2, RotateCcw } from "lucide-react";
 import { COMPONENTS, SHAPE_CHOICES, DEFAULT_COMPONENT_STYLES, loadComponentDefaults, saveComponentDefaults } from "@/lib/componentDefaults";
-import { NUMBER_COLORS } from "@/lib/numberStyle";
+import { PALETTE } from "@/lib/colorPalette";
 
-function ShapeGlyph({ shape, color, fill }) {
-  const stroke = color;
+function ShapeGlyph({ shape, color, fill, strokeColor }) {
+  const stroke = strokeColor || color;
   const fillColor = fill === "outline" ? "none" : color;
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={fillColor} stroke={stroke} strokeWidth="2">
@@ -51,7 +51,7 @@ export default function ComponentDefaultsSettings() {
             <div key={key} className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <ShapeGlyph shape={s.shape} color={s.color} fill={s.fill_style} />
+                  <ShapeGlyph shape={s.shape} color={s.color} fill={s.fill_style} strokeColor={s.stroke_color} />
                   <span className="text-sm font-semibold text-foreground">{label}</span>
                 </div>
                 <button
@@ -77,7 +77,7 @@ export default function ComponentDefaultsSettings() {
                         }`}
                         title={shape}
                       >
-                        <ShapeGlyph shape={shape} color={s.color} fill={s.fill_style} />
+                        <ShapeGlyph shape={shape} color={s.color} fill={s.fill_style} strokeColor={s.stroke_color} />
                       </button>
                     ))}
                   </div>
@@ -111,16 +111,46 @@ export default function ComponentDefaultsSettings() {
                 </div>
               </div>
 
-              {/* Color */}
+              {/* Shape color */}
               <div className="mt-3">
-                <label className="text-[11px] text-muted-foreground block mb-1.5">Color</label>
+                <label className="text-[11px] text-muted-foreground block mb-1.5">Shape color</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {NUMBER_COLORS.map((c) => (
+                  {PALETTE.map((c) => (
                     <button
                       key={c}
                       onClick={() => update(key, { color: c })}
                       className={`w-6 h-6 rounded-md border transition-transform hover:scale-110 ${
                         s.color === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card border-transparent" : "border-border"
+                      }`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Outline color — optional, defaults to the shape color */}
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[11px] text-muted-foreground">
+                    Outline color <span className="opacity-70">(optional)</span>
+                  </label>
+                  {s.stroke_color && (
+                    <button
+                      onClick={() => update(key, { stroke_color: null })}
+                      className="text-[11px] text-primary hover:underline"
+                    >
+                      Same as shape
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => update(key, { stroke_color: c })}
+                      className={`w-6 h-6 rounded-md border transition-transform hover:scale-110 ${
+                        s.stroke_color === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card border-transparent" : "border-border"
                       }`}
                       style={{ backgroundColor: c }}
                       title={c}

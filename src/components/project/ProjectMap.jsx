@@ -33,6 +33,7 @@ import { buildNumberablePoints } from "@/lib/pointNumbering";
 import { isMeterManualLayer } from "@/lib/meterLayerDetection";
 import { loadNumberStyle, saveNumberStyle, applyStyleProp } from "@/lib/numberStyle";
 import { collectValvePoints, findBorderValves } from "@/lib/borderValves";
+import { resolvePointColors } from "@/lib/colorPalette";
 import OutBoundaryHighlighter from "@/components/project/OutBoundaryHighlighter";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
 import MapAnnotations from "@/components/project/MapAnnotations";
@@ -873,12 +874,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           const defaultStyle = { color: layer.color, weight: 2, fillColor: layer.color, fillOpacity: 0.15 };
 
           const pointStyle = () => {
-            const pc = layer.point_config || {};
-            const isOutline = pc.fill_style === "outline";
+            const { fill, stroke } = resolvePointColors(layer);
+            const isOutline = (layer.point_config || {}).fill_style === "outline";
             return {
-              color: layer.color,
+              color: stroke,
               weight: 2,
-              fillColor: isOutline ? "transparent" : layer.color,
+              fillColor: fill,
               fillOpacity: isOutline ? 0 : 0.8,
             };
           };
@@ -996,17 +997,18 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                 const pc = layer.point_config || {};
                 const isOutline = pc.fill_style === "outline";
                 const shape = pc.shape || "circle";
+                const { fill: pFill, stroke: pStroke } = resolvePointColors(layer);
                 if (shape !== "circle") {
                   return L.marker(latlng, {
                     pane: layerPane,
-                    icon: createShapeIcon(shape, layer.color, pc.radius || 6, pc.fill_style),
+                    icon: createShapeIcon(shape, layer.color, pc.radius || 6, pc.fill_style, pStroke),
                   });
                 }
                 return L.circleMarker(latlng, {
                   radius: pc.radius || 6,
-                  color: layer.color,
+                  color: pStroke,
                   weight: 2,
-                  fillColor: isOutline ? "transparent" : layer.color,
+                  fillColor: pFill,
                   fillOpacity: isOutline ? 0 : 0.8,
                   pane: layerPane,
                 });

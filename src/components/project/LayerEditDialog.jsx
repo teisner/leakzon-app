@@ -33,8 +33,9 @@ const SHAPE_SVG_PATHS = {
   triangle: "M12 3 L21 20 H3 Z",
 };
 
-function ShapePreview({ shape, color, size, fillStyle }) {
+function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
   const isOutline = fillStyle === "outline";
+  const stroke = strokeColor || color;
   if (shape === "circle") {
     return (
       <span
@@ -43,7 +44,7 @@ function ShapePreview({ shape, color, size, fillStyle }) {
           width: size * 2,
           height: size * 2,
           backgroundColor: isOutline ? "transparent" : color,
-          border: isOutline ? `2px solid ${color}` : "none",
+          border: `2px solid ${stroke}`,
         }}
       />
     );
@@ -51,7 +52,7 @@ function ShapePreview({ shape, color, size, fillStyle }) {
   const path = SHAPE_SVG_PATHS[shape];
   return (
     <svg width={size * 2} height={size * 2} viewBox="0 0 24 24" className="inline-block">
-      <path d={path} fill={isOutline ? "transparent" : color} stroke={color} strokeWidth="2" strokeLinejoin="round" />
+      <path d={path} fill={isOutline ? "transparent" : color} stroke={stroke} strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -196,7 +197,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                     onClick={() => setPointConfig((p) => ({ ...p, shape: opt.value }))}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm transition-colors ${(pointConfig?.shape || "circle") === opt.value ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
                   >
-                    <ShapePreview shape={opt.value} color={color} size={10} fillStyle={pointConfig?.fill_style} />
+                    <ShapePreview shape={opt.value} color={color} size={10} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
                     {opt.label}
                   </button>
                 ))}
@@ -220,6 +221,27 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                 </button>
               </div>
 
+              <div className="mt-3 flex items-center justify-between">
+                <Label>Outline color</Label>
+                {pointConfig?.stroke_color && (
+                  <button
+                    onClick={() => setPointConfig((p) => { const { stroke_color, ...rest } = p || {}; return rest; })}
+                    className="text-[11px] text-blue-600 hover:underline"
+                  >
+                    Same as shape
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Optional — give the outline a different color than the shape (e.g. a white shape with a dark outline).
+              </p>
+              <div className="mt-2">
+                <LayerColorPicker
+                  value={pointConfig?.stroke_color || color}
+                  onChange={(c) => setPointConfig((p) => ({ ...p, stroke_color: c }))}
+                />
+              </div>
+
               <Label className="mt-3 block">{t('layerEdit.size')}</Label>
               <div className="flex items-center gap-2 mt-2">
                 {[4, 6, 8, 10, 12].map((r) => (
@@ -228,7 +250,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                     onClick={() => setPointConfig((p) => ({ ...p, radius: r }))}
                     className={`flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-colors ${pointConfig?.radius === r ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
                   >
-                    <ShapePreview shape={pointConfig?.shape || "circle"} color={color} size={r} fillStyle={pointConfig?.fill_style} />
+                    <ShapePreview shape={pointConfig?.shape || "circle"} color={color} size={r} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
                   </button>
                 ))}
               </div>

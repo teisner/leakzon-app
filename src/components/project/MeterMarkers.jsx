@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { CircleMarker, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
 import { createShapeIcon } from "@/lib/shapeIcons";
+import { resolvePointColors } from "@/lib/colorPalette";
 
 export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, pane }) {
   // Optional Leaflet pane so these markers land in their layer's z-order slot.
@@ -17,6 +18,9 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
   const shape = layerConfig?.point_config?.shape || "circle";
   const iconUrl = layerConfig?.icon_url;
   const isOutline = fillStyle === "outline";
+  // Optional separate outline color (point_config.stroke_color); falls back to
+  // the shape color, i.e. the original single-color behavior.
+  const { stroke: strokeColor } = resolvePointColors(layerConfig || {});
 
   const buildPopup = (m) => (
     <Popup>
@@ -99,7 +103,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
   }
 
   if (shape !== "circle") {
-    const icon = createShapeIcon(shape, color, radius, fillStyle);
+    const icon = createShapeIcon(shape, color, radius, fillStyle, strokeColor);
     return (
       <>
         {validMeters.map((m) => (
@@ -133,7 +137,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
             {...paneProp}
             radius={hl ? radius + 3 : radius}
             pathOptions={{
-              color: hl ? "#fbbf24" : isEstimated ? "#000000" : color,
+              color: hl ? "#fbbf24" : isEstimated ? "#000000" : strokeColor,
               weight: hl ? 3 : isEstimated ? 2.5 : 1.5,
               fillColor: isOutline ? "transparent" : color,
               fillOpacity: m.is_active === false ? 0.15 : (m.is_main ? 0.8 : 0.45),

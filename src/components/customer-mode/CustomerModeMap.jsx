@@ -6,6 +6,7 @@ import { MAP_SOURCES, SOURCE_KEYS } from "@/lib/mapSources";
 import { reprojectToWGS84 } from "@/lib/geoAnalysis";
 import { getPipeStyle } from "@/lib/pipeStyling";
 import { createShapeIcon } from "@/lib/shapeIcons";
+import { resolvePointColors } from "@/lib/colorPalette";
 import { buildFeaturePopup } from "@/lib/featurePopup";
 import { isValveLayer, isFeatureIsolated, findIsolatedForFeature } from "@/lib/isolatedPoints";
 import BingTileLayer from "@/components/project/BingTileLayer";
@@ -377,10 +378,11 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
       if (isPointLayer) {
         const pc = layer.point_config || {};
         const isOutline = pc.fill_style === "outline";
+        const { fill, stroke } = resolvePointColors(layer);
         return {
-          color: layer.color,
+          color: stroke,
           weight: 2,
-          fillColor: isOutline ? "transparent" : layer.color,
+          fillColor: fill,
           fillOpacity: isOutline ? 0 : 0.8,
         };
       }
@@ -418,17 +420,18 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
       const pc = layer.point_config || {};
       const isOutline = pc.fill_style === "outline";
       const shape = pc.shape || "circle";
+      const { fill: pFill, stroke: pStroke } = resolvePointColors(layer);
       if (shape !== "circle") {
         return L.marker(latlng, {
-          icon: createShapeIcon(shape, layer.color, pc.radius || 6, pc.fill_style),
+          icon: createShapeIcon(shape, layer.color, pc.radius || 6, pc.fill_style, pStroke),
         });
       }
       // Default circle marker
       return L.circleMarker(latlng, {
         radius: pc.radius || 6,
-        color: layer.color,
+        color: pStroke,
         weight: 2,
-        fillColor: isOutline ? "transparent" : layer.color,
+        fillColor: pFill,
         fillOpacity: isOutline ? 0 : 0.8,
       });
     };

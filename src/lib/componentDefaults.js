@@ -14,12 +14,13 @@ export const COMPONENTS = [
 
 export const SHAPE_CHOICES = ["circle", "star", "square", "triangle"];
 
+// `stroke_color: null` means "same as the shape color".
 export const DEFAULT_COMPONENT_STYLES = {
-  "Main Meters": { shape: "star", size: 12, color: "#1f2937", fill_style: "filled" },
-  "Sub Meters": { shape: "circle", size: 6, color: "#2563eb", fill_style: "filled" },
-  "Insertion Meters": { shape: "star", size: 12, color: "#111827", fill_style: "filled" },
-  "Ultrasonic Meters": { shape: "triangle", size: 10, color: "#0ea5e9", fill_style: "filled" },
-  "Valves": { shape: "square", size: 7, color: "#f59e0b", fill_style: "filled" },
+  "Main Meters": { shape: "star", size: 12, color: "#1f2937", fill_style: "filled", stroke_color: null },
+  "Sub Meters": { shape: "circle", size: 6, color: "#2563eb", fill_style: "filled", stroke_color: null },
+  "Insertion Meters": { shape: "star", size: 12, color: "#111827", fill_style: "filled", stroke_color: null },
+  "Ultrasonic Meters": { shape: "triangle", size: 10, color: "#0ea5e9", fill_style: "filled", stroke_color: null },
+  "Valves": { shape: "square", size: 7, color: "#f59e0b", fill_style: "filled", stroke_color: null },
 };
 
 const KEY = "leakzon-component-defaults";
@@ -61,7 +62,9 @@ export function componentPointConfig(name, category) {
   const key = matchComponentKey(name, category);
   if (!key) return null;
   const s = loadComponentDefaults()[key];
-  return { shape: s.shape, radius: s.size, fill_style: s.fill_style };
+  const pc = { shape: s.shape, radius: s.size, fill_style: s.fill_style };
+  if (s.stroke_color) pc.stroke_color = s.stroke_color;
+  return pc;
 }
 
 // Default color for a matched component, or null.

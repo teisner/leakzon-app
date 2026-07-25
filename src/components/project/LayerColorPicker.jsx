@@ -1,17 +1,10 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { PALETTE } from "@/lib/colorPalette";
 
-// 32-color palette spanning the spectrum for layer differentiation
-export const LAYER_COLORS = [
-  "#ef4444", "#f97316", "#f59e0b", "#eab308",
-  "#facc15", "#fde047", "#84cc16", "#a3e635",
-  "#22c55e", "#4ade80", "#10b981", "#34d399",
-  "#14b8a6", "#2dd4bf", "#06b6d4", "#22d3ee",
-  "#0ea5e9", "#38bdf8", "#3b82f6", "#60a5fa",
-  "#6366f1", "#818cf8", "#8b5cf6", "#a78bfa",
-  "#a855f7", "#c084fc", "#d946ef", "#e879f9",
-  "#ec4899", "#f472b6", "#6b7280", "#1f2937",
-];
+// Shared palette (includes white and black) — see lib/colorPalette.js.
+// Re-exported under the original name for existing importers.
+export const LAYER_COLORS = PALETTE;
 
 function normalizeHex(value) {
   let v = value.trim();
@@ -54,7 +47,7 @@ export default function LayerColorPicker({ value, onChange }) {
             key={c}
             type="button"
             onClick={() => { onChange(c); setHexInput(c.toUpperCase()); }}
-            className={`w-6 h-6 rounded-full transition-transform shrink-0 border border-white/50 ${
+            className={`w-6 h-6 rounded-full transition-transform shrink-0 border border-border ${
               value?.toLowerCase() === c ? "ring-2 ring-offset-1 ring-slate-900 scale-110 dark:ring-white dark:ring-offset-background" : ""
             }`}
             style={{ backgroundColor: c }}

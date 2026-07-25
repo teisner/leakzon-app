@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, ChevronDown, MapPin, ListOrdered } from "lucide-react";
+import { resolvePointColors } from "@/lib/colorPalette";
 
 // Renders a legend symbol that visually matches the layer's map appearance
 function LayerSymbol({ layer }) {
@@ -33,12 +34,11 @@ function LayerSymbol({ layer }) {
   // Point layer — render the actual shape with fill/outline
   const pc = layer.point_config || {};
   const shape = pc.shape || "circle";
-  const isOutline = pc.fill_style === "outline";
-  const color = layer.color || "#2563eb";
-  const fill = isOutline ? "none" : color;
+  const { fill: rawFill, stroke } = resolvePointColors(layer);
+  const fill = rawFill === "transparent" ? "none" : rawFill;
 
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" className="shrink-0">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth="2" className="shrink-0">
       {shape === "circle" && <circle cx="12" cy="12" r="10" />}
       {shape === "square" && <rect x="3" y="3" width="18" height="18" rx="2" />}
       {shape === "triangle" && <polygon points="12,2 22,22 2,22" />}

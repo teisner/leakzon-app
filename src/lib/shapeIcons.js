@@ -6,15 +6,18 @@ const SHAPE_PATHS = {
   triangle: "M12 3 L21 20 H3 Z",
 };
 
-export function createShapeIcon(shape, color, radius, fillStyle) {
+// `strokeColor` is the optional separate outline color; it defaults to the
+// shape color, which is the original single-color behavior.
+export function createShapeIcon(shape, color, radius, fillStyle, strokeColor) {
   const isOutline = fillStyle === "outline";
   const fill = isOutline ? "transparent" : color;
+  const stroke = strokeColor || color;
   const px = radius * 2;
   const path = SHAPE_PATHS[shape];
   if (!path) return null;
 
   const svg = `<svg width="${px}" height="${px}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-    <path d="${path}" fill="${fill}" stroke="${color}" stroke-width="2" stroke-linejoin="round" />
+    <path d="${path}" fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round" />
   </svg>`;
 
   return L.divIcon({

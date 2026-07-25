@@ -6,6 +6,19 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.026 — 2026-07-25
+**White & black shape colors, plus a separate outline color**
+- Added **white** and **black** to the color palette, and unified it: the same
+  palette is now used by the project layer settings and the dashboard component
+  defaults (Settings).
+- Shapes can now have **one color for the shape and a different color for the
+  outline** — e.g. a white shape with a dark outline so it stays visible on any
+  basemap. Set it in the layer settings ("Outline color") and per component type
+  in dashboard Settings; "Same as shape" clears it. Leaving it unset keeps the
+  previous single-color behavior, so existing layers look unchanged.
+- The outline color is honored everywhere a point is drawn: the map, the layers
+  panel swatch, the map legend, and the customer view.
+
 ## 1.025 — 2026-07-25
 **Fixed point numbering running right-to-left**
 - Numbering now genuinely reads left-to-right, top-to-bottom. The row grouping
