@@ -46,12 +46,16 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
 
   const handleToggleLock = () => {
     if (locked) {
-      onUpdate({ locked: false, locked_by_name: null, locked_date: null });
+      // locked_by_id/date are the real DB columns; locked_by_name is a
+      // display-only field the parent keeps in local state (and resolves via a
+      // join on load) — it is not a column, so writing it would fail the update.
+      onUpdate({ locked: false, locked_by_id: null, locked_date: null, locked_by_name: null });
     } else {
       onUpdate({
         locked: true,
-        locked_by_name: currentUser?.full_name || "Unknown",
+        locked_by_id: currentUser?.id || null,
         locked_date: new Date().toISOString(),
+        locked_by_name: currentUser?.full_name || null,
       });
     }
   };
@@ -79,7 +83,7 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
               title={locked ? "Project is Locked" : "Project is Unlocked"}
               description={
                 locked
-                  ? `Locked by ${project.locked_by_name || "Unknown"} — all editing is disabled`
+                  ? `Locked${project.locked_by_name ? ` by ${project.locked_by_name}` : ""} — all editing is disabled`
                   : "Lock the project to make it read-only and prevent any changes"
               }
             >

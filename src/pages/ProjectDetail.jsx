@@ -689,13 +689,16 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('project').select('*').eq('id', id).single(),
+      supabase.from('project').select('*, locked_by:system_user!locked_by_id(full_name)').eq('id', id).single(),
       supabase.from('project_layer').select('*, layer_type_ref:layer_type(name)').eq('project_id', id).order('created_at', { ascending: false }),
       invokeFunction("getProjectMeters", { project_id: id }).then((res) => res.data?.meters || []),
     ])
       .then(([{ data: p }, { data: rawLayers }, m]) => {
         const l = (rawLayers || []).map((layer) => ({ ...layer, category: layer.layer_type_ref?.name || null }));
-        setProject(p);
+        // Resolve the locker's name for display (join may be null for non-admins
+        // who can't read other users' rows — the "Locked by …" label degrades to
+        // just "Locked" then).
+        setProject(p ? { ...p, locked_by_name: p.locked_by?.full_name || null } : p);
         setLayers(l);
         setMeters(m);
         supabase.from('project').select('*').order('created_at', { ascending: false }).then(({ data }) => setAllProjects(data || []));
@@ -1147,8 +1150,16 @@ export default function ProjectDetail() {
   };
 
   const handleUpdateProjectSettings = async (data) => {
-    const { error } = await supabase.from('project').update(data).eq('id', id);
-    if (!error) setProject((p) => ({ ...p, ...data }));
+    // locked_by_name is display-only (not a real column) — strip it from the
+    // DB write but keep it in local state so the "Locked by …" label updates
+    // immediately.
+    const { locked_by_name, ...dbData } = data;
+    const { error } = await supabase.from('project').update(dbData).eq('id', id);
+    if (error) {
+      alert(`Could not update the project: ${error.message}`);
+      return;
+    }
+    setProject((p) => ({ ...p, ...data }));
   };
 
   const handleAnomalyExported = async () => {
