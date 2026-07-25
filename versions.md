@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.032 — 2026-07-25
+**Fixed layer category dropdown not opening (regression from 1.029)**
+- The category dropdown in layer settings appeared not to open. Making that
+  dialog a floating panel in 1.029 put it above the dropdown's own layer, so the
+  menu was opening behind the panel. It now opens on top again.
+
 ## 1.031 — 2026-07-25
 **Dashboard "Projects" icon now matches the project page**
 - The Projects item in the dashboard sidebar uses the same grid icon as the

@@ -232,7 +232,10 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
               <SelectTrigger className="mt-1.5">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
-              <SelectContent>
+              {/* Portals to <body> at z-50 by default, which is below this
+                  floating panel (z-[9999]) — without this the menu opens
+                  behind the panel and looks like it never opened. */}
+              <SelectContent className="z-[10000]">
                 {CATEGORY_OPTIONS.map((cat) => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
