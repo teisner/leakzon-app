@@ -6,6 +6,14 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.053 — 2026-07-26
+**Fixed empty dashboard after setting or resetting your PIN**
+- Setting a PIN for the first time, or resetting it via "forgot password", signed
+  you in without actually creating a session — so the app treated you as not
+  logged in and the dashboard showed no projects at all, whatever your user type.
+  Both paths now sign you in properly, exactly like a normal login.
+- Only affected first-time sign-in and password reset; ordinary logins were fine.
+
 ## 1.052 — 2026-07-26
 **"Find border valves" skips valves already marked as isolation points**
 - Valves you've already marked as isolation points are no longer highlighted —

@@ -124,7 +124,12 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
     setLoading(true);
     try {
       const data = await callAuth({ action: "setPassword", identifier: identifier.trim(), password });
-      onLoginSuccess?.({ full_name: data.full_name });
+      // Same as the login path — without setSession there's no JWT, so RLS
+      // treats the user as anonymous and they see an empty dashboard.
+      if (data.access_token) {
+        await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+      }
+      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type });
     } catch (err) {
       setError(err.response?.data?.error || t('login.setPasswordFailed'));
     }
@@ -166,7 +171,12 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
         tempPassword,
         newPassword,
       });
-      onLoginSuccess?.({ full_name: data.full_name });
+      // Same as the login path — without setSession there's no JWT, so RLS
+      // treats the user as anonymous and they see an empty dashboard.
+      if (data.access_token) {
+        await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+      }
+      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type });
     } catch (err) {
       setError(err.response?.data?.error || t('login.resetFailed'));
     }

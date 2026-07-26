@@ -79,6 +79,27 @@ async function ensureAuthUser(user: { id: string; email: string; user_type: stri
   }
 }
 
+// Builds the full login payload — auth user, real session, last_login. Used by
+// `login` and, crucially, by `setPassword` / `resetPassword`: those complete a
+// login too, and returning without a session left the user "signed in" client
+// side with no JWT, so RLS saw an anonymous request and every project list came
+// back empty.
+async function loginPayload(user: { id: string; email: string; full_name: string; user_type: string }) {
+  await ensureAuthUser(user);
+  const session = await mintSession(user.email);
+  await admin.from('system_user').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  return {
+    success: true,
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_in: session.expires_in,
+    user_id: user.id,
+    full_name: user.full_name,
+    email: user.email,
+    user_type: user.user_type,
+  };
+}
+
 // Converts the verified PIN login into a real Supabase session (access +
 // refresh token), signed by Supabase's own managed key.
 async function mintSession(email: string) {
@@ -157,7 +178,7 @@ Deno.serve(async (req) => {
         .from('system_user')
         .update({ password_hash: hash, temp_password_hash: null, temp_password_expires: null })
         .eq('id', user.id);
-      return json({ success: true, full_name: user.full_name });
+      return json(await loginPayload(user));
     }
 
     if (action === 'forgotPassword') {
@@ -199,7 +220,7 @@ Deno.serve(async (req) => {
         .from('system_user')
         .update({ password_hash: newHash, temp_password_hash: null, temp_password_expires: null })
         .eq('id', user.id);
-      return json({ success: true, full_name: user.full_name });
+      return json(await loginPayload(user));
     }
 
     return json({ error: 'Unknown action' }, 400);
