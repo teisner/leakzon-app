@@ -350,49 +350,49 @@ export default function DmaConsumptionDialog({ open, onOpenChange, dma, project 
                     <BarChart data={monthlyChartData} margin={{ top: 10, right: hasMainMeter ? 50 : 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} angle={-30} textAnchor="end" height={60} />
-                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#3b82f6" }} />
-                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} />}
+                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#22c55e" }} />
+                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#3b82f6" }} />}
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar yAxisId="subs" dataKey="consumption" name="Sub-Meters" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar yAxisId="subs" dataKey="consumption" name="Sub-Meters" fill="#22c55e" radius={[4, 4, 0, 0]} />
                       {hasMainMeter && (
-                        <Bar yAxisId="mains" dataKey="mainConsumption" name="Main Meter" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="mains" dataKey="mainConsumption" name="Main Meter" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                       )}
                     </BarChart>
                   ) : hasDates ? (
                     <AreaChart data={chartData} margin={{ top: 10, right: hasMainMeter ? 50 : 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="dmaConsumptionGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="dmaMainGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={30} />
-                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#3b82f6" }} />
-                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} />}
+                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#22c55e" }} />
+                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#3b82f6" }} />}
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Area yAxisId="subs" type="monotone" dataKey="consumption" name="Sub-Meters" stroke="#3b82f6" strokeWidth={2} fill="url(#dmaConsumptionGradient)" activeDot={{ r: 5 }} connectNulls />
+                      <Area yAxisId="subs" type="monotone" dataKey="consumption" name="Sub-Meters" stroke="#22c55e" strokeWidth={2} fill="url(#dmaConsumptionGradient)" activeDot={{ r: 5 }} connectNulls />
                       {hasMainMeter && (
-                        <Area yAxisId="mains" type="monotone" dataKey="mainConsumption" name="Main Meter" stroke="#f59e0b" strokeWidth={2} fill="url(#dmaMainGradient)" activeDot={{ r: 5 }} connectNulls />
+                        <Area yAxisId="mains" type="monotone" dataKey="mainConsumption" name="Main Meter" stroke="#3b82f6" strokeWidth={2} fill="url(#dmaMainGradient)" activeDot={{ r: 5 }} connectNulls />
                       )}
                     </AreaChart>
                   ) : (
                     <BarChart data={chartData} margin={{ top: 10, right: hasMainMeter ? 50 : 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" minTickGap={20} angle={-30} textAnchor="end" height={60} />
-                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#3b82f6" }} />
-                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#f59e0b" }} />}
+                      <YAxis yAxisId="subs" tick={{ fontSize: 10, fill: "#22c55e" }} />
+                      {hasMainMeter && <YAxis yAxisId="mains" orientation="right" tick={{ fontSize: 10, fill: "#3b82f6" }} />}
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar yAxisId="subs" dataKey="consumption" name="Sub-Meters" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar yAxisId="subs" dataKey="consumption" name="Sub-Meters" fill="#22c55e" radius={[4, 4, 0, 0]} />
                       {hasMainMeter && (
-                        <Bar yAxisId="mains" dataKey="mainConsumption" name="Main Meter" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="mains" dataKey="mainConsumption" name="Main Meter" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                       )}
                     </BarChart>
                   )}

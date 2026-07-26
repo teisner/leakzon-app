@@ -158,6 +158,9 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   const { peaks, weatherData, loadingWeather } = useWeatherPeaks(viewMode === "amr" ? [] : filtered, project?.city, project?.country);
 
+  // Main/insertion meters read blue, sub-meters green — matching the DMA chart.
+  const seriesColor = meter?.is_main ? "#3b82f6" : "#22c55e";
+
   // ─── Chart data ─────────────────────────────────────────────────
   const chartData = useMemo(() => {
     return filtered.map((r, i) => {
@@ -289,21 +292,21 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} angle={-30} textAnchor="end" height={60} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar dataKey="consumption" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="consumption" fill={seriesColor} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   ) : hasDates ? (
                     <ComposedChart data={chartData} margin={{ top: 30, right: 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="consumptionGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                          <stop offset="5%" stopColor={seriesColor} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={seriesColor} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={30} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip content={<WeatherTooltip />} />
-                      <Area type="monotone" dataKey="consumption" stroke="#3b82f6" strokeWidth={2} fill="url(#consumptionGradient)" dot={renderWeatherDot} activeDot={{ r: 6 }} />
+                      <Area type="monotone" dataKey="consumption" stroke={seriesColor} strokeWidth={2} fill="url(#consumptionGradient)" dot={renderWeatherDot} activeDot={{ r: 6 }} />
                     </ComposedChart>
                   ) : (
                     <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -311,7 +314,7 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                       <XAxis dataKey="label" tick={{ fontSize: 9 }} interval="preserveStartEnd" minTickGap={20} angle={-30} textAnchor="end" height={60} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar dataKey="consumption" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="consumption" fill={seriesColor} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   )}
                 </ResponsiveContainer>

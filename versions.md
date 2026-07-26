@@ -6,6 +6,14 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.040 — 2026-07-26
+**Consumption charts colour-coded: main blue, sub-meters green**
+- Meter consumption chart: the line is blue for main and insertion meters, green
+  for sub-meters.
+- DMA consumption chart: the main meter series is now blue and the sub-meters
+  series green (the main series was amber).
+- Applies to the line, bar and monthly views, including axis labels.
+
 ## 1.039 — 2026-07-26
 **Distance settings are now drag sliders (0–500 ft, default 100 ft)**
 - "Boundary Deviation Distance" (DMA Focus) and "Isolation Valve Distance"
