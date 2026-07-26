@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
+import { waitForSession } from "@/lib/authReady";
 import { invokeFunction } from "@/api/functionsClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
@@ -714,6 +715,24 @@ export default function ProjectDetail() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // Without this the queries below run before the stored session is
+      // restored; RLS then hides the row and `.single()` returns null, which
+      // renders as "Project not found" for a project the user can see.
+      const session = await waitForSession();
+      if (cancelled) return;
+      if (!session) {
+        // Genuinely signed out — the dashboard surfaces the login dialog.
+        navigate("/");
+        return;
+      }
+      loadProjectPage();
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const loadProjectPage = () => {
     Promise.all([
       supabase.from('project').select('*, locked_by:system_user!locked_by_id(full_name)').eq('id', id).single(),
       supabase.from('project_layer').select('*, layer_type_ref:layer_type(name)').eq('project_id', id).order('created_at', { ascending: false }),
@@ -737,9 +756,12 @@ export default function ProjectDetail() {
         loadAnnotations();
         loadCustomerAnnotations();
       })
-      .catch(() => setProject(null))
+      .catch((e) => {
+        console.error("Failed to load project:", e);
+        setProject(null);
+      })
       .finally(() => setLoading(false));
-  }, [id]);
+  };
 
   const handleLayerUploaded = async (layerType) => {
     loadLayers();

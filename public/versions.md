@@ -1,3 +1,18 @@
+## 1.068 — 2026-07-27
+**Fixed "Project not found" when opening a project**
+- Opening a project straight after loading the app could show **"Project not
+  found"** even though the project was right there on the dashboard. The page
+  asked for the project before your sign-in had finished being restored, so the
+  database correctly refused it — and a refused row looks exactly like a
+  missing one.
+- Same cause as the empty dashboard in 1.066. Every page that loads data on
+  open now waits for your sign-in first, through one shared piece of code
+  rather than each page handling it separately — so this cannot come back on a
+  page nobody thought to check.
+- If you really are signed out, you now get sent to the dashboard to sign in
+  instead of a misleading "not found" message.
+- The upload page had the same fault and is fixed too.
+
 ## 1.067 — 2026-07-27
 **Version number in the project side menu is green and centred**
 - In a project, the "Ver" line at the bottom of the side menu is now green and

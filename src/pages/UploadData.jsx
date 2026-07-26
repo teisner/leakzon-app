@@ -9,6 +9,7 @@ import { Upload, FileText, Map as MapIcon, Check, AlertCircle, Loader2, ChevronR
 import { uploadFile } from "@/api/storageClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
+import { waitForSession } from "@/lib/authReady";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
@@ -81,25 +82,41 @@ export default function UploadData() {
 
   // Fetch project data on mount
   useEffect(() => {
-    Promise.all([
-      supabase.from('project').select('*').eq('id', id).single(),
-      supabase.from('project_layer').select('*').eq('project_id', id).order('created_at', { ascending: false }),
-      invokeFunction("getProjectMeters", { project_id: id }).then((res) => res.data?.meters || []),
-      supabase.from('dma').select('*').eq('project_id', id).order('sort_order'),
-    ])
-      .then(([{ data: p }, { data: l }, m, { data: d }]) => {
-        setProject(p);
-        setLayers(l || []);
-        setMeters(m);
-        setDmas(d || []);
-        supabase.from('layer_type').select('*').order('name').then(({ data }) => setLayerTypes(data || []));
-        const usedColors = (l || []).filter((ly) => !ly.pipe_config).map((ly) => ly.color).filter(Boolean);
-        const avail = LAYER_COLORS.filter((c) => !usedColors.includes(c));
-        setLayerColor(avail[0] || LAYER_COLORS[0]);
-      })
-      .catch(() => setProject(null))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    // Wait for the restored session first — querying before it lands makes RLS
+    // hide the row, and `.single()` then returns null, which reads as though
+    // the project doesn't exist.
+    waitForSession().then((session) => {
+      if (cancelled) return;
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      Promise.all([
+        supabase.from('project').select('*').eq('id', id).single(),
+        supabase.from('project_layer').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+        invokeFunction("getProjectMeters", { project_id: id }).then((res) => res.data?.meters || []),
+        supabase.from('dma').select('*').eq('project_id', id).order('sort_order'),
+      ])
+        .then(([{ data: p }, { data: l }, m, { data: d }]) => {
+          if (cancelled) return;
+          setProject(p);
+          setLayers(l || []);
+          setMeters(m);
+          setDmas(d || []);
+          supabase.from('layer_type').select('*').order('name').then(({ data }) => setLayerTypes(data || []));
+          const usedColors = (l || []).filter((ly) => !ly.pipe_config).map((ly) => ly.color).filter(Boolean);
+          const avail = LAYER_COLORS.filter((c) => !usedColors.includes(c));
+          setLayerColor(avail[0] || LAYER_COLORS[0]);
+        })
+        .catch((e) => {
+          console.error("Failed to load project:", e);
+          setProject(null);
+        })
+        .finally(() => setLoading(false));
+    });
     return () => {
+      cancelled = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [id]);

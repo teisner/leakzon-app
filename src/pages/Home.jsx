@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
+import { waitForSession } from "@/lib/authReady";
 import { Plus, Droplets, FolderOpen, Users as UsersIcon, LogOut, LayoutGrid, RefreshCw, Globe, ChevronDown, Archive, Search, ArrowDownUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -142,7 +143,7 @@ export default function Home() {
       // fired before that finishes goes out with only the anon key. RLS then
       // returns zero rows with HTTP 200 — indistinguishable from "this user
       // has no projects". Wait for the session rather than guess.
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await waitForSession();
       if (!session) return;
 
       // RLS (has_project_access) already restricts which projects a Project
