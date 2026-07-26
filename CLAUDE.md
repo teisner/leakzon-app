@@ -26,12 +26,25 @@ Installed via: `claude plugin install caveman@caveman`
 (marketplace `JuliusBrussee/caveman`). Uninstall:
 `npx -y github:JuliusBrussee/caveman -- --uninstall`.
 
-## Auto-deploy after every change
+## Deploy workflow: preview first, publish on approval
 
-**After making any code change the user asked for, deploy it automatically —
-do not wait to be told "please deploy".** Deploy = commit the change and
-`git push origin main`; Vercel auto-builds `main` and publishes to
-`ob.leakzon.app`. The standard flow for every change:
+**Ship every change to the `preview` branch first — never straight to `main`.**
+The user reviews it on the stable Vercel preview URL, then says "publish" (or
+similar) and only then does it go live.
+
+- `preview` branch  → Vercel preview build (stable URL, same every time)
+- `main` branch     → production, `ob.leakzon.app`
+
+Do not merge to `main` until the user explicitly approves. When they do:
+`git checkout main && git merge preview && git push origin main && git checkout preview`.
+
+Caveat to remember and state when relevant: **only frontend changes are really
+previewed.** Supabase migrations and Edge Functions deploy straight to the one
+Supabase project, so they go live the moment they're pushed regardless of
+branch — and the preview shares the production database, so data changes made
+in a preview are real.
+
+The standard flow for every change:
 
 1. Make the edit(s).
 2. **Bump the version**: increment `APP_VERSION` in `src/lib/version.js` by
@@ -41,15 +54,15 @@ do not wait to be told "please deploy".** Deploy = commit the change and
    the main change, then the detailed bullets. The version shows in small text
    under the logo (dashboard + project header).
 3. `npm run build` to confirm it compiles.
-4. `git add` the changed files, `git commit` with a clear message, `git push origin main`.
-5. Tell the user it's pushed and Vercel is deploying.
-6. **Send a push notification** (PushNotification, status "proactive") so the
-   user is pinged on their phone (via Remote Control) to refresh. Message =
-   the version number + the changelog headline, e.g.
-   `LeakZon v1.017 deployed — "<headline>". Refresh to update.` (The tool
-   auto-skips when the user is actively at the terminal — that's expected.)
-   Send one per deploy; if several deploys happen in a row while they're away,
-   a single notification for the latest is fine.
+4. `git add` the changed files, `git commit` with a clear message, then
+   `git push origin preview`.
+5. Tell the user it's on the preview URL and ask them to review.
+6. **Send a push notification** (PushNotification, status "proactive") when the
+   change reaches the user — on preview ("ready to review") and again on
+   publish. Message = version number + changelog headline, e.g.
+   `LeakZon v1.017 on preview — "<headline>". Ready to review.` (The tool
+   auto-skips when the user is at the terminal — expected.) One per push; if
+   several happen while they're away, one for the latest is fine.
 
 Only skip the push if the change is incomplete/experimental, or the user
 explicitly says not to deploy yet. If a build fails, fix it before pushing —
