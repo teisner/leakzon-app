@@ -484,7 +484,7 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
       <DialogContent className={`${isMeterConfig || phase === "zip_review" || isZipStats ? "sm:max-w-4xl" : "sm:max-w-lg"} max-h-[78vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-blue-600" />
+            <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             {t('upload.title')}
           </DialogTitle>
         </DialogHeader>
@@ -526,19 +526,19 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
           <div className="py-6 space-y-4">
             <div className="flex items-center gap-3">
               {phase === "done" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <Check className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
               ) : (
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
               )}
               <div>
-                <p className="text-sm font-medium text-slate-900">{progressLabel}</p>
-                <p className="text-xs text-slate-500">{file?.name}</p>
+                <p className="text-sm font-medium text-foreground">{progressLabel}</p>
+                <p className="text-xs text-muted-foreground">{file?.name}</p>
               </div>
             </div>
             <Progress value={progress} className="h-2" />
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>
                 {layerType === "shp" && analysis ? `${analysis.featureCount} features` : ""}
                 {layerType === "data" && phase === "done" ? `${localMeterCount} meters created` : ""}
@@ -551,8 +551,8 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
         {/* Loading (reading / analyzing) */}
         {isLoading && (
           <div className="py-8 flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            <p className="text-sm text-slate-600">{progressLabel}</p>
+            <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+            <p className="text-sm text-muted-foreground">{progressLabel}</p>
           </div>
         )}
 
@@ -560,7 +560,7 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
         {isFormPhase && mode === "import" && (
           <div className="space-y-4">
             {error && (
-              <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/25 rounded-lg p-3">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
@@ -568,8 +568,8 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
 
             {/* Undo import action */}
             {phase === "idle" && hasMeters && (
-              <div className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-                <span className="text-xs text-slate-500">{t('upload.undoImportPrompt')}</span>
+              <div className="flex items-center justify-between gap-2 bg-muted border border-border rounded-lg px-4 py-2.5">
+                <span className="text-xs text-muted-foreground">{t('upload.undoImportPrompt')}</span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -589,29 +589,29 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
                   <button
                     onClick={() => { setLayerType("shp"); setPhase("idle"); setFile(null); setAnalysis(null); }}
                     className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors ${
-                      layerType === "shp" ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"
+                      layerType === "shp" ? "border-blue-500 bg-blue-500/10" : "border-border hover:border-border"
                     }`}
                   >
-                    <MapIcon className={`w-5 h-5 ${layerType === "shp" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className="text-xs font-medium text-slate-700">{t('upload.shapefilePoi')}</span>
+                    <MapIcon className={`w-5 h-5 ${layerType === "shp" ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium text-foreground">{t('upload.shapefilePoi')}</span>
                   </button>
                   <button
                     onClick={() => { setLayerType("data"); setPhase("idle"); setFile(null); setAnalysis(null); }}
                     className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors ${
-                      layerType === "data" ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"
+                      layerType === "data" ? "border-blue-500 bg-blue-500/10" : "border-border hover:border-border"
                     }`}
                   >
-                    <FileText className={`w-5 h-5 ${layerType === "data" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className="text-xs font-medium text-slate-700">{t('upload.meterData')}</span>
+                    <FileText className={`w-5 h-5 ${layerType === "data" ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium text-foreground">{t('upload.meterData')}</span>
                   </button>
                   <button
                     onClick={() => { setLayerType("consumption"); setPhase("idle"); setFile(null); setAnalysis(null); setError(null); }}
                     className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-colors ${
-                      layerType === "consumption" ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-slate-300"
+                      layerType === "consumption" ? "border-blue-500 bg-blue-500/10" : "border-border hover:border-border"
                     }`}
                   >
-                    <Gauge className={`w-5 h-5 ${layerType === "consumption" ? "text-blue-600" : "text-slate-400"}`} />
-                    <span className="text-xs font-medium text-slate-700">{t('upload.consumption')}</span>
+                    <Gauge className={`w-5 h-5 ${layerType === "consumption" ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-medium text-foreground">{t('upload.consumption')}</span>
                   </button>
                 </div>
               </div>
@@ -621,11 +621,11 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
             {phase === "idle" && !file && layerType !== "consumption" && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-500/5 transition-colors"
               >
-                <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-600 font-medium">{t('upload.clickToSelect')}</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground font-medium">{t('upload.clickToSelect')}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                    {layerType === "shp" ? t('upload.shpFiles') : t('upload.dataFiles')}
                  </p>
                 <input
@@ -673,27 +673,27 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
             {/* SHP review phase */}
             {file && phase === "review" && (
               <>
-                <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
-                  <MapIcon className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-700 truncate flex-1">{file.name}</span>
+                <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+                  <MapIcon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
                   <button
                     onClick={() => { setFile(null); setAnalysis(null); setFileUrl(null); setPhase("idle"); }}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {t('upload.change')}
                     </button>
                     </div>
 
                     {analysis && (
-                    <div className="space-y-3 bg-blue-50/50 border border-blue-100 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('upload.fileAnalysis')}</p>
+                    <div className="space-y-3 bg-blue-500/5 border border-blue-500/25 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('upload.fileAnalysis')}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-2xl font-bold text-slate-900">{analysis.featureCount}</p>
-                        <p className="text-xs text-slate-500">{t('upload.features')}</p>
+                        <p className="text-2xl font-bold text-foreground">{analysis.featureCount}</p>
+                        <p className="text-xs text-muted-foreground">{t('upload.features')}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-700 mb-1">{t('upload.geometry')}</p>
+                        <p className="text-sm font-medium text-foreground mb-1">{t('upload.geometry')}</p>
                         <div className="flex flex-wrap gap-1">
                           {analysis.geometryTypes.map((gt) => (
                             <Badge key={gt} variant="outline" className="text-[10px]">{gt}</Badge>
@@ -703,24 +703,24 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
                     </div>
                     {analysis.propertyNames.length > 0 && (
                       <div>
-                        <p className="text-xs text-slate-500 mb-1">{t('upload.properties', { count: analysis.propertyNames.length })}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('upload.properties', { count: analysis.propertyNames.length })}</p>
                         <div className="flex flex-wrap gap-1">
                           {analysis.propertyNames.slice(0, 12).map((p) => (
-                            <span key={p} className="text-[10px] bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-600">{p}</span>
+                            <span key={p} className="text-[10px] bg-card border border-border rounded px-1.5 py-0.5 text-muted-foreground">{p}</span>
                           ))}
                           {analysis.propertyNames.length > 12 && (
-                            <span className="text-[10px] text-slate-400">{t('upload.more', { count: analysis.propertyNames.length - 12 })}</span>
+                            <span className="text-[10px] text-muted-foreground">{t('upload.more', { count: analysis.propertyNames.length - 12 })}</span>
                           )}
                         </div>
                       </div>
                     )}
                     {analysis.bounds && (
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[10px] text-muted-foreground">
                         Bounds: {analysis.bounds.south.toFixed(3)}, {analysis.bounds.west.toFixed(3)} → {analysis.bounds.north.toFixed(3)}, {analysis.bounds.east.toFixed(3)}
                       </p>
                     )}
                     {(analysis.altitude_field || analysis.has_z_coordinates) && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-1">
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-md px-2 py-1">
                         <Check className="w-3 h-3" />
                         Altitude data detected: {analysis.altitude_field ? `field "${analysis.altitude_field}"` : "3D Z coordinates"}{analysis.altitude_unit ? ` (${analysis.altitude_unit})` : ""}
                       </div>
@@ -802,9 +802,9 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
                 </div>
 
                 {layerCategory === "Water Lines" ? (
-                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-800">
+                  <div className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
+                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
                       {t('upload.waterLinesInfo')}
                     </p>
                   </div>
@@ -820,23 +820,23 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
             {/* Main/Sub prompt phase */}
             {file && phase === "main_prompt" && meterAnalysis && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
-                  <FileText className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-700 truncate flex-1">{file.name}</span>
+                <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
                   <button
                     onClick={() => { setFile(null); setMeterAnalysis(null); setFileUrl(null); setMainColumn(""); setPhase("idle"); }}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {t('upload.change')}
                     </button>
                     </div>
-                    <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/25 rounded-lg p-4">
+                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                    <p className="text-sm text-blue-900 font-medium">
+                    <p className="text-sm text-blue-900 dark:text-blue-200 font-medium">
                       {t('upload.mainColumnDetected', { column: mainColumn })}
                     </p>
-                    <p className="text-xs text-blue-700">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
                       {t('upload.splitPrompt')}
                     </p>
                   </div>
@@ -863,12 +863,12 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
             {/* Meter config phase */}
             {file && phase === "meter_config" && meterAnalysis && (
               <>
-                <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
-                  <FileText className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-700 truncate flex-1">{file.name}</span>
+                <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
                   <button
                     onClick={() => { setFile(null); setMeterAnalysis(null); setFileUrl(null); setPhase("idle"); }}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {t('upload.change')}
                     </button>

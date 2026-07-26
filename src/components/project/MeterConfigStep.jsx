@@ -71,17 +71,17 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
     <div className="space-y-2.5">
       {/* Is Main toggle / split info */}
       {splitMode ? (
-        <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
-          <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-700">
+        <div className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/25 rounded-lg p-2.5">
+          <Info className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-700 dark:text-blue-300">
             Meters will be automatically split into <strong>Main</strong> and <strong>Sub</strong> layers based on the "{mainColumn}" column.
           </p>
         </div>
       ) : (
-        <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2.5">
+        <div className="flex items-center justify-between bg-muted rounded-lg p-2.5">
           <div>
-            <p className="text-sm font-medium text-slate-900">Main Meter?</p>
-            <p className="text-xs text-slate-500">Indicate whether these are main meters or sub-meters</p>
+            <p className="text-sm font-medium text-foreground">Main Meter?</p>
+            <p className="text-xs text-muted-foreground">Indicate whether these are main meters or sub-meters</p>
           </div>
           <Switch checked={isMain} onCheckedChange={setIsMain} />
         </div>
@@ -89,20 +89,20 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
 
       {/* ID Columns section */}
       {idColumns && idColumns.length > 0 && (
-        <div className="space-y-1.5 border border-slate-200 rounded-lg p-2.5 bg-slate-50/50">
+        <div className="space-y-1.5 border border-border rounded-lg p-2.5 bg-muted/50">
           <div className="flex items-center gap-1.5">
-            <KeyRound className="w-3.5 h-3.5 text-slate-500" />
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Index Columns</p>
-            <span className="text-[10px] text-slate-400 ml-auto">{selectedIds.length}/{MAX_INDEXES} selected</span>
+            <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Index Columns</p>
+            <span className="text-[10px] text-muted-foreground ml-auto">{selectedIds.length}/{MAX_INDEXES} selected</span>
           </div>
-          <p className="text-xs text-slate-400">Select up to {MAX_INDEXES} index columns, then choose one as the primary UID.</p>
+          <p className="text-xs text-muted-foreground">Select up to {MAX_INDEXES} index columns, then choose one as the primary UID.</p>
 
           {/* Index checkboxes with UID radio */}
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] text-slate-400 font-medium">Check to import · Select UID</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Check to import · Select UID</p>
               {idColumns.length > 6 && (
-                <button onClick={() => setShowAllIds(!showAllIds)} className="text-[10px] text-blue-600 hover:underline">
+                <button onClick={() => setShowAllIds(!showAllIds)} className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline">
                   {showAllIds ? "Show less" : `Show all (${idColumns.length})`}
                 </button>
               )}
@@ -115,14 +115,14 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
                 return (
                   <div
                     key={col}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${isUid ? "bg-blue-50 ring-1 ring-blue-200" : isChecked ? "bg-slate-50" : "hover:bg-slate-100"} ${disabled ? "opacity-40" : ""}`}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors ${isUid ? "bg-blue-500/10 ring-1 ring-blue-500/30" : isChecked ? "bg-muted" : "hover:bg-muted"} ${disabled ? "opacity-40" : ""}`}
                   >
                     <Checkbox
                       checked={isChecked}
                       onCheckedChange={() => toggleIdColumn(col)}
                       disabled={disabled}
                     />
-                    <span className="text-xs text-slate-700 flex-1 truncate">{col}</span>
+                    <span className="text-xs text-foreground flex-1 truncate">{col}</span>
                     {isChecked && (
                       <label className="flex items-center gap-1 cursor-pointer shrink-0">
                         <input
@@ -132,7 +132,7 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
                           onChange={() => handleChange("uid", col)}
                           className="w-3 h-3 accent-blue-600"
                         />
-                        <span className="text-[10px] text-blue-600 font-medium">UID</span>
+                        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">UID</span>
                       </label>
                     )}
                   </div>
@@ -140,7 +140,7 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
               })}
             </div>
             {selectedIds.length === 0 && (
-              <p className="text-[10px] text-amber-600 flex items-center gap-1 pt-0.5">
+              <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 pt-0.5">
                 <AlertCircle className="w-3 h-3" /> Select at least one index column and set a UID.
               </p>
             )}
@@ -150,13 +150,13 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
 
       {/* Field mappings (excluding uid since it's in the ID section) */}
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Field Mapping</p>
-        <p className="text-xs text-slate-400">Match your file columns to the meter database fields</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Field Mapping</p>
+        <p className="text-xs text-muted-foreground">Match your file columns to the meter database fields</p>
         {Object.entries(FIELD_LABELS)
           .filter(([field]) => field !== "uid")
           .map(([field, label]) => (
           <div key={field} className="flex items-center gap-2">
-            <Label className="text-xs text-slate-600 w-44 shrink-0">{label}</Label>
+            <Label className="text-xs text-muted-foreground w-44 shrink-0">{label}</Label>
             <select
               value={mappings?.[field] || ""}
               onChange={(e) => handleChange(field, e.target.value)}
@@ -173,12 +173,12 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
 
       {/* Coordinates note */}
       {mappings?.coordinates ? (
-        <div className="flex items-start gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
+        <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-500/10 border border-blue-500/25 rounded-lg p-2.5">
           <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>The selected coordinates field will be automatically split into separate Latitude and Longitude values in the database.</span>
         </div>
       ) : mappings?.latitude && mappings?.longitude ? (
-        <div className="flex items-start gap-2 text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg p-2.5">
+        <div className="flex items-start gap-2 text-xs text-green-700 dark:text-green-300 bg-green-500/10 border border-green-500/25 rounded-lg p-2.5">
           <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>Latitude and Longitude will be imported directly from their separate columns.</span>
         </div>

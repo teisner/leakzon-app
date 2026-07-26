@@ -1,3 +1,14 @@
+## 1.059 — 2026-07-26
+**Import dialogs are readable in dark mode**
+- The meter data import dialog was built with fixed light colours and no dark
+  variants at all — dark grey text on dark panels, and white blocks where a
+  tinted note should be. It now follows the theme like the rest of the app.
+- Same fix applied across the whole import flow: the upload dialog itself, the
+  meter column-mapping step, the consumption upload step and the undo import
+  dialog.
+- The blue / green / amber / red note boxes now use translucent tints that sit
+  correctly on either background, with lighter text in dark mode.
+
 ## 1.058 — 2026-07-26
 **Fixed meter data imports silently creating no meters at all**
 - Importing meter data from a CSV/Excel file created the layer but **not a

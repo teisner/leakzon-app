@@ -48,39 +48,39 @@ export default function UndoImportDialog({ open, onOpenChange, projectId, onUndo
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Undo2 className="w-5 h-5 text-red-600" /> Undo Last Import
+            <Undo2 className="w-5 h-5 text-red-600 dark:text-red-400" /> Undo Last Import
           </DialogTitle>
         </DialogHeader>
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
           </div>
         ) : error ? (
-          <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/25 rounded-lg p-3">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         ) : preview ? (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-800">
+            <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/25 rounded-lg p-3">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
                 This will permanently delete all data from the last import. This action cannot be undone.
               </p>
             </div>
 
             {preview.layerNames?.length > 0 && (
-              <p className="text-xs text-slate-500">
-                Import: <span className="font-medium text-slate-700">{preview.layerNames.join(", ")}</span>
+              <p className="text-xs text-muted-foreground">
+                Import: <span className="font-medium text-foreground">{preview.layerNames.join(", ")}</span>
               </p>
             )}
 
             <div className="grid grid-cols-2 gap-2">
-              <SummaryCard icon={Layers} label="Layers" count={preview.layerCount} color="text-blue-600 bg-blue-50" />
-              <SummaryCard icon={Gauge} label="Meters" count={preview.meterCount} color="text-emerald-600 bg-emerald-50" />
-              <SummaryCard icon={BarChart3} label="Readings" count={preview.readingCount} color="text-purple-600 bg-purple-50" />
-              <SummaryCard icon={FileWarning} label="Import Logs" count={preview.logCount} color="text-amber-600 bg-amber-50" />
+              <SummaryCard icon={Layers} label="Layers" count={preview.layerCount} color="text-blue-600 dark:text-blue-400 bg-blue-500/10" />
+              <SummaryCard icon={Gauge} label="Meters" count={preview.meterCount} color="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" />
+              <SummaryCard icon={BarChart3} label="Readings" count={preview.readingCount} color="text-purple-600 dark:text-purple-400 bg-purple-500/10" />
+              <SummaryCard icon={FileWarning} label="Import Logs" count={preview.logCount} color="text-amber-600 dark:text-amber-400 bg-amber-500/10" />
             </div>
           </div>
         ) : null}

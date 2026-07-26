@@ -368,7 +368,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
 
   if (noMeters) {
     return (
-      <div className="flex items-start gap-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <div className="flex items-start gap-3 text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg p-4">
         <Ban className="w-5 h-5 shrink-0 mt-0.5" />
         <div>
           <p className="font-semibold">No meter data found</p>
@@ -383,30 +383,30 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
       <div className="py-6 space-y-4">
         <div className="flex items-center gap-3">
           {phase === "done" ? (
-            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-              <Check className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
           ) : (
-            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+            <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
           )}
           <div>
-            <p className="text-sm font-medium text-slate-900">{progressLabel}</p>
-            <p className="text-xs text-slate-500">{file?.name}</p>
+            <p className="text-sm font-medium text-foreground">{progressLabel}</p>
+            <p className="text-xs text-muted-foreground">{file?.name}</p>
           </div>
         </div>
         <Progress value={progress} className="h-2" />
         {batchInfo && phase === "processing" && (
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Badge variant="secondary" className="text-[10px]">
               Batch {batchInfo.current}/{batchInfo.total}
             </Badge>
-            <span className="text-slate-400">·</span>
+            <span className="text-muted-foreground">·</span>
             <span>{batchInfo.recordsPerBatch} records/batch</span>
-            <span className="text-slate-400">·</span>
+            <span className="text-muted-foreground">·</span>
             <span>{batchInfo.readingsPerRecord} readings/record</span>
           </div>
         )}
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-muted-foreground">
           {eta ? (
             <span>~{eta.remaining} remaining · ETA {eta.completion}</span>
           ) : (
@@ -421,8 +421,8 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
   if (phase === "analyzing") {
     return (
       <div className="py-8 flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-        <p className="text-sm text-slate-600">Analyzing file...</p>
+        <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+        <p className="text-sm text-muted-foreground">Analyzing file...</p>
       </div>
     );
   }
@@ -430,7 +430,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
   return (
     <div className="space-y-4">
       {error && (
-        <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/25 rounded-lg p-3">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -438,17 +438,17 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
 
       {phase === "idle" && (
         <>
-          <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-100 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
             <Gauge className="w-4 h-4 shrink-0" />
             <span>Upload a CSV or JSON file containing meter consumption data. UIDs will be matched against the {meterCount} existing meter{meterCount !== 1 ? "s" : ""} in this project.</span>
           </div>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-500/5 transition-colors"
           >
-            <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm text-slate-600 font-medium">Click to select a file</p>
-            <p className="text-xs text-slate-400 mt-1">CSV or JSON files</p>
+            <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground font-medium">Click to select a file</p>
+            <p className="text-xs text-muted-foreground mt-1">CSV or JSON files</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -460,7 +460,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
           <div className="flex justify-center">
             <button
               onClick={downloadConsumptionTemplate}
-              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline"
+              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               Download CSV Template
@@ -471,21 +471,21 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
 
       {phase === "config" && (
         <>
-          <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-3">
-            <FileText className="w-4 h-4 text-slate-400" />
-            <span className="text-sm text-slate-700 truncate flex-1">{file.name}</span>
-            <span className="text-xs text-slate-400">{rows.length} rows</span>
+          <div className="flex items-center gap-2 bg-muted rounded-lg p-3">
+            <FileText className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-foreground truncate flex-1">{file.name}</span>
+            <span className="text-xs text-muted-foreground">{rows.length} rows</span>
             <button
               onClick={() => { setFile(null); setPhase("idle"); setRows([]); setColumns([]); setMatchResults(null); }}
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
               Change
             </button>
           </div>
 
           <div>
-            <Label className="mb-1.5 block text-sm">UID Column <span className="text-red-500">*</span></Label>
-            <p className="text-xs text-slate-400 mb-2">Select the column containing meter identifiers. If UIDs are merged with other IDs (comma/semicolon separated), each part will be tried for matching.</p>
+            <Label className="mb-1.5 block text-sm">UID Column <span className="text-red-600 dark:text-red-400">*</span></Label>
+            <p className="text-xs text-muted-foreground mb-2">Select the column containing meter identifiers. If UIDs are merged with other IDs (comma/semicolon separated), each part will be tried for matching.</p>
             <select
               value={uidColumn}
               onChange={(e) => setUidColumn(e.target.value)}
@@ -497,13 +497,13 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               ))}
             </select>
             {idCols.length > 0 && (
-              <p className="text-[10px] text-slate-400 mt-1">Detected ID columns: {idCols.join(", ")}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Detected ID columns: {idCols.join(", ")}</p>
             )}
           </div>
 
           <div>
             <Label className="mb-1.5 block text-sm">Date Column (optional)</Label>
-            <p className="text-xs text-slate-400 mb-2">For long-format data. If left empty, consumption column headers will be used as period labels (wide format). Dates are auto-detected and reformatted to the project's {dateFormat === "US" ? "US (MM/DD/YYYY)" : "EU (DD/MM/YYYY)"} format.</p>
+            <p className="text-xs text-muted-foreground mb-2">For long-format data. If left empty, consumption column headers will be used as period labels (wide format). Dates are auto-detected and reformatted to the project's {dateFormat === "US" ? "US (MM/DD/YYYY)" : "EU (DD/MM/YYYY)"} format.</p>
             <select
               value={dateColumn}
               onChange={(e) => setDateColumn(e.target.value)}
@@ -519,7 +519,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               if (!sample) return null;
               const norm = normalizeDateForProject(sample, dateFormat);
               return (
-                <p className="text-[10px] text-emerald-600 mt-1">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">
                   ✓ Date headers detected — "{sample}" → "{norm.label}"
                 </p>
               );
@@ -527,9 +527,9 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
           </div>
 
           <div>
-            <Label className="mb-1.5 block text-sm">Consumption Column(s) <span className="text-red-500">*</span></Label>
-            <p className="text-xs text-slate-400 mb-2">Select one or more columns containing consumption values.</p>
-            <div className="border border-slate-200 rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
+            <Label className="mb-1.5 block text-sm">Consumption Column(s) <span className="text-red-600 dark:text-red-400">*</span></Label>
+            <p className="text-xs text-muted-foreground mb-2">Select one or more columns containing consumption values.</p>
+            <div className="border border-border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
               {columns.map((col) => {
                 const isUid = col === uidColumn;
                 const isDate = col === dateColumn;
@@ -539,16 +539,16 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
                 return (
                   <label
                     key={col}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-slate-100"}`}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-muted"}`}
                   >
                     <Checkbox
                       checked={consumptionColumns.includes(col)}
                       onCheckedChange={() => !isDisabled && toggleConsumptionColumn(col)}
                       disabled={isDisabled}
                     />
-                    <span className="text-xs text-slate-700 flex-1 truncate">{col}</span>
+                    <span className="text-xs text-foreground flex-1 truncate">{col}</span>
                     {isSum ? (
-                      <Badge variant="secondary" className="text-[9px] text-amber-700">sum — ignored</Badge>
+                      <Badge variant="secondary" className="text-[9px] text-amber-700 dark:text-amber-300">sum — ignored</Badge>
                     ) : isNumeric && !isUid && !isDate ? (
                       <Badge variant="secondary" className="text-[9px]">numeric</Badge>
                     ) : null}
@@ -559,42 +559,42 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
           </div>
 
           {computing && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Computing matches...
             </div>
           )}
           {matchResults && !computing && (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <p className="text-xl font-bold text-slate-900">{matchResults.total}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Total Rows</p>
+                <div className="bg-muted rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-foreground">{matchResults.total}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Total Rows</p>
                 </div>
-                <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                  <p className="text-xl font-bold text-emerald-700">{matchResults.matched}</p>
-                  <p className="text-[10px] text-emerald-600 mt-0.5">Matched</p>
+                <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{matchResults.matched}</p>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">Matched</p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-3 text-center">
-                  <p className="text-xl font-bold text-red-700">{matchResults.unmatched}</p>
-                  <p className="text-[10px] text-red-600 mt-0.5">Unmatched</p>
+                <div className="bg-red-500/10 rounded-lg p-3 text-center">
+                  <p className="text-xl font-bold text-red-700 dark:text-red-300">{matchResults.unmatched}</p>
+                  <p className="text-[10px] text-red-600 dark:text-red-400 mt-0.5">Unmatched</p>
                 </div>
               </div>
               {matchResults.unmatched > 0 && (
-                <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-amber-700 mb-1.5">Sample unmatched UIDs (will be logged as errors):</p>
+                <div className="border border-amber-500/25 bg-amber-500/5 rounded-lg p-3">
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1.5">Sample unmatched UIDs (will be logged as errors):</p>
                   <div className="space-y-1">
                     {matchResults.unmatchedSamples.map((s, i) => (
-                      <p key={i} className="text-xs font-mono text-amber-800 truncate">"{s.rawUid}"</p>
+                      <p key={i} className="text-xs font-mono text-amber-800 dark:text-amber-200 truncate">"{s.rawUid}"</p>
                     ))}
                   </div>
                 </div>
               )}
               {matchResults.matched > 0 && (
-                <div className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-emerald-700 mb-1.5">Sample matched meters:</p>
+                <div className="border border-emerald-500/25 bg-emerald-500/5 rounded-lg p-3">
+                  <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1.5">Sample matched meters:</p>
                   <div className="space-y-1">
                     {matchResults.matchedSamples.map((s, i) => (
-                      <p key={i} className="text-xs font-mono text-emerald-800 truncate">"{s.rawUid}" → {s.meterUid}</p>
+                      <p key={i} className="text-xs font-mono text-emerald-800 dark:text-emerald-200 truncate">"{s.rawUid}" → {s.meterUid}</p>
                     ))}
                   </div>
                 </div>
