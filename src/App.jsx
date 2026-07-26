@@ -12,6 +12,7 @@ import UploadData from './pages/UploadData';
 import MobileLocator from './pages/MobileLocator';
 import CustomerMode from './pages/CustomerMode';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Only runs inactivity logout on authenticated routes, not public-facing ones
 const InactivityGuard = () => {
@@ -41,6 +42,7 @@ function App() {
         </Routes>
       </Router>
       <Toaster />
+      <SpeedInsights />
     </QueryClientProvider>
     </ThemeProvider>
     </LanguageProvider>

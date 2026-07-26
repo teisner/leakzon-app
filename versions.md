@@ -6,6 +6,11 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.044 — 2026-07-26
+**Added Vercel Speed Insights**
+- Installed `@vercel/speed-insights` and mounted it at the app root, so real
+  page-load performance shows up in the Vercel dashboard's Speed Insights tab.
+
 ## 1.043 — 2026-07-26
 **Fixed the Mobile Locator link from the email**
 - Opening the emailed Mobile Locator link failed with "Failed to load meters"
