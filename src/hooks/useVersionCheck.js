@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_VERSION } from "@/lib/version";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000; // hourly
@@ -23,10 +23,13 @@ function isNewer(candidate, current) {
  * scripts/gen-version-json.mjs), so it reflects what's currently deployed while
  * APP_VERSION reflects what this tab loaded.
  *
- * @returns {string|null} the newer deployed version, or null when up to date
+ * @returns {{ latestVersion: string|null, checkNow: () => Promise<string|null> }}
+ *   latestVersion is the newer deployed version (null when up to date);
+ *   checkNow forces an immediate check and resolves with the same value.
  */
 export function useVersionCheck() {
   const [latest, setLatest] = useState(null);
+  const checkRef = useRef(async () => null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,14 +39,19 @@ export function useVersionCheck() {
         // Cache-bust: without this a CDN/browser cache would keep handing back
         // the version.json that shipped with this tab's bundle.
         const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) return null;
         const data = await res.json();
-        if (cancelled || !data?.version) return;
-        setLatest(isNewer(data.version, APP_VERSION) ? data.version : null);
+        if (cancelled || !data?.version) return null;
+        const newer = isNewer(data.version, APP_VERSION) ? data.version : null;
+        setLatest(newer);
+        return newer;
       } catch {
         // Offline or blocked — stay quiet, try again next tick.
       }
+      return null;
     };
+
+    checkRef.current = check;
 
     check();
     const id = setInterval(check, CHECK_INTERVAL_MS);
@@ -58,5 +66,8 @@ export function useVersionCheck() {
     };
   }, []);
 
-  return latest;
+  // Stable identity so callers can put it in dependency arrays.
+  const checkNow = useCallback(() => checkRef.current(), []);
+
+  return { latestVersion: latest, checkNow };
 }

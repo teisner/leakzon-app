@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import changelogMd from "../../../versions.md?raw";
 import { APP_VERSION } from "@/lib/version";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
+import UpdateAvailableDialog from "@/components/UpdateAvailableDialog";
 
 const REQUEST_TYPES = [
   { value: "feature_request", label: "New Feature", Icon: Lightbulb, color: "text-amber-500 border-amber-500/30 bg-amber-500/10" },
@@ -39,6 +41,38 @@ export default function VersionUpdates({ project, currentUser, projects }) {
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  // The bundled changelog renders instantly; refreshing pulls the copy from the
+  // live deployment, which is the only way to see entries newer than this tab.
+  const [changelog, setChangelog] = useState(changelogMd);
+  const [refreshingLog, setRefreshingLog] = useState(false);
+  const [logUpToDate, setLogUpToDate] = useState(false);
+  const [showUpdate, setShowUpdate] = useState(false);
+  const { latestVersion, checkNow } = useVersionCheck();
+
+  const handleRefreshChangelog = async () => {
+    setRefreshingLog(true);
+    setLogUpToDate(false);
+    try {
+      const [logRes, newer] = await Promise.all([
+        fetch(`/versions.md?t=${Date.now()}`, { cache: "no-store" }),
+        checkNow(),
+      ]);
+      if (logRes.ok) {
+        const text = await logRes.text();
+        if (text.trim()) {
+          setChangelog(text);
+          setShowChangelog(true);
+        }
+      }
+      if (newer) setShowUpdate(true);
+      else setLogUpToDate(true);
+    } catch {
+      /* offline — leave the bundled copy in place */
+    } finally {
+      setRefreshingLog(false);
+      setTimeout(() => setLogUpToDate(false), 3000);
+    }
+  };
 
   // Form state
   const [requestType, setRequestType] = useState("feature_request");
@@ -176,11 +210,27 @@ export default function VersionUpdates({ project, currentUser, projects }) {
               Changelog — What's New
               <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">v{APP_VERSION}</span>
             </span>
-            {showChangelog ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            <span className="flex items-center gap-1">
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); handleRefreshChangelog(); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); handleRefreshChangelog(); } }}
+                title="Check for a newer version and reload the changelog"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                {refreshingLog
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : logUpToDate
+                    ? <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    : <RefreshCw className="w-3.5 h-3.5" />}
+              </span>
+              {showChangelog ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            </span>
           </button>
           {showChangelog && (
             <div className="border-t border-border px-5 py-4 max-h-[420px] overflow-y-auto changelog-markdown">
-              <ReactMarkdown>{changelogMd}</ReactMarkdown>
+              <ReactMarkdown>{changelog}</ReactMarkdown>
             </div>
           )}
         </div>
@@ -402,6 +452,12 @@ export default function VersionUpdates({ project, currentUser, projects }) {
           </div>
         )}
       </div>
+
+      <UpdateAvailableDialog
+        open={showUpdate}
+        onOpenChange={setShowUpdate}
+        latestVersion={latestVersion}
+      />
     </div>
   );
 }

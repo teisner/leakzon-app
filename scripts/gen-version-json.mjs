@@ -4,7 +4,7 @@
 // build has been deployed. version.json is a tiny static file served fresh from
 // the current deployment, so an old tab can fetch it and notice it's behind.
 // Generated (not hand-maintained) so it can never drift from APP_VERSION.
-import { readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,4 +19,10 @@ if (!match) {
 
 const out = resolve(root, "public/version.json");
 writeFileSync(out, JSON.stringify({ version: match[1] }) + "\n");
-console.log(`gen-version-json: wrote ${match[1]} -> public/version.json`);
+
+// Also publish the changelog as a static file. The app bundles versions.md at
+// build time for instant render, but the "refresh changelog" button needs to
+// read what the *current* deployment has, which a bundled copy can never show.
+copyFileSync(resolve(root, "versions.md"), resolve(root, "public/versions.md"));
+
+console.log(`gen-version-json: wrote ${match[1]} -> public/version.json + public/versions.md`);

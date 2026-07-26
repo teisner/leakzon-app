@@ -4,10 +4,7 @@ import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
 import { APP_VERSION } from "@/lib/version";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
+import UpdateAvailableDialog from "@/components/UpdateAvailableDialog";
 
 export default function ProjectNav({ viewMode, onChange, onImportData, locked, onOpenWizard, onOpenCustomerView, customerAnnotationCount = 0, currentUser }) {
   const canViewVersionUpdates = currentUser?.user_type === "LeakZon" || currentUser?.user_type === "Admin";
@@ -24,7 +21,7 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
 
   const expanded = mode === "open";
   // Hourly poll of the deployed version — badge appears when this tab is behind.
-  const latestVersion = useVersionCheck();
+  const { latestVersion } = useVersionCheck();
   const [showUpdate, setShowUpdate] = useState(false);
 
   const views = [
@@ -157,21 +154,11 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
         </div>
       </div>
 
-      <AlertDialog open={showUpdate} onOpenChange={setShowUpdate}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>A newer version is available</AlertDialogTitle>
-            <AlertDialogDescription>
-              You're running version {APP_VERSION}; version {latestVersion} has been released.
-              Refresh the page to load it. Anything you haven't saved will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Later</AlertDialogCancel>
-            <AlertDialogAction onClick={() => window.location.reload()}>Refresh now</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UpdateAvailableDialog
+        open={showUpdate}
+        onOpenChange={setShowUpdate}
+        latestVersion={latestVersion}
+      />
     </nav>
   );
 }
