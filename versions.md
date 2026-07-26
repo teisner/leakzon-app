@@ -6,6 +6,15 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.048 — 2026-07-26
+**Notifies you when a newer version has been deployed**
+- The app now checks hourly (and whenever you return to the tab) whether a newer
+  version has been released. When it has, an amber badge appears next to the
+  version number in the project side menu.
+- Clicking the badge explains which version you're on, which is available, and
+  offers to refresh — with a warning that unsaved work is lost, so you can
+  choose "Later".
+
 ## 1.047 — 2026-07-26
 **Version Updates moved to the side menu footer**
 - On the projects dashboard, Version Updates now sits at the bottom of the side

@@ -1,8 +1,13 @@
 import React, { useState } from "react";
-import { Map as MapIcon, Database, ArrowUpDown, Network, Rocket, Boxes, Eye, Settings, GitPullRequest } from "lucide-react";
+import { Map as MapIcon, Database, ArrowUpDown, Network, Rocket, Boxes, Eye, Settings, GitPullRequest, ArrowUpCircle } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
 import { APP_VERSION } from "@/lib/version";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export default function ProjectNav({ viewMode, onChange, onImportData, locked, onOpenWizard, onOpenCustomerView, customerAnnotationCount = 0, currentUser }) {
   const canViewVersionUpdates = currentUser?.user_type === "LeakZon" || currentUser?.user_type === "Admin";
@@ -18,6 +23,9 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
   };
 
   const expanded = mode === "open";
+  // Hourly poll of the deployed version — badge appears when this tab is behind.
+  const latestVersion = useVersionCheck();
+  const [showUpdate, setShowUpdate] = useState(false);
 
   const views = [
     { key: "gis", label: t('view.gisMap'), Icon: MapIcon },
@@ -133,11 +141,37 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
           }}
         />
         <div className="mt-2 pt-2 border-t border-border">
-          <p className={`text-[10px] text-muted-foreground/70 tabular-nums ${expanded ? "px-3" : "text-center"}`}>
-            Ver {APP_VERSION}
-          </p>
+          <div className={`flex items-center gap-1.5 ${expanded ? "px-3" : "justify-center"}`}>
+            <p className="text-[10px] text-muted-foreground/70 tabular-nums">Ver {APP_VERSION}</p>
+            {latestVersion && (
+              <button
+                onClick={() => setShowUpdate(true)}
+                title={`Version ${latestVersion} is available`}
+                className="relative flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white shrink-0 hover:bg-amber-600 transition-colors"
+              >
+                <ArrowUpCircle className="w-3 h-3" />
+                <span className="absolute inset-0 rounded-full bg-amber-500 animate-ping opacity-60" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      <AlertDialog open={showUpdate} onOpenChange={setShowUpdate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>A newer version is available</AlertDialogTitle>
+            <AlertDialogDescription>
+              You're running version {APP_VERSION}; version {latestVersion} has been released.
+              Refresh the page to load it. Anything you haven't saved will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Later</AlertDialogCancel>
+            <AlertDialogAction onClick={() => window.location.reload()}>Refresh now</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </nav>
   );
 }
