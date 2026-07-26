@@ -56,7 +56,17 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
       // locked_by_id/date are the real DB columns; locked_by_name is a
       // display-only field the parent keeps in local state (and resolves via a
       // join on load) — it is not a column, so writing it would fail the update.
-      onUpdate({ locked: false, locked_by_id: null, locked_date: null, locked_by_name: null });
+      // Unlocking also withdraws a customer approval — same single action the
+      // operator already knows, per the approval spec.
+      onUpdate({
+        locked: false,
+        locked_by_id: null,
+        locked_date: null,
+        locked_by_name: null,
+        customer_approved_by: null,
+        customer_approved_at: null,
+        approval_requested: false,
+      });
     } else {
       onUpdate({
         locked: true,
@@ -90,7 +100,9 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
               title={locked ? "Project is Locked" : "Project is Unlocked"}
               description={
                 locked
-                  ? `Locked${project.locked_by_name ? ` by ${project.locked_by_name}` : ""} — all editing is disabled`
+                  ? project.customer_approved_by
+                    ? `Approved and locked by ${project.customer_approved_by} (customer) — unlocking withdraws the approval`
+                    : `Locked${project.locked_by_name ? ` by ${project.locked_by_name}` : ""} — all editing is disabled`
                   : "Lock the project to make it read-only and prevent any changes"
               }
             >

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, ExternalLink, Ban, Plus, Check, Clock, Link2, CalendarPlus } from "lucide-react";
+import { Copy, ExternalLink, Ban, Plus, Check, Clock, Link2, CalendarPlus, ShieldCheck } from "lucide-react";
+import { supabase } from "@/api/supabaseClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -13,6 +14,9 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
   const [days, setDays] = useState(7);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  // Whether the customer is being asked to sign off the network design.
+  const [approvalRequested, setApprovalRequested] = useState(false);
+  const [approvedBy, setApprovedBy] = useState(null);
 
   const loadLinks = useCallback(async () => {
     if (!projectId) return;
@@ -23,6 +27,13 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
         project_id: projectId,
       });
       setLinks(res.data?.links || []);
+      const { data: proj } = await supabase
+        .from('project')
+        .select('approval_requested, customer_approved_by')
+        .eq('id', projectId)
+        .single();
+      setApprovalRequested(!!proj?.approval_requested);
+      setApprovedBy(proj?.customer_approved_by || null);
     } catch {
       /* skip */
     } finally {
@@ -64,6 +75,25 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleRequestApproval = async () => {
+    const next = !approvalRequested;
+    const { error } = await supabase
+      .from('project')
+      .update({ approval_requested: next })
+      .eq('id', projectId);
+    if (error) {
+      toast({ variant: "destructive", title: "Could not update", description: error.message });
+      return;
+    }
+    setApprovalRequested(next);
+    toast({
+      title: next ? "Approval requested" : "Approval request removed",
+      description: next
+        ? "The customer will see an \"Approve this design\" button in the shared view."
+        : "The approve button is hidden from the shared view.",
+    });
   };
 
   const handleExtend = async (linkId) => {
@@ -174,6 +204,34 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
             <p className="text-xs text-amber-600 dark:text-amber-500 px-1">
               An active link already exists. Disable it before creating a new one.
             </p>
+          )}
+
+          {/* Approval request — only meaningful once a link exists */}
+          {hasActiveLink && (
+            <div className="rounded-lg border border-border p-3">
+              {approvedBy ? (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  Design approved by {approvedBy}
+                </p>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleRequestApproval}
+                    className={`w-full gap-1.5 ${approvalRequested ? "" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+                    variant={approvalRequested ? "outline" : "default"}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    {approvalRequested ? "Cancel approval request" : "Approve Network Design"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+                    {approvalRequested
+                      ? "The customer sees an \"Approve this design\" button in the shared view. Approving locks the project in their name."
+                      : "Asks the customer to sign off the network design from the shared link. Their approval locks the project."}
+                  </p>
+                </>
+              )}
+            </div>
           )}
 
           {/* Links list */}

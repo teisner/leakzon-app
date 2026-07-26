@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Loader2, AlertCircle, Building2, User, MapPin } from "lucide-react";
 import { invokeFunction } from "@/api/functionsClient";
 import CustomerModeMap from "@/components/customer-mode/CustomerModeMap";
+import ApproveDesignBar from "@/components/customer-mode/ApproveDesignBar";
 import LinkCountdown from "@/components/customer-mode/LinkCountdown";
 
 export default function CustomerMode() {
@@ -109,7 +110,7 @@ export default function CustomerMode() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <CustomerModeMap
           project={project}
           layers={layers}
@@ -118,6 +119,7 @@ export default function CustomerMode() {
           isolatedPoints={isolated_points}
           token={token}
         />
+        <ApproveDesignBar project={project} token={token} />
       </div>
     </div>
   );

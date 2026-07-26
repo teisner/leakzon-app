@@ -5,7 +5,7 @@ import { supabase } from "@/api/supabaseClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
-import { PanelLeftClose, PanelLeftOpen, MessageSquare } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, MessageSquare, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
@@ -1201,6 +1201,16 @@ export default function ProjectDetail() {
       alert(`Could not update the project: ${error.message}`);
       return;
     }
+    // Withdrawing a customer approval also removes the wizard steps that the
+    // approval auto-ticked. They're tagged, so steps the operator marked
+    // themselves are left alone.
+    if (data.locked === false && data.customer_approved_at === null) {
+      await supabase
+        .from('project_progress')
+        .delete()
+        .eq('project_id', id)
+        .eq('description', 'customer_approval');
+    }
     setProject((p) => ({ ...p, ...data }));
   };
 
@@ -1373,6 +1383,22 @@ export default function ProjectDetail() {
             : []
         }
       />
+
+      {/* Customer sign-off banner */}
+      {project.customer_approved_at && (
+        <div className="shrink-0 bg-emerald-600 text-white px-4 py-3 flex items-center gap-3">
+          <ShieldCheck className="w-6 h-6 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold">
+              Network design approved by {project.customer_approved_by}
+            </p>
+            <p className="text-xs text-emerald-50/90">
+              {new Date(project.customer_approved_at).toLocaleString()} — the project is locked.
+              Unlock it in Project Settings to withdraw the approval.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Main — nav sidebar + side panel + content area */}
       <div className="flex-1 flex overflow-hidden">

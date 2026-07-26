@@ -6,6 +6,20 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.049 — 2026-07-26
+**Customers can approve the network design from the shared view**
+- Customer View dialog: a green **Approve Network Design** button asks the
+  customer to sign off (available once a share link exists, and can be
+  cancelled).
+- Shared customer view: a large **Approve this design** button appears at the
+  bottom centre. The customer confirms and enters their name — the dialog spells
+  out that approving locks the project.
+- On approval the project is locked in the customer's name with a timestamp, a
+  green banner appears at the top of the project page, and every onboarding
+  wizard step is marked done except "Export to LeakZon".
+- Unlocking the project in Project Settings withdraws the approval and removes
+  the steps the approval ticked — steps you marked yourself are kept.
+
 ## 1.048 — 2026-07-26
 **Notifies you when a newer version has been deployed**
 - The app now checks hourly (and whenever you return to the tab) whether a newer
