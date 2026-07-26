@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Lock, LockOpen, Users as UsersIcon, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Lock, LockOpen, Users as UsersIcon, Loader2, Globe } from "lucide-react";
 import { isoToFlag } from "@/lib/countryCodes";
 import UserDialog from "@/components/users/UserDialog";
 import { useLanguage } from "@/lib/i18n";
@@ -89,6 +89,7 @@ export default function UsersSection({ currentUser }) {
                   <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colPhone')}</th>
                   <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colUsername')}</th>
                   <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colType')}</th>
+                  <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colCountryView')}</th>
                   <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colPassword')}</th>
                   {isAdmin && (
                     <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colLastLogin')}</th>
@@ -96,7 +97,7 @@ export default function UsersSection({ currentUser }) {
                   <th className="text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide px-4 py-3">{t('users.colActions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {visibleUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
@@ -129,6 +130,12 @@ export default function UsersSection({ currentUser }) {
                       }>
                         {u.user_type || "LeakZon"}
                       </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-muted-foreground/70" />
+                        {u.preferred_country || t('users.allCountries')}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {u.password_hash ? (

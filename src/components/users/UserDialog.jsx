@@ -18,6 +18,9 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
   const [countryCode, setCountryCode] = useState("972");
   const [username, setUsername] = useState("");
   const [userType, setUserType] = useState("LeakZon");
+  // "" = All Countries. Stored as NULL so it reads as "no preference".
+  const [preferredCountry, setPreferredCountry] = useState("");
+  const [countries, setCountries] = useState([]);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -32,6 +35,7 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
       setCountryCode(user.country_code || "972");
       setUsername(user.username || "");
       setUserType(user.user_type || "LeakZon");
+      setPreferredCountry(user.preferred_country || "");
     } else {
       setFullName("");
       setEmail("");
@@ -40,9 +44,20 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
       setCountryCode("972");
       setUsername("");
       setUserType("User");
+      setPreferredCountry("");
     }
     setError(null);
   }, [user, open]);
+
+  // The dashboard's country filter is built from the countries actually in use
+  // by projects, so offer exactly those rather than a fixed world list.
+  useEffect(() => {
+    if (!open) return;
+    supabase.from('project').select('country').then(({ data }) => {
+      const list = [...new Set((data || []).map((p) => p.country).filter(Boolean))].sort();
+      setCountries(list);
+    });
+  }, [open]);
 
   const handleCountryChange = (c) => {
     setCountryIso(c.iso);
@@ -64,6 +79,7 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
       country_iso: countryIso,
       username: username.trim(),
       user_type: userType,
+      preferred_country: preferredCountry || null,
     };
     const { error: saveError } = user
       ? await supabase.from('system_user').update(data).eq('id', user.id)
@@ -86,7 +102,7 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
 
         <div className="space-y-4">
           {error && (
-            <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/25 rounded-lg p-3">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -120,7 +136,7 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
             <Label>{t('userDialog.username')}</Label>
             <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="johndoe" className="mt-1.5" />
             {user && (
-              <p className="text-xs text-slate-400 mt-1">{t('userDialog.usernameNote')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('userDialog.usernameNote')}</p>
             )}
           </div>
 
@@ -138,13 +154,29 @@ export default function UserDialog({ open, onOpenChange, user, currentUser, onSa
               </SelectContent>
             </Select>
             {!canChangeType && (
-              <p className="text-xs text-slate-400 mt-1">{t('userDialog.userTypeNote')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('userDialog.userTypeNote')}</p>
             )}
           </div>
 
+          <div>
+            <Label>{t('userDialog.preferredCountry')}</Label>
+            <Select value={preferredCountry || "__all__"} onValueChange={(v) => setPreferredCountry(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">{t('userDialog.allCountries')}</SelectItem>
+                {countries.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">{t('userDialog.preferredCountryNote')}</p>
+          </div>
+
           {!user && (
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-              <p className="text-xs text-blue-700">
+            <div className="bg-blue-500/10 border border-blue-500/25 rounded-lg p-3">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
                 {t('userDialog.firstLoginNote')}
               </p>
             </div>

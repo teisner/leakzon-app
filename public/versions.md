@@ -1,3 +1,13 @@
+## 1.061 — 2026-07-26
+**Each user can have a default country for the projects dashboard**
+- The user list has a new **Country View** column showing which country that
+  user's projects dashboard opens on — **All Countries** unless set.
+- Editing a user offers the same choices as the dashboard's country menu (the
+  countries actually in use by projects) plus **All Countries**.
+- The dashboard now opens on that country. It is only a starting point: the
+  country menu still works exactly as before, and switching there does not
+  overwrite the saved preference.
+
 ## 1.060 — 2026-07-26
 **Preview refreshes itself as soon as a new build is deployed**
 - On the preview site the tab now checks for a new build every 30 seconds and

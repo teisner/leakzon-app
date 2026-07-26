@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { Plus, Droplets, FolderOpen, Users as UsersIcon, LogOut, LayoutGrid, RefreshCw, Globe, ChevronDown, Archive, Search, ArrowDownUp } from "lucide-react";
@@ -73,6 +73,26 @@ export default function Home() {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Seed the country filter from the user's saved preference, once per login.
+  // Read from the database rather than the cached localStorage session so a
+  // change made in the Users list applies on the next load. It's only a
+  // starting point — switching country in the menu below still works, and is
+  // deliberately not written back.
+  const seededCountryRef = useRef(null);
+  useEffect(() => {
+    const userId = loggedInUser?.id;
+    if (!userId || seededCountryRef.current === userId) return;
+    seededCountryRef.current = userId;
+    supabase
+      .from('system_user')
+      .select('preferred_country')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data?.preferred_country) setCountryFilter(data.preferred_country);
+      });
+  }, [loggedInUser?.id]);
 
   const handleForceRefresh = async () => {
     setRefreshing(true);
