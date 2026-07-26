@@ -218,6 +218,9 @@ function buildDbfFile(features: any[]) {
     { name: 'type', type: 'C', size: 15 },
     { name: 'color', type: 'C', size: 10 },
     { name: 'diameter', type: 'C', size: 20 },
+    // A shapefile carries no styling of its own, so the intended line style
+    // travels as an attribute for the consumer to apply.
+    { name: 'style', type: 'C', size: 10 },
   ];
   const headerSize = 32 + fields.length * 32 + 1;
   const recordSize = 1 + fields.reduce((s, f) => s + f.size, 0);
@@ -257,6 +260,7 @@ function buildDbfFile(features: any[]) {
       String(p.type || '').slice(0, 15).padEnd(15),
       String(p.color || '').slice(0, 10).padEnd(10),
       String(p.diameter || '').slice(0, 20).padEnd(20),
+      String(p.style || 'solid').slice(0, 10).padEnd(10),
     ];
     for (let i = 0; i < fields.length; i++) {
       const valBytes = enc.encode(values[i]);
@@ -280,6 +284,30 @@ function sanitizeFileName(name: string | undefined) {
       .replace(/^_+|_+$/g, '') || 'layer'
   );
 }
+
+// Re-types a polygon feature as lines so it exports as an outline only —
+// a shapefile polygon renders filled in most viewers, and DMA/boundary
+// outlines have to sit over the map without hiding what is under them.
+function toOutline(feature: any, color: string, style: string) {
+  const g = feature.geometry || {};
+  let rings: number[][][] = [];
+  if (g.type === 'Polygon') rings = g.coordinates || [];
+  else if (g.type === 'MultiPolygon') rings = (g.coordinates || []).flat();
+  else return { ...feature, properties: { ...feature.properties, color, style } };
+  return {
+    geometry: { type: 'MultiLineString', coordinates: rings },
+    properties: { ...feature.properties, type: 'MultiLineString', color, style },
+  };
+}
+
+// Boundary layers get the red dashed treatment; matched by name because that
+// is how they are labelled ("Obion Boundary", "woodlawn Boundary").
+function isBoundaryLayer(name: string | undefined) {
+  return /boundar|border|\u05d2\u05d1\u05d5\u05dc/i.test(String(name || ''));
+}
+
+const DMA_OUTLINE_COLOR = '#000000';
+const BOUNDARY_OUTLINE_COLOR = '#FF0000';
 
 function buildShapefileSet(features: any[]) {
   return { shp: buildShpFile(features), shx: buildShxFile(features), dbf: buildDbfFile(features), prj: new TextEncoder().encode(PRJ_WKT) };
@@ -502,7 +530,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
   try {
-    const { project_id } = await req.json();
+    const { project_id, analyze_only } = await req.json();
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
     const user = await getCallerUser(req);
@@ -516,6 +544,21 @@ Deno.serve(async (req) => {
       fetchAllMeters(project_id),
       admin.from('dma').select('*').eq('project_id', project_id).order('sort_order'),
     ]);
+
+    // Analysis pass only — skips fetching and rebuilding every layer's
+    // shapefile, so the review step in the dialog returns quickly.
+    if (analyze_only) {
+      const preview = analyzeMeters(meters, dmas || [], layers || []);
+      return json({
+        insights: preview.insights,
+        stats: {
+          layers: (layers || []).filter((l: any) => l.file_url && l.layer_type === 'shp').length,
+          features: 0,
+          meters: preview.insights.metersTotal,
+          dmas: (dmas || []).length,
+        },
+      });
+    }
 
     const JSZip = (await import('npm:jszip@3.10.1')).default;
     const innerZip = new JSZip();
@@ -544,7 +587,11 @@ Deno.serve(async (req) => {
       }));
       if (rawFeatures.length === 0) continue;
 
-      const groups = groupByGeometryType(rawFeatures);
+      const styled = isBoundaryLayer(layer.name)
+        ? rawFeatures.map((f: any) => toOutline(f, BOUNDARY_OUTLINE_COLOR, 'dashed'))
+        : rawFeatures;
+
+      const groups = groupByGeometryType(styled);
       const baseName = sanitizeFileName(layer.name);
       for (const [category, feats] of Object.entries(groups)) {
         const suffix = Object.keys(groups).length > 1 ? `_${category}` : '';
@@ -571,10 +618,15 @@ Deno.serve(async (req) => {
       if (!Array.isArray(poly) || poly.length < 3) continue;
       const ring = poly.map(([lat, lng]: number[]) => [lng, lat]);
       ring.push(ring[0]);
-      dmaFeatures.push({
-        geometry: { type: 'Polygon', coordinates: [ring] },
-        properties: { name: dma.name || '', type: 'Polygon', color: dma.color || '', diameter: '' },
-      });
+      // Outline only, black — see toOutline.
+      dmaFeatures.push(toOutline(
+        {
+          geometry: { type: 'Polygon', coordinates: [ring] },
+          properties: { name: dma.name || '', type: 'Polygon', color: dma.color || '', diameter: '' },
+        },
+        DMA_OUTLINE_COLOR,
+        'solid',
+      ));
     }
     if (dmaFeatures.length > 0) {
       const shpSet = buildShapefileSet(dmaFeatures);

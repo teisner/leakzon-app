@@ -1,3 +1,17 @@
+## 1.063 — 2026-07-26
+**Export to LeakZon analyses first, and DMA/boundary export as outlines**
+- The export now starts with an **analysis step**. Before anything is
+  downloaded you see the DMA count, how many meters are assigned vs not, mains
+  vs sub meters, which DMAs have no main meter, and how many meters have no
+  coordinates — then choose whether to continue.
+- **DMA.shp** and the **boundary** layer now export as outlines rather than
+  filled areas, so they sit over the map without hiding what is beneath.
+  DMA outlines are **black**, boundary outlines **red dashed** — carried both
+  as the shape geometry and as `color` / `style` attributes.
+- After the export finishes, the insights are shown **first**, with a
+  **Continue to LeakZon platform** button. The confetti now fires on that step
+  rather than interrupting the summary.
+
 ## 1.062 — 2026-07-26
 **Export to LeakZon now analyses the meters first, and reports what it found**
 - Meters **not assigned to any DMA** are written to their own

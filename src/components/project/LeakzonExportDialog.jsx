@@ -23,9 +23,41 @@ function Insight({ label, value, tone, note }) {
   );
 }
 
+function InsightsPanel({ insights, t }) {
+  if (!insights) return null;
+  return (
+    <div className="w-full rounded-lg border border-border bg-muted/40 p-3 text-start">
+      <p className="text-xs font-semibold text-foreground mb-2">{t("leakzonExport.insightsTitle")}</p>
+      <dl className="space-y-1 text-xs">
+        <Insight label={t("leakzonExport.iDmas")} value={insights.dmasTotal} />
+        <Insight label={t("leakzonExport.iAssigned")} value={`${insights.assigned} / ${insights.metersTotal + insights.fictitiousMains}`} />
+        <Insight
+          label={t("leakzonExport.iUnassigned")}
+          value={insights.unassigned}
+          tone={insights.unassigned > 0 ? "warn" : "ok"}
+          note={insights.unassigned > 0 ? t("leakzonExport.iUnassignedNote") : null}
+        />
+        <Insight label={t("leakzonExport.iMainSub")} value={`${insights.mains} / ${insights.subs}`} />
+        <Insight
+          label={t("leakzonExport.iDmasWithMain")}
+          value={`${insights.dmasWithMain} / ${insights.dmasTotal}`}
+          tone={insights.dmasWithMain < insights.dmasTotal ? "warn" : "ok"}
+        />
+        {insights.fictitiousMains > 0 && (
+          <Insight label={t("leakzonExport.iFictitious")} value={insights.fictitiousMains} tone="warn" note={insights.fictitiousDmaNames.join(", ")} />
+        )}
+        {insights.noCoords > 0 && (
+          <Insight label={t("leakzonExport.iNoCoords")} value={insights.noCoords} tone="warn" />
+        )}
+      </dl>
+    </div>
+  );
+}
+
 export default function LeakzonExportDialog({ open, onOpenChange, project, onExported }) {
   const { t } = useLanguage();
-  const [phase, setPhase] = useState("confirm"); // confirm | exporting | done | error
+  // confirm -> analyzing -> review -> exporting -> done -> (portal prompt)
+  const [phase, setPhase] = useState("confirm");
   const [error, setError] = useState("");
   const [stats, setStats] = useState(null);
   const [insights, setInsights] = useState(null);
@@ -52,10 +84,31 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
     }, 300);
   };
 
+  // Runs the same meter analysis the export uses, but without building any
+  // shapefiles, so the numbers can be reviewed before committing to a download.
+  const handleAnalyze = async () => {
+    setPhase("analyzing");
+    setError("");
+    setStats(null);
+    setInsights(null);
+    try {
+      const response = await invokeFunction("exportToLeakZon", {
+        project_id: project.id,
+        analyze_only: true,
+      });
+      if (!response.data?.insights) throw new Error("Analysis failed");
+      setInsights(response.data.insights);
+      setStats(response.data.stats || null);
+      setPhase("review");
+    } catch (e) {
+      setError(e.message || "Analysis failed");
+      setPhase("error");
+    }
+  };
+
   const handleExport = async () => {
     setPhase("exporting");
     setError("");
-    setStats(null);
     try {
       const response = await invokeFunction("exportToLeakZon", {
         project_id: project.id,
@@ -78,7 +131,6 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
       setStats(response.data?.stats || null);
       setInsights(response.data?.insights || null);
       setPhase("done");
-      fireConfetti();
 
       // Mark the "Export to LeakZon" onboarding step as done
       try {
@@ -99,7 +151,7 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
         onExported?.();
       } catch {}
 
-      setTimeout(() => setShowPortalPrompt(true), 1200);
+      // The portal screen is opened by the user from the insights, not on a timer.
     } catch (e) {
       setError(e.message || "Export failed");
       setPhase("error");
@@ -110,8 +162,14 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
     setPhase("confirm");
     setError("");
     setStats(null);
+    setInsights(null);
     setShowPortalPrompt(false);
     onOpenChange(false);
+  };
+
+  const handleContinueToPortal = () => {
+    setShowPortalPrompt(true);
+    fireConfetti();
   };
 
   const handleGoToPortal = () => {
@@ -153,6 +211,21 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
           </div>
         )}
 
+        {phase === "analyzing" && (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-sm font-medium text-foreground">{t("leakzonExport.analyzing")}</p>
+            <p className="text-xs text-muted-foreground">{t("leakzonExport.analyzingDesc")}</p>
+          </div>
+        )}
+
+        {phase === "review" && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t("leakzonExport.reviewDesc")}</p>
+            <InsightsPanel insights={insights} t={t} />
+          </div>
+        )}
+
         {phase === "exporting" && (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -170,37 +243,7 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
                 {t("leakzonExport.stats", stats)}
               </p>
             )}
-            {insights && (
-              <div className="w-full mt-2 rounded-lg border border-border bg-muted/40 p-3 text-start">
-                <p className="text-xs font-semibold text-foreground mb-2">{t("leakzonExport.insightsTitle")}</p>
-                <dl className="space-y-1 text-xs">
-                  <Insight label={t("leakzonExport.iAssigned")} value={`${insights.assigned} / ${insights.metersTotal + insights.fictitiousMains}`} />
-                  <Insight
-                    label={t("leakzonExport.iUnassigned")}
-                    value={insights.unassigned}
-                    tone={insights.unassigned > 0 ? "warn" : "ok"}
-                    note={insights.unassigned > 0 ? t("leakzonExport.iUnassignedNote") : null}
-                  />
-                  <Insight label={t("leakzonExport.iMainSub")} value={`${insights.mains} / ${insights.subs}`} />
-                  <Insight
-                    label={t("leakzonExport.iDmasWithMain")}
-                    value={`${insights.dmasWithMain} / ${insights.dmasTotal}`}
-                    tone={insights.dmasWithMain < insights.dmasTotal ? "warn" : "ok"}
-                  />
-                  {insights.fictitiousMains > 0 && (
-                    <Insight
-                      label={t("leakzonExport.iFictitious")}
-                      value={insights.fictitiousMains}
-                      tone="warn"
-                      note={insights.fictitiousDmaNames.join(", ")}
-                    />
-                  )}
-                  {insights.noCoords > 0 && (
-                    <Insight label={t("leakzonExport.iNoCoords")} value={insights.noCoords} tone="warn" />
-                  )}
-                </dl>
-              </div>
-            )}
+            <InsightsPanel insights={insights} t={t} />
           </div>
         )}
 
@@ -222,9 +265,19 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           {phase === "confirm" && (
-            <Button onClick={handleExport} className="w-full h-11 text-base font-bold gap-2">
-              <Rocket className="w-4 h-4" /> {t("leakzonExport.exportBtn")}
+            <Button onClick={handleAnalyze} className="w-full h-11 text-base font-bold gap-2">
+              <Rocket className="w-4 h-4" /> {t("leakzonExport.analyzeBtn")}
             </Button>
+          )}
+          {phase === "review" && (
+            <>
+              <Button onClick={handleExport} className="w-full h-11 text-base font-bold gap-2">
+                <Rocket className="w-4 h-4" /> {t("leakzonExport.exportBtn")}
+              </Button>
+              <Button variant="ghost" onClick={handleReset} className="w-full">
+                {t("leakzonExport.close")}
+              </Button>
+            </>
           )}
           {phase === "done" && showPortalPrompt && (
             <>
@@ -237,9 +290,14 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
             </>
           )}
           {phase === "done" && !showPortalPrompt && (
-            <Button variant="ghost" onClick={handleReset} className="w-full">
-              {t("leakzonExport.close")}
-            </Button>
+            <>
+              <Button onClick={handleContinueToPortal} className="w-full h-11 text-base font-bold gap-2">
+                <Rocket className="w-4 h-4" /> {t("leakzonExport.continueBtn")}
+              </Button>
+              <Button variant="ghost" onClick={handleReset} className="w-full">
+                {t("leakzonExport.close")}
+              </Button>
+            </>
           )}
           {phase === "error" && (
             <Button variant="ghost" onClick={handleReset} className="w-full">
