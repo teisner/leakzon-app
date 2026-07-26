@@ -6,6 +6,13 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.041 — 2026-07-26
+**DMA settings is now a floating, draggable panel**
+- The DMA configuration dialog (name, colour, transparency, boundary align) is
+  no longer a blocking modal — it's a floating panel you can drag by its header,
+  so the map and the polygon you just drew stay visible while you set it up.
+  Sized to its content and capped to the viewport, with the body scrolling.
+
 ## 1.040 — 2026-07-26
 **Consumption charts colour-coded: main blue, sub-meters green**
 - Meter consumption chart: the line is blue for main and insertion meters, green
