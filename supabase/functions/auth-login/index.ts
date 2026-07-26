@@ -64,6 +64,28 @@ async function findUser(identifier: string | undefined) {
   return byEmail && byEmail.length > 0 ? byEmail[0] : null;
 }
 
+// Support login ("sign in as user"): an admin types the TARGET user's email with
+// their OWN pin. Deliberately a privileged backdoor, so it is constrained:
+//   - only Admin / Super User / LeakZon pins are accepted
+//   - only for targets that have already activated their account
+//   - every use is written to impersonation_log
+// Note this grants no data the admin couldn't already reach — those user types
+// already pass has_project_access for every project — it only reproduces the
+// target's own view so login problems can be diagnosed.
+const IMPERSONATION_ROLES = ['Admin', 'Super User', 'LeakZon'];
+
+async function findImpersonatingAdmin(pin: string) {
+  const { data: admins } = await admin
+    .from('system_user')
+    .select('id, full_name, email, user_type, password_hash')
+    .in('user_type', IMPERSONATION_ROLES)
+    .not('password_hash', 'is', null);
+  for (const a of admins || []) {
+    if (await bcrypt.compare(pin, a.password_hash)) return a;
+  }
+  return null;
+}
+
 // Ensures a real auth.users row exists with the same id as the system_user
 // row, so auth.uid() on every future request equals system_user.id.
 async function ensureAuthUser(user: { id: string; email: string; user_type: string }) {
@@ -84,10 +106,16 @@ async function ensureAuthUser(user: { id: string; email: string; user_type: stri
 // login too, and returning without a session left the user "signed in" client
 // side with no JWT, so RLS saw an anonymous request and every project list came
 // back empty.
-async function loginPayload(user: { id: string; email: string; full_name: string; user_type: string }) {
+async function loginPayload(
+  user: { id: string; email: string; full_name: string; user_type: string },
+  { skipLastLogin = false }: { skipLastLogin?: boolean } = {}
+) {
   await ensureAuthUser(user);
   const session = await mintSession(user.email);
-  await admin.from('system_user').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  // A support login must not masquerade as the user's own activity.
+  if (!skipLastLogin) {
+    await admin.from('system_user').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+  }
   return {
     success: true,
     access_token: session.access_token,
@@ -146,21 +174,25 @@ Deno.serve(async (req) => {
         return json({ error: 'No password set. Please set your password first.' }, 400);
       }
       const matches = await bcrypt.compare(password ?? '', user.password_hash);
-      if (!matches) return json({ error: 'Invalid password' }, 401);
 
-      await ensureAuthUser(user);
-      const session = await mintSession(user.email);
-      await admin.from('system_user').update({ last_login: new Date().toISOString() }).eq('id', user.id);
+      // Not the user's own pin — allow an admin pin as a support login.
+      let impersonator = null;
+      if (!matches) {
+        impersonator = await findImpersonatingAdmin(password ?? '');
+        if (!impersonator) return json({ error: 'Invalid password' }, 401);
+        if (impersonator.id === user.id) return json({ error: 'Invalid password' }, 401);
+        await admin.from('impersonation_log').insert({ admin_id: impersonator.id, target_id: user.id });
+        console.log(`[auth-login] support login: ${impersonator.email} -> ${user.email}`);
+      }
 
+      const payload = await loginPayload(user, { skipLastLogin: !!impersonator });
       return json({
-        success: true,
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-        expires_in: session.expires_in,
-        user_id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        user_type: user.user_type,
+        ...payload,
+        // Present only for support logins — the app shows a banner so the admin
+        // can't mistake this for their own session.
+        impersonated_by: impersonator
+          ? { id: impersonator.id, full_name: impersonator.full_name, email: impersonator.email }
+          : null,
       });
     }
 

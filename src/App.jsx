@@ -13,6 +13,7 @@ import MobileLocator from './pages/MobileLocator';
 import CustomerMode from './pages/CustomerMode';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import ImpersonationBanner from './components/ImpersonationBanner';
 
 // Only runs inactivity logout on authenticated routes, not public-facing ones
 const InactivityGuard = () => {
@@ -30,6 +31,7 @@ function App() {
     <ThemeProvider>
     <QueryClientProvider client={queryClientInstance}>
       <Router>
+        <ImpersonationBanner />
         <ScrollToTop />
         <InactivityGuard />
         <Routes>

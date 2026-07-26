@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.054 — 2026-07-26
+**Admins can sign in as a user to reproduce their view**
+- On the login screen, an admin can enter a **user's email with their own PIN**
+  and be signed in as that user — useful for checking what a user actually sees.
+  Only works for accounts that have already been activated.
+- Only Admin / Super User / LeakZon PINs are accepted; a regular user's PIN can
+  never open someone else's account.
+- An amber "Support login — viewing as …" bar stays visible for the whole
+  session, with an End button, so a support session can't be mistaken for your
+  own. Every use is recorded, and it doesn't touch the user's own "last login".
+
 ## 1.053 — 2026-07-26
 **Fixed empty dashboard after setting or resetting your PIN**
 - Setting a PIN for the first time, or resetting it via "forgot password", signed

@@ -104,7 +104,7 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
       // authenticated and RLS can see this user (see custom_access_token_hook,
       // Phase 1) — auth-login mints this via the Admin API server-side.
       await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
-      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type });
+      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type, impersonated_by: data.impersonated_by || null });
     } catch (err) {
       setError(err.response?.data?.error || t('login.loginFailed'));
     }
@@ -129,7 +129,7 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
       if (data.access_token) {
         await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
       }
-      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type });
+      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type, impersonated_by: data.impersonated_by || null });
     } catch (err) {
       setError(err.response?.data?.error || t('login.setPasswordFailed'));
     }
@@ -176,7 +176,7 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
       if (data.access_token) {
         await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
       }
-      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type });
+      onLoginSuccess?.({ id: data.user_id, full_name: data.full_name, email: data.email, user_type: data.user_type, impersonated_by: data.impersonated_by || null });
     } catch (err) {
       setError(err.response?.data?.error || t('login.resetFailed'));
     }
