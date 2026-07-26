@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.042 — 2026-07-26
+**"Find border valves" now finds single valves sitting on a DMA border**
+- It previously only flagged a valve when a *second* valve from the neighbouring
+  DMA sat right next to it. Shared borders are very often isolated by one valve,
+  so those DMAs returned nothing even though the boundary valve was there. A
+  valve within range of two different DMA boundaries is now flagged on its own.
+- Checked against a real 9-DMA project with 6,324 valves: findings went from 28
+  to 173 and DMA coverage from 5 to 7 of 9 at a 60 m distance.
+- Reminder: the search distance is the "Isolation Valve Distance" slider in
+  Project Settings — raise it if a border is still missed.
+
 ## 1.041 — 2026-07-26
 **DMA settings is now a floating, draggable panel**
 - The DMA configuration dialog (name, colour, transparency, boundary align) is

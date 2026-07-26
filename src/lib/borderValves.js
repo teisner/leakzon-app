@@ -34,49 +34,75 @@ export function collectValvePoints(layers, geojsonCache) {
   return pts;
 }
 
-// Finds valves that sit at a border between two DMAs — i.e. pairs of valves
-// close to each other (within pairMeters) that belong to *different* DMAs (one
-// on each side of the shared boundary). These are the candidate isolation
-// valves. Returns the flagged valves as [{lat, lng}].
+// Finds valves that sit at a border between two DMAs — the candidate isolation
+// valves. Two independent rules, unioned:
 //
-// dmaPolys: [{ id, poly }] where poly is [[lat,lng], …].
+//   A. A valve close to another valve that belongs to a *different* DMA — a
+//      pair straddling the shared boundary.
+//   B. A single valve within range of the boundaries of two *different* DMAs —
+//      i.e. sitting on the shared border itself.
+//
+// Rule B matters because a shared border is very often isolated by ONE valve,
+// not a pair. With only rule A those DMAs returned nothing at all even though
+// the boundary valve was right there.
+//
+// dmaPolys: [{ id, poly }] where poly is [[lat, lng], …].
 export function findBorderValves(valvePoints, dmaPolys, { pairMeters = 60, maxAssignMeters = 120 } = {}) {
   if (!valvePoints?.length || (dmaPolys?.length || 0) < 2) return [];
 
+  // Distance from every valve to every DMA boundary — used by both rules.
+  const boundaryDist = valvePoints.map((v) =>
+    dmaPolys.map((d) => {
+      const np = nearestPointOnPolygon([v.lat, v.lng], d.poly);
+      return haversineMeters(v.lat, v.lng, np[0], np[1]);
+    })
+  );
+
   // Assign each valve to a DMA: the one it's inside, else the nearest DMA whose
   // boundary is within maxAssignMeters (valves often sit just outside a zone).
-  const assigned = valvePoints.map((v) => {
+  const assigned = valvePoints.map((v, i) => {
     let inside = null;
-    for (const d of dmaPolys) {
-      if (pointInPolygon(v.lat, v.lng, d.poly)) { inside = d.id; break; }
+    for (let k = 0; k < dmaPolys.length; k++) {
+      if (pointInPolygon(v.lat, v.lng, dmaPolys[k].poly)) { inside = dmaPolys[k].id; break; }
     }
     if (inside) return { ...v, dmaId: inside };
     let best = null;
     let bestDist = Infinity;
-    for (const d of dmaPolys) {
-      const np = nearestPointOnPolygon([v.lat, v.lng], d.poly);
-      const dist = haversineMeters(v.lat, v.lng, np[0], np[1]);
-      if (dist < bestDist) { bestDist = dist; best = d.id; }
+    for (let k = 0; k < dmaPolys.length; k++) {
+      if (boundaryDist[i][k] < bestDist) { bestDist = boundaryDist[i][k]; best = dmaPolys[k].id; }
     }
     return { ...v, dmaId: bestDist <= maxAssignMeters ? best : null };
   });
 
-  // Sort by latitude so we only compare valves within a narrow lat band
-  // (keeps this near-linear instead of O(n²) for spread-out networks).
-  assigned.sort((a, b) => a.lat - b.lat);
-  const bandDeg = pairMeters / METERS_PER_DEGREE_LAT;
-
   const flagged = new Set();
-  for (let i = 0; i < assigned.length; i++) {
-    for (let j = i + 1; j < assigned.length && assigned[j].lat - assigned[i].lat <= bandDeg; j++) {
-      const a = assigned[i];
-      const b = assigned[j];
+
+  // Rule B — on a shared border: within range of two different DMA boundaries.
+  for (let i = 0; i < valvePoints.length; i++) {
+    let near = 0;
+    for (let k = 0; k < dmaPolys.length; k++) {
+      if (boundaryDist[i][k] <= pairMeters) near++;
+      if (near >= 2) { flagged.add(i); break; }
+    }
+  }
+
+  // Rule A — a close pair of valves belonging to different DMAs. Scanned in
+  // latitude order so only valves within a narrow band are compared (keeps this
+  // near-linear rather than O(n²) on networks with thousands of valves).
+  const order = assigned
+    .map((a, i) => ({ i, lat: a.lat }))
+    .sort((x, y) => x.lat - y.lat);
+  const bandDeg = pairMeters / METERS_PER_DEGREE_LAT;
+  for (let x = 0; x < order.length; x++) {
+    for (let y = x + 1; y < order.length && order[y].lat - order[x].lat <= bandDeg; y++) {
+      const a = assigned[order[x].i];
+      const b = assigned[order[y].i];
       if (!a.dmaId || !b.dmaId || a.dmaId === b.dmaId) continue;
       if (haversineMeters(a.lat, a.lng, b.lat, b.lng) <= pairMeters) {
-        flagged.add(i);
-        flagged.add(j);
+        flagged.add(order[x].i);
+        flagged.add(order[y].i);
       }
     }
   }
-  return [...flagged].map((idx) => ({ lat: assigned[idx].lat, lng: assigned[idx].lng }));
+
+  return [...flagged].map((idx) => ({ lat: valvePoints[idx].lat, lng: valvePoints[idx].lng }));
 }
