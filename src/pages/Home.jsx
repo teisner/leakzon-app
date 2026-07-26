@@ -138,6 +138,13 @@ export default function Home() {
   const loadProjects = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
+      // supabase-js restores the persisted session asynchronously, so a query
+      // fired before that finishes goes out with only the anon key. RLS then
+      // returns zero rows with HTTP 200 — indistinguishable from "this user
+      // has no projects". Wait for the session rather than guess.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
       // RLS (has_project_access) already restricts which projects a Project
       // User can see server-side — no client-side assigned_user_ids filter
       // needed here anymore (that array became the project_assignment table).
@@ -161,10 +168,15 @@ export default function Home() {
         };
       });
       setProjects(enriched);
-      try {
-        localStorage.setItem(`dashboardProjectsCache_${loggedInUser?.id || 'guest'}`, JSON.stringify({ data: enriched, timestamp: Date.now() }));
-      } catch {}
-    } catch {
+      // Never cache an empty result. Caching one pins the dashboard to "no
+      // projects" for the whole TTL, long after whatever caused it is over.
+      if (enriched.length > 0) {
+        try {
+          localStorage.setItem(`dashboardProjectsCache_${loggedInUser?.id || 'guest'}`, JSON.stringify({ data: enriched, timestamp: Date.now() }));
+        } catch {}
+      }
+    } catch (e) {
+      console.error("Failed to load projects:", e);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -187,18 +199,30 @@ export default function Home() {
       setLoading(false);
     }
 
-    // Fetch in background if no cache or cache is older than 1 hour
+    // Fetch in background if no cache or cache is older than 1 hour. An empty
+    // cached list always refetches — it carries no information, and treating
+    // it as valid is what kept the dashboard blank.
+    const hasCachedProjects = cached?.data?.length > 0;
     const cacheAge = cached ? Date.now() - cached.timestamp : Infinity;
-    if (!cached || cacheAge >= DASHBOARD_CACHE_TTL) {
-      loadProjects(!!cached); // silent if we have cached data to show
+    if (!hasCachedProjects || cacheAge >= DASHBOARD_CACHE_TTL) {
+      loadProjects(hasCachedProjects); // silent only if there's something on screen
     }
+
+    // The persisted session arrives after mount, so the first load above can
+    // return early with no session. Reload once it lands.
+    const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) loadProjects(true);
+    });
 
     // Hourly background refresh
     const interval = setInterval(() => {
       loadProjects(true);
     }, DASHBOARD_CACHE_TTL);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      authSub?.subscription?.unsubscribe();
+    };
   }, [loggedInUser]);
 
   return (

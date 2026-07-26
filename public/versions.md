@@ -1,3 +1,15 @@
+## 1.066 — 2026-07-26
+**Fixed the dashboard showing no projects at all**
+- After a deploy, the dashboard could come up completely empty and stay that
+  way. The project list is loaded as soon as the page opens, but the saved
+  sign-in is restored a moment later — so the request went out unauthenticated
+  and came back with nothing, which looked exactly like "you have no projects".
+- That empty result was then saved to the local cache and reused for an hour,
+  so reloading did not help.
+- The dashboard now waits for your sign-in before loading, never caches an
+  empty list, and reloads by itself the moment the session is restored. No
+  action needed — affected browsers recover on the next page load.
+
 ## 1.065 — 2026-07-26
 **Export analysis no longer counts a DMA as having a main meter it isn't linked to**
 - A DMA was treated as having a main meter whenever *any* main happened to sit
