@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.047 — 2026-07-26
+**Version Updates moved to the side menu footer**
+- On the projects dashboard, Version Updates now sits at the bottom of the side
+  menu directly above Settings, instead of in the main list with Projects,
+  Archive and Users.
+
 ## 1.046 — 2026-07-26
 **Version number shown on the login screen**
 - The login box now shows "Ver 1.046" in its bottom-right corner, below the

@@ -25,7 +25,6 @@ export default function DashboardNav({ activeTab, onChange, currentUser }) {
     { key: "projects", label: t('dashboard.projects'), Icon: LayoutDashboard },
     { key: "archive", label: t('dashboard.archive'), Icon: Archive },
     { key: "users", label: t('dashboard.users'), Icon: UsersIcon },
-    ...(canViewVersionUpdates ? [{ key: "versionUpdates", label: t('dashboard.versionUpdates'), Icon: GitPullRequest }] : []),
   ];
 
   const navButton = ({ key, label, Icon }) => (
@@ -58,6 +57,7 @@ export default function DashboardNav({ activeTab, onChange, currentUser }) {
       </div>
 
       <div className="mt-auto pt-2 space-y-1">
+        {canViewVersionUpdates && navButton({ key: "versionUpdates", label: t('dashboard.versionUpdates'), Icon: GitPullRequest })}
         {canViewVersionUpdates && navButton({ key: "settings", label: "Settings", Icon: Settings })}
         <SidebarLockControl
           mode={mode}
