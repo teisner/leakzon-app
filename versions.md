@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.045 — 2026-07-26
+**Locked projects are tinted on the dashboard**
+- A locked project's card now has a warm amber tint and border instead of the
+  normal card colour, matching its lock badge — so locked projects stand out
+  across the grid, not just by the small icon.
+
 ## 1.044 — 2026-07-26
 **Added Vercel Speed Insights**
 - Installed `@vercel/speed-insights` and mounted it at the app root, so real

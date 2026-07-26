@@ -24,7 +24,13 @@ export default function ProjectCard({ project, onClick, onEdit, onDelete, onUndo
   return (
     <div
       onClick={() => onClick?.(project)}
-      className={`group relative bg-card rounded-2xl ${scale.pad} cursor-pointer transition-all duration-300 ease-out border border-border hover:border-primary/40 hover:shadow-[0_8px_30px_-6px_rgba(0,188,212,0.15)] hover:-translate-y-1 overflow-hidden`}
+      className={`group relative rounded-2xl ${scale.pad} cursor-pointer transition-all duration-300 ease-out border hover:shadow-[0_8px_30px_-6px_rgba(0,188,212,0.15)] hover:-translate-y-1 overflow-hidden ${
+        project.locked
+          // Locked projects get a warm amber tint, matching the lock badge, so
+          // they read as read-only at a glance across the grid.
+          ? "bg-amber-500/[0.07] border-amber-500/30 hover:border-amber-500/50"
+          : "bg-card border-border hover:border-primary/40"
+      }`}
     >
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
