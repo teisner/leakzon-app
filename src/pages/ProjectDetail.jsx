@@ -1625,7 +1625,9 @@ export default function ProjectDetail() {
         open={!!editLayer}
         onOpenChange={(open) => !open && setEditLayer(null)}
         layer={editLayer}
-        onSaved={loadLayers}
+        // Saving can also backfill meter rows (when a layer is re-categorised
+        // as a meter type), so refresh meters too — not just the layer list.
+        onSaved={() => { loadLayers(); loadMeters(); }}
       />
       <EstimationThresholdDialog
         open={showThresholdDialog}

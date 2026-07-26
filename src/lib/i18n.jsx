@@ -729,6 +729,7 @@ const translations = {
     'layerEdit.weight': 'Weight:',
     'layerEdit.cancel': 'Cancel',
     'layerEdit.save': 'Save',
+    'layerEdit.creatingMeters': 'Creating meter records...',
 
     // Manual Layer Dialog
     'manualLayer.title': 'Create Manual Layer',
@@ -1674,6 +1675,7 @@ const translations = {
     'layerEdit.weight': 'משקל:',
     'layerEdit.cancel': 'ביטול',
     'layerEdit.save': 'שמור',
+    'layerEdit.creatingMeters': 'יוצר רשומות מדים...',
 
     // Manual Layer Dialog
     'manualLayer.title': 'צור שכבה ידנית',

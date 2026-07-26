@@ -1,3 +1,23 @@
+## 1.055 — 2026-07-26
+**Uploaded meter layers now create meter records, and the category is detected automatically**
+- Uploading a single shapefile/GeoJSON no longer defaults the layer category to
+  **Other** — it is now auto-detected from the layer name, the same way a
+  multi-layer ZIP already did. A file with "meter" in the name lands under
+  **Meters**.
+- Because the category was wrong, meter layers were created as a display layer
+  only: the layer showed a feature count but **0 meters**, with nothing on the
+  map or in the Meter Data table. Meter layers now always create the matching
+  meter records — main/insertion/ultrasonic layers as **mains**, plain
+  meter/connection/service layers as **sub meters**.
+- **Repair for a layer already uploaded this way:** open the layer's settings
+  and set its category to **Meters** (or Main/Sub/Insertion Meters). Saving now
+  creates the missing meter records from the layer's own points. It only does
+  this when the layer has no meter records yet, so re-saving can't duplicate
+  them.
+- A name like "Water_Mains_Meters" was read as a Water Lines layer; an explicit
+  "meter" in the name now wins over the pipe keywords. "Service line" style
+  names still classify as pipes.
+
 # LeakZon — Version History
 
 Version format: `1.NNN` (three digits after the dot). Every change bumps the

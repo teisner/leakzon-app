@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
+import { meterLayerKind } from "@/lib/meterLayerDetection";
+import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
 import { SHAPE_OPTIONS } from "@/lib/shapeIcons";
 import { useLanguage } from "@/lib/i18n";
 import LayerColorPicker from "./LayerColorPicker";
@@ -66,6 +68,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
   const [pipeConfig, setPipeConfig] = useState(null);
   const [pointConfig, setPointConfig] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [progressLabel, setProgressLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const [lastLayer, setLastLayer] = useState(null);
   // Floating/draggable panel (same interaction as the onboarding wizard) so the
@@ -164,13 +167,40 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
         updates.point_config = pointConfig;
       }
       if (isPipe) updates.pipe_config = pipeConfig;
-      await supabase.from('project_layer').update(updates).eq('id', effectiveLayer.id);
+      const { error } = await supabase.from('project_layer').update(updates).eq('id', effectiveLayer.id);
+      if (error) throw error;
+      await backfillMeters();
       onSaved?.();
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to update layer:", err);
     }
     setSaving(false);
+  };
+
+  // A layer imported under a non-meter category (e.g. "Other") creates no rows
+  // in the `meter` table, so its points show a feature count but no meters
+  // anywhere. Re-categorising it as a meter type here repairs that: if the
+  // layer has no meter rows yet, build them from its stored GeoJSON.
+  const backfillMeters = async () => {
+    const kind = meterLayerKind(name, category);
+    if (!kind || !isPoint || !effectiveLayer.file_url) return;
+    const { count, error: countError } = await supabase
+      .from('meter')
+      .select('id', { count: 'exact', head: true })
+      .eq('layer_id', effectiveLayer.id);
+    if (countError || count > 0) return;
+    setProgressLabel(t('layerEdit.creatingMeters'));
+    try {
+      await createMetersFromGeoJSONUrl(effectiveLayer.file_url, {
+        projectId: effectiveLayer.project_id,
+        layerId: effectiveLayer.id,
+        isMain: kind === "main",
+      });
+    } catch (e) {
+      console.error("Failed to create meter rows for re-categorised layer:", e);
+    }
+    setProgressLabel("");
   };
 
   // If this layer matches a component type configured in the dashboard
@@ -495,7 +525,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
         <Button variant="outline" onClick={() => onOpenChange(false)}>{t('layerEdit.cancel')}</Button>
         <Button onClick={handleSave} disabled={saving} className="gap-1.5">
           {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          {t('layerEdit.save')}
+          {progressLabel || t('layerEdit.save')}
         </Button>
       </div>
     </div>

@@ -16,14 +16,33 @@ export function isInsertionManualLayer(layer) {
   return /insertion/i.test(layer?.name || "");
 }
 
-// True for layers whose point features represent main/insertion/ultrasonic
-// meters — i.e. layers that should also produce is_main=true rows in the
-// `meter` table (so they show in the meter table, network inventory, DMA
-// main-meter linking, and point numbering). Used when importing a shapefile/
-// GeoJSON layer, which otherwise only creates a display layer with no meters.
-export function isMainMeterLayerName(name, category) {
-  return (
-    /insertion|ultrasonic|main[\s_-]?meter/i.test(name || "") ||
-    ["Main Meters", "Insertion Meters", "Ultrasonic Meters"].includes(category || "")
-  );
+// Categories whose layers carry meters, split by whether those meters are
+// mains (is_main=true — network inventory, DMA main-meter linking) or
+// customer/sub meters (is_main=false).
+const MAIN_METER_CATEGORIES = ["Main Meters", "Insertion Meters", "Ultrasonic Meters"];
+const SUB_METER_CATEGORIES = ["Meters", "Sub Meters"];
+// Categories that are definitely not meters, so a stray "meter" in the layer
+// name (e.g. "meter_valves") doesn't get misread as a meter layer.
+const NON_METER_CATEGORIES = [
+  "Water Lines", "Valves", "Hydrant", "Water Tower",
+  "Pump Stations", "Reservoir Water", "Water Source",
+];
+
+// Classifies a layer's point features as meters: "main", "sub", or null for
+// "not a meter layer". Layers that come back "main"/"sub" must also produce
+// rows in the `meter` table when imported — otherwise they exist only as a
+// display layer and the points are missing from the meter table, network
+// inventory, DMA linking and point numbering.
+export function meterLayerKind(name, category) {
+  const n = name || "";
+  const c = category || "";
+  if (/insertion|ultrasonic|main[\s_-]?meter/i.test(n) || MAIN_METER_CATEGORIES.includes(c)) {
+    return "main";
+  }
+  if (NON_METER_CATEGORIES.includes(c)) return null;
+  // A generic "meter"/"connection"/"service" name (or an explicit sub-meter
+  // category) means customer meters — the common case for a big meters
+  // shapefile that landed under a category like "Other".
+  if (SUB_METER_CATEGORIES.includes(c) || /meter|connection|service/i.test(n)) return "sub";
+  return null;
 }

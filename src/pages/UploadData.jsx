@@ -10,7 +10,7 @@ import { uploadFile } from "@/api/storageClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
-import { isMainMeterLayerName } from "@/lib/meterLayerDetection";
+import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
 import { componentPointConfig, componentColor } from "@/lib/componentDefaults";
 import { downloadMeterTemplate } from "@/lib/meterTemplate";
@@ -162,6 +162,7 @@ export default function UploadData() {
     setFile(selected);
     const nameWithoutExt = selected.name.replace(/\.[^/.]+$/, "");
     setLayerName(nameWithoutExt);
+    setLayerCategory(detectLayerCategory(nameWithoutExt));
 
     if (layerType === "shp") {
       try {
@@ -192,6 +193,10 @@ export default function UploadData() {
             const geojson = shpLayers[0].geojson;
             const detectedName = shpLayers[0].name || nameWithoutExt;
             setLayerName(detectedName);
+            // Auto-detect from the shapefile's own layer name, same as the
+            // multi-layer ZIP branch — otherwise this defaulted to "Other"
+            // and meter layers silently created no meter rows.
+            setLayerCategory(detectLayerCategory(detectedName));
             setProgressLabel(t('upload.storingGeojson'));
             const geojsonBlob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
             const geojsonFile = new File([geojsonBlob], `${detectedName}.geojson`, { type: "application/json" });
@@ -334,9 +339,10 @@ export default function UploadData() {
         // Meter-type layers (Main/Insertion/Ultrasonic) also need is_main
         // meter rows so they show in the meter table, network inventory, DMA
         // linking, and point numbering — not just as a display layer.
-        if (insertedLayer?.id && isMainMeterLayerName(layerName, layerCategory)) {
+        const meterKind = meterLayerKind(layerName, layerCategory);
+        if (insertedLayer?.id && meterKind) {
           try {
-            await createMetersFromGeoJSONUrl(file_url, { projectId: id, layerId: insertedLayer.id });
+            await createMetersFromGeoJSONUrl(file_url, { projectId: id, layerId: insertedLayer.id, isMain: meterKind === "main" });
           } catch (e) {
             console.error("Failed to create meter rows for meter layer:", e);
           }
@@ -479,9 +485,10 @@ export default function UploadData() {
           altitude_unit: layer.analysis?.altitude_unit || null,
         }).select('id').single();
 
-        if (insertedZipLayer?.id && isMainMeterLayerName(layer.name, layer.category)) {
+        const zipMeterKind = meterLayerKind(layer.name, layer.category);
+        if (insertedZipLayer?.id && zipMeterKind) {
           try {
-            await createMetersFromGeoJSONUrl(layer.fileUrl, { projectId: id, layerId: insertedZipLayer.id });
+            await createMetersFromGeoJSONUrl(layer.fileUrl, { projectId: id, layerId: insertedZipLayer.id, isMain: zipMeterKind === "main" });
           } catch (e) {
             console.error("Failed to create meter rows for meter layer:", e);
           }

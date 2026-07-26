@@ -13,7 +13,7 @@ import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import { detectLayerCategory } from "@/lib/layerCategoryDetection";
-import { isMainMeterLayerName } from "@/lib/meterLayerDetection";
+import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
 import { componentPointConfig, componentColor } from "@/lib/componentDefaults";
 import ZipLayerReview from "@/components/project/ZipLayerReview";
@@ -107,6 +107,7 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
     setFile(selected);
     const nameWithoutExt = selected.name.replace(/\.[^/.]+$/, "");
     setLayerName(nameWithoutExt);
+    setLayerCategory(detectLayerCategory(nameWithoutExt));
 
     if (layerType === "shp") {
       try {
@@ -138,6 +139,10 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
             const geojson = layers[0].geojson;
             const layerName = layers[0].name || nameWithoutExt;
             setLayerName(layerName);
+            // Same auto-detect the multi-layer ZIP branch below does. Without
+            // it a single-shapefile upload defaulted to "Other", which also
+            // stopped meter layers from creating any meter rows.
+            setLayerCategory(detectLayerCategory(layerName));
             setProgressLabel(t('upload.storingGeojson'));
             const geojsonBlob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
             const geojsonFile = new File([geojsonBlob], `${layerName}.geojson`, { type: "application/json" });
@@ -282,10 +287,11 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
         // is_main meter rows so they appear in the meter table, network
         // inventory, DMA main-meter linking, and point numbering — a plain
         // shapefile import otherwise only creates a display layer.
-        if (insertedLayer?.id && isMainMeterLayerName(layerName, layerCategory)) {
+        const meterKind = meterLayerKind(layerName, layerCategory);
+        if (insertedLayer?.id && meterKind) {
           setProgressLabel(t('upload.savingLayer'));
           try {
-            await createMetersFromGeoJSONUrl(file_url, { projectId, layerId: insertedLayer.id });
+            await createMetersFromGeoJSONUrl(file_url, { projectId, layerId: insertedLayer.id, isMain: meterKind === "main" });
           } catch (e) {
             console.error("Failed to create meter rows for meter layer:", e);
           }
@@ -438,9 +444,10 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
 
         // Also create is_main meter rows for meter-type layers (see the
         // single-layer path above for why).
-        if (insertedZipLayer?.id && isMainMeterLayerName(layer.name, layer.category)) {
+        const zipMeterKind = meterLayerKind(layer.name, layer.category);
+        if (insertedZipLayer?.id && zipMeterKind) {
           try {
-            await createMetersFromGeoJSONUrl(layer.fileUrl, { projectId, layerId: insertedZipLayer.id });
+            await createMetersFromGeoJSONUrl(layer.fileUrl, { projectId, layerId: insertedZipLayer.id, isMain: zipMeterKind === "main" });
           } catch (e) {
             console.error("Failed to create meter rows for meter layer:", e);
           }

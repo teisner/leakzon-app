@@ -6,7 +6,7 @@ import { runBatchesInParallel } from "@/lib/parallelBatch";
 const UID_KEYS = ["name", "uid", "UID", "id", "ID", "meter_id", "MeterID", "label", "NAME"];
 
 // Builds meter rows from a GeoJSON's point features. Used when a shapefile/
-// GeoJSON layer represents meters (see isMainMeterLayerName) so those points
+// GeoJSON layer represents meters (see meterLayerKind) so those points
 // land in the `meter` table, not just as a display layer.
 export function buildMetersFromGeoJSON(geojson, { projectId, layerId, fileUrl, isMain = true }) {
   const features = geojson?.features || (geojson?.type === "Feature" ? [geojson] : []);
