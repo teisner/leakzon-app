@@ -1,3 +1,9 @@
+## 1.067 — 2026-07-27
+**Version number in the project side menu is green and centred**
+- In a project, the "Ver" line at the bottom of the side menu is now green and
+  centred, in both the expanded and collapsed states — it was grey and
+  left-aligned when the menu was open.
+
 ## 1.066 — 2026-07-26
 **Fixed the dashboard showing no projects at all**
 - After a deploy, the dashboard could come up completely empty and stay that

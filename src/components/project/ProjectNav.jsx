@@ -138,8 +138,8 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
           }}
         />
         <div className="mt-2 pt-2 border-t border-border">
-          <div className={`flex items-center gap-1.5 ${expanded ? "px-3" : "justify-center"}`}>
-            <p className="text-[10px] text-muted-foreground/70 tabular-nums">Ver {APP_VERSION}</p>
+          <div className="flex items-center justify-center gap-1.5">
+            <p className="text-[10px] text-green-600 dark:text-green-400 tabular-nums">Ver {APP_VERSION}</p>
             {latestVersion && (
               <button
                 onClick={() => setShowUpdate(true)}
