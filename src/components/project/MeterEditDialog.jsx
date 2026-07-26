@@ -107,6 +107,9 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
         if (linkedDmaId) {
           await supabase.from('dma').update({ main_meter_id: meter.id }).eq('id', linkedDmaId);
         }
+        // Keep the meter's own dma_id in step: it drives the DMA column in the
+        // meter table and the DMA assignment in the LeakZon export.
+        await supabase.from('meter').update({ dma_id: linkedDmaId || null }).eq('id', meter.id);
       }
 
       onSaved?.();

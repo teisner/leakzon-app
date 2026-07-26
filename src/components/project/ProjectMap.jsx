@@ -666,13 +666,39 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     // DMAs. (dma.main_meter_id has no unique constraint, so this is allowed.)
     // meter_count isn't stored anymore — it's computed live via the
     // dma_enriched view.
-    await supabase.from('dma').update({
+    const prevMainId = editDma.main_meter_id || null;
+    const nextMainId = editMainMeterId || null;
+
+    const { error } = await supabase.from('dma').update({
       name: editName,
       color: editColor,
       transparency: editTransparency / 100,
       polygon_json: editPoints,
       main_meter_id: editMainMeterId || null,
     }).eq('id', editDma.id);
+    if (error) {
+      console.error("Failed to save DMA:", error);
+      return;
+    }
+
+    // The meter carries its own dma_id, and the export reads it. Keep it in
+    // step with the link, or a meter unassigned here still exports under this
+    // DMA and keeps showing it in the meter table.
+    if (prevMainId !== nextMainId) {
+      if (prevMainId) {
+        // A main meter can serve several DMAs — only clear it when no other
+        // DMA still points at it.
+        const stillLinked = (dmas || []).some((d) => d.id !== editDma.id && d.main_meter_id === prevMainId);
+        if (!stillLinked) {
+          await supabase.from('meter').update({ dma_id: null })
+            .eq('id', prevMainId).eq('dma_id', editDma.id);
+        }
+      }
+      if (nextMainId) {
+        await supabase.from('meter').update({ dma_id: editDma.id }).eq('id', nextMainId);
+      }
+    }
+
     setEditDma(null);
     onDmaCreated?.();
   };

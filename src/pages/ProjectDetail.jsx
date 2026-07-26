@@ -662,6 +662,9 @@ export default function ProjectDetail() {
   const handleDmaCreated = () => {
     recordProgress(id, "dmas_created");
     loadDmas();
+    // A DMA edit can change which meter is its main, which changes the DMA
+    // shown against that meter — reload meters too.
+    loadMeters();
   };
 
   const handleValveClick = (valveInfo) => {

@@ -205,15 +205,25 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
     return (dmas || []).map((dma) => {
       let poly;
       try {
-        poly = typeof dma.polygon === "string" ? JSON.parse(dma.polygon) : dma.polygon;
+        // Base44's `polygon` (JSON string) became `polygon_json` (jsonb) —
+        // accept either, or every sub-meter shows a blank DMA.
+        const raw = dma.polygon_json ?? dma.polygon;
+        poly = typeof raw === "string" ? JSON.parse(raw) : raw;
       } catch { poly = null; }
       return { id: dma.id, name: dma.name, main_meter_id: dma.main_meter_id, poly };
     });
   }, [dmas]);
 
   const getMeterDma = useCallback((m) => {
+    // An explicit link always wins.
     for (const dma of parsedDmas) {
       if (dma.main_meter_id && dma.main_meter_id === m.id) return dma.name;
+    }
+    // A main meter belongs to a DMA only by that explicit link — mains sit at
+    // inlets and boundaries, so falling back to "which polygon contains it"
+    // would keep showing a DMA after the main meter was unassigned from it.
+    if (m.is_main) return null;
+    for (const dma of parsedDmas) {
       if (dma.poly && dma.poly.length >= 3 && m.latitude != null && m.longitude != null) {
         if (pointInPolygon(m.latitude, m.longitude, dma.poly)) return dma.name;
       }

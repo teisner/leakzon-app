@@ -1,3 +1,19 @@
+## 1.064 — 2026-07-26
+**Removing a DMA's main meter now clears the DMA from that meter's record**
+- Unassigning a main meter from a DMA clears the DMA against that meter in the
+  Meter Data table, and in the LeakZon export. Previously the meter kept its
+  stored DMA, so it still exported under a DMA it was no longer linked to.
+- A main meter serving more than one DMA keeps the others — only the link you
+  removed is cleared.
+- A main meter shows a DMA only when it is actually linked to one. It no longer
+  picks one up just for sitting inside its area, which was why the DMA stayed
+  visible after unassigning.
+- **Fixed:** the DMA column in the Meter Data table was reading a field that no
+  longer exists, so **sub meters showed a blank DMA** even when they sat inside
+  one. They now show their DMA.
+- Saving a DMA now reports a failure instead of closing as if it had worked,
+  and the meter list refreshes after the change.
+
 ## 1.063 — 2026-07-26
 **Export to LeakZon analyses first, and DMA/boundary export as outlines**
 - The export now starts with an **analysis step**. Before anything is
