@@ -5,7 +5,7 @@
 import { pointInPolygon } from "@/lib/polygonUtils";
 
 const FEET_TO_METERS = 0.3048;
-export const DEFAULT_PROXIMITY_FEET = 60;
+export const DEFAULT_PROXIMITY_FEET = 100;
 export const DEFAULT_PROXIMITY_METERS = DEFAULT_PROXIMITY_FEET * FEET_TO_METERS;
 export const feetToMeters = (feet) => feet * FEET_TO_METERS;
 

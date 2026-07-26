@@ -4,12 +4,12 @@
 //
 // Stored canonically in metres on project.isolation_distance_meters. The column
 // is nullable so "not configured yet" can fall back to a unit-aware default:
-// 60 m for metric projects, 200 ft for imperial ones (the customary equivalents
-// — 200 ft is 60.96 m, so they're the same distance in practice).
+// 100 ft for imperial projects and 30 m for metric ones — the same distance
+// either way (100 ft is 30.48 m).
 const FEET_TO_METERS = 0.3048;
 
-export const DEFAULT_ISOLATION_METRIC_M = 60;
-export const DEFAULT_ISOLATION_IMPERIAL_FT = 200;
+export const DEFAULT_ISOLATION_METRIC_M = 30;
+export const DEFAULT_ISOLATION_IMPERIAL_FT = 100;
 
 export const isImperialProject = (project) => project?.distance_unit === "Miles";
 

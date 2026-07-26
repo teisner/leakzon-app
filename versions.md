@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.039 — 2026-07-26
+**Distance settings are now drag sliders (0–500 ft, default 100 ft)**
+- "Boundary Deviation Distance" (DMA Focus) and "Isolation Valve Distance"
+  (Isolation Points) are now sliders you drag with the mouse, with the value
+  shown live beside them, instead of typed number boxes.
+- Range 0–500 ft, default 100 ft. Metric projects show the isolation slider in
+  metres over the equivalent 0–150 m range, defaulting to 30 m (the same
+  distance as 100 ft).
+- Existing projects keep whatever distance they were already set to — only the
+  default for new projects changed.
+
 ## 1.038 — 2026-07-26
 **Removed the zero-value / spike shading from the consumption chart**
 - The amber "Zero values" and purple "high spikes" shaded areas (and their

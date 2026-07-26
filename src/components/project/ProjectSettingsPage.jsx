@@ -1,6 +1,7 @@
 import React from "react";
 import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
+import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
 
 function SegmentedToggle({ value, options, onChange }) {
@@ -48,6 +49,7 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
   // Shown in the project's own distance unit (m for metric, ft for imperial);
   // stored canonically in metres.
   const { value: isolationValue, unit: isolationUnit } = isolationDistanceDisplay(project);
+  const boundaryFeet = project.boundary_deviation_feet ?? DEFAULT_PROXIMITY_FEET;
 
   const handleToggleLock = () => {
     if (locked) {
@@ -159,19 +161,19 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
               title="Boundary Deviation Distance"
               description="Proximity radius (in feet) used when focusing on a DMA on the map"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 w-56">
                 <input
-                  type="number"
+                  type="range"
                   min={0}
-                  max={1000}
-                  value={project.boundary_deviation_feet ?? 60}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val) && val >= 0) handleUpdate("boundary_deviation_feet", val);
-                  }}
-                  className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  max={500}
+                  step={5}
+                  value={boundaryFeet}
+                  onChange={(e) => handleUpdate("boundary_deviation_feet", parseInt(e.target.value, 10))}
+                  className="flex-1 accent-primary cursor-pointer"
                 />
-                <span className="text-sm text-muted-foreground font-medium">ft</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums w-16 text-right shrink-0">
+                  {boundaryFeet} ft
+                </span>
               </div>
             </SettingRow>
           </div>
@@ -186,21 +188,21 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
               title="Isolation Valve Distance"
               description={`How close two valves on opposite sides of a DMA boundary must be to count as a candidate isolation point — used by "Find border valves"`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 w-56">
                 <input
-                  type="number"
-                  min={1}
-                  max={isolationUnit === "ft" ? 3000 : 1000}
+                  type="range"
+                  min={0}
+                  max={isolationUnit === "ft" ? 500 : 150}
+                  step={isolationUnit === "ft" ? 5 : 1}
                   value={isolationValue}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val > 0) {
-                      handleUpdate("isolation_distance_meters", displayToMeters(project, val));
-                    }
-                  }}
-                  className="w-24 px-3 py-1.5 text-sm font-semibold text-center border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  onChange={(e) =>
+                    handleUpdate("isolation_distance_meters", displayToMeters(project, parseFloat(e.target.value)))
+                  }
+                  className="flex-1 accent-primary cursor-pointer"
                 />
-                <span className="text-sm text-muted-foreground font-medium">{isolationUnit}</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums w-16 text-right shrink-0">
+                  {isolationValue} {isolationUnit}
+                </span>
               </div>
             </SettingRow>
           </div>
