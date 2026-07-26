@@ -30,7 +30,11 @@ export async function runBatchesInParallel(items, batchSize, concurrency, proces
       let success = false;
       while (attempt < maxRetries && !success) {
         try {
-          await processBatch(batch);
+          const result = await processBatch(batch);
+          // supabase-js resolves rather than rejects on a failed write, so a
+          // rejected insert would otherwise be counted as a success and the
+          // import would report rows it never wrote. Surface it as a throw.
+          if (result && result.error) throw result.error;
           success = true;
         } catch (err) {
           attempt++;

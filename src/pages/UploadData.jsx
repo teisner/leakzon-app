@@ -18,7 +18,7 @@ import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import { detectLayerCategory } from "@/lib/layerCategoryDetection";
 import ZipLayerReview from "@/components/project/ZipLayerReview";
 import ZipImportStats from "@/components/project/ZipImportStats";
-import { analyzeMeterData, extractMeterRecords, detectMainColumn } from "@/lib/meterAnalysis";
+import { analyzeMeterData, extractMeterRecords, detectMainColumn, toMeterInsertRows } from "@/lib/meterAnalysis";
 import { runBatchesInParallel } from "@/lib/parallelBatch";
 import MeterConfigStep from "@/components/project/MeterConfigStep";
 import ConsumptionUploadStep from "@/components/project/ConsumptionUploadStep";
@@ -393,7 +393,7 @@ export default function UploadData() {
 
           setProgressLabel(t('upload.savingLayerName', { name: set.name }));
 
-          const { data: layer } = await supabase
+          const { data: layer, error: layerError } = await supabase
             .from('project_layer')
             .insert({
               project_id: id,
@@ -410,8 +410,9 @@ export default function UploadData() {
             })
             .select()
             .single();
+          if (layerError || !layer) throw layerError || new Error("Failed to create the layer");
 
-          const taggedRecords = set.records.map((r) => ({
+          const taggedRecords = toMeterInsertRows(set.records, dmas).map((r) => ({
             ...r,
             project_id: id,
             source_file_url: fileUrl,

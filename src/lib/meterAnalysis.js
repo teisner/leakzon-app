@@ -183,6 +183,22 @@ export async function analyzeMeterData(file, fileUrl) {
   return { columns, suggestions, idColumns, preview: rows.slice(0, 5), rowCount: rows.length, rows };
 }
 
+// `meter` has no dma_name column — the DMA is a real FK (meter.dma_id), and
+// getProjectMeters synthesizes dma_name on read. So the dma_name that
+// extractMeterRecords carries (for preview + "imported with DMA names") has to
+// be resolved to a dma_id and dropped before the rows are written, otherwise
+// PostgREST rejects the whole batch with:
+//   PGRST204 Could not find the 'dma_name' column of 'meter' in the schema cache
+export function toMeterInsertRows(records, dmas) {
+  const byName = new Map(
+    (dmas || []).filter((d) => d?.name).map((d) => [d.name.trim().toLowerCase(), d.id])
+  );
+  return records.map(({ dma_name, ...rest }) => {
+    const dmaId = dma_name ? byName.get(String(dma_name).trim().toLowerCase()) : null;
+    return dmaId ? { ...rest, dma_id: dmaId } : rest;
+  });
+}
+
 export async function extractMeterRecords(analysis, fileUrl, fileName, mappings, isMain, extraIdColumns, mainColumn) {
   const idCols = extraIdColumns || [];
   return analysis.rows

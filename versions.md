@@ -1,3 +1,17 @@
+## 1.058 — 2026-07-26
+**Fixed meter data imports silently creating no meters at all**
+- Importing meter data from a CSV/Excel file created the layer but **not a
+  single meter** — no points on the map, nothing in the Meter Data table — and
+  still reported success. The import was sending a `DMA / Zone Name` field that
+  is no longer a column on the meter record, so the database rejected every
+  batch and the app never noticed.
+- The DMA name from the file is now matched to the project's DMAs (ignoring
+  case and spacing) and stored as a proper link, so importing meters with a DMA
+  column assigns them to that DMA.
+- Batch imports now stop and show the real error instead of reporting rows they
+  never saved. This applies to every bulk import, not just meters.
+- The "carbon copy" optimized importer was unaffected and worked throughout.
+
 ## 1.057 — 2026-07-26
 **Preview builds are marked with a red PREVIEW label**
 - A small red **PREVIEW** appears under the LeakZon logo on the projects
