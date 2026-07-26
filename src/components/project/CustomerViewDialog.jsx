@@ -222,7 +222,7 @@ export default function CustomerViewDialog({ open, onOpenChange, projectId, proj
                     variant={approvalRequested ? "outline" : "default"}
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    {approvalRequested ? "Cancel approval request" : "Approve Network Design"}
+                    {approvalRequested ? "Cancel approval request" : "Request Design Approval"}
                   </Button>
                   <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
                     {approvalRequested

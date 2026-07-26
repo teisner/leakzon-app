@@ -6,6 +6,14 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.051 — 2026-07-26
+**Fixed the frozen customer approval dialog; changelog colours**
+- Clicking "Approve this design" in the customer view appeared to do nothing and
+  froze the page — the confirmation opened *underneath* the map while its
+  backdrop still swallowed clicks. It now opens above the map.
+- Renamed the project-side button to **Request Design Approval**.
+- Changelog: version and date in blue, the headline in green, details unchanged.
+
 ## 1.050 — 2026-07-26
 **Refresh button on the changelog**
 - A small refresh icon next to the Changelog heading in Version Updates pulls

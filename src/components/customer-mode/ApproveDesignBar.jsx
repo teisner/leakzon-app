@@ -74,7 +74,7 @@ export default function ApproveDesignBar({ project, token, onApproved }) {
       </div>
 
       <AlertDialog open={open} onOpenChange={(v) => { if (!saving) setOpen(v); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[2000]" overlayClassName="z-[1999]">
           <AlertDialogHeader>
             <AlertDialogTitle>Approve this network design?</AlertDialogTitle>
             <AlertDialogDescription>
