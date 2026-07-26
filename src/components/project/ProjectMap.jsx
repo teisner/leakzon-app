@@ -583,9 +583,14 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     return findBorderValves(
       collectValvePoints(layers, geojsonCache),
       parseDmaPolygons(dmas),
-      { pairMeters, maxAssignMeters: pairMeters * 2 }
+      {
+        pairMeters,
+        maxAssignMeters: pairMeters * 2,
+        // Valves already marked as isolation points don't need marking again.
+        excludePoints: isolatedPoints || [],
+      }
     );
-  }, [highlightBorderValves, layers, geojsonCache, dmas, project]);
+  }, [highlightBorderValves, layers, geojsonCache, dmas, project, isolatedPoints]);
 
   // Persist number styling per project; apply size/color to all or selected.
   useEffect(() => {

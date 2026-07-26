@@ -6,6 +6,14 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.052 — 2026-07-26
+**"Find border valves" skips valves already marked as isolation points**
+- Valves you've already marked as isolation points are no longer highlighted —
+  only the ones still needing attention show up, so the results shrink as you
+  work through them.
+- They're still used when pairing, so a valve on the other side of the same
+  border is still found.
+
 ## 1.051 — 2026-07-26
 **Fixed the frozen customer approval dialog; changelog colours**
 - Clicking "Approve this design" in the customer view appeared to do nothing and

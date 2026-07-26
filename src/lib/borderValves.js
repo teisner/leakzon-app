@@ -47,7 +47,14 @@ export function collectValvePoints(layers, geojsonCache) {
 // the boundary valve was right there.
 //
 // dmaPolys: [{ id, poly }] where poly is [[lat, lng], …].
-export function findBorderValves(valvePoints, dmaPolys, { pairMeters = 60, maxAssignMeters = 120 } = {}) {
+// excludePoints: valves already marked as isolation points — they're dropped
+// from the result (nothing left to mark) but kept in the pairing computation,
+// so a neighbour across the border is still detected by rule A.
+export function findBorderValves(
+  valvePoints,
+  dmaPolys,
+  { pairMeters = 60, maxAssignMeters = 120, excludePoints = [], excludeToleranceMeters = 2 } = {}
+) {
   if (!valvePoints?.length || (dmaPolys?.length || 0) < 2) return [];
 
   // Distance from every valve to every DMA boundary — used by both rules.
@@ -104,5 +111,15 @@ export function findBorderValves(valvePoints, dmaPolys, { pairMeters = 60, maxAs
     }
   }
 
-  return [...flagged].map((idx) => ({ lat: valvePoints[idx].lat, lng: valvePoints[idx].lng }));
+  const alreadyMarked = (v) =>
+    (excludePoints || []).some(
+      (p) =>
+        p?.lat != null &&
+        p?.lng != null &&
+        haversineMeters(v.lat, v.lng, p.lat, p.lng) <= excludeToleranceMeters
+    );
+
+  return [...flagged]
+    .map((idx) => ({ lat: valvePoints[idx].lat, lng: valvePoints[idx].lng }))
+    .filter((v) => !alreadyMarked(v));
 }
