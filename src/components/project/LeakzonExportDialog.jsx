@@ -7,11 +7,28 @@ import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
 
+function Insight({ label, value, tone, note }) {
+  const toneClass =
+    tone === "warn" ? "text-amber-600 dark:text-amber-400"
+    : tone === "ok" ? "text-emerald-600 dark:text-emerald-400"
+    : "text-foreground";
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className={`font-medium tabular-nums ${toneClass}`}>
+        {value}
+        {note && <span className="ms-1.5 font-normal text-muted-foreground">({note})</span>}
+      </dd>
+    </div>
+  );
+}
+
 export default function LeakzonExportDialog({ open, onOpenChange, project, onExported }) {
   const { t } = useLanguage();
   const [phase, setPhase] = useState("confirm"); // confirm | exporting | done | error
   const [error, setError] = useState("");
   const [stats, setStats] = useState(null);
+  const [insights, setInsights] = useState(null);
   const [showPortalPrompt, setShowPortalPrompt] = useState(false);
 
   const fireConfetti = () => {
@@ -59,6 +76,7 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       setStats(response.data?.stats || null);
+      setInsights(response.data?.insights || null);
       setPhase("done");
       fireConfetti();
 
@@ -151,6 +169,37 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
               <p className="text-xs text-muted-foreground">
                 {t("leakzonExport.stats", stats)}
               </p>
+            )}
+            {insights && (
+              <div className="w-full mt-2 rounded-lg border border-border bg-muted/40 p-3 text-start">
+                <p className="text-xs font-semibold text-foreground mb-2">{t("leakzonExport.insightsTitle")}</p>
+                <dl className="space-y-1 text-xs">
+                  <Insight label={t("leakzonExport.iAssigned")} value={`${insights.assigned} / ${insights.metersTotal + insights.fictitiousMains}`} />
+                  <Insight
+                    label={t("leakzonExport.iUnassigned")}
+                    value={insights.unassigned}
+                    tone={insights.unassigned > 0 ? "warn" : "ok"}
+                    note={insights.unassigned > 0 ? t("leakzonExport.iUnassignedNote") : null}
+                  />
+                  <Insight label={t("leakzonExport.iMainSub")} value={`${insights.mains} / ${insights.subs}`} />
+                  <Insight
+                    label={t("leakzonExport.iDmasWithMain")}
+                    value={`${insights.dmasWithMain} / ${insights.dmasTotal}`}
+                    tone={insights.dmasWithMain < insights.dmasTotal ? "warn" : "ok"}
+                  />
+                  {insights.fictitiousMains > 0 && (
+                    <Insight
+                      label={t("leakzonExport.iFictitious")}
+                      value={insights.fictitiousMains}
+                      tone="warn"
+                      note={insights.fictitiousDmaNames.join(", ")}
+                    />
+                  )}
+                  {insights.noCoords > 0 && (
+                    <Insight label={t("leakzonExport.iNoCoords")} value={insights.noCoords} tone="warn" />
+                  )}
+                </dl>
+              </div>
             )}
           </div>
         )}

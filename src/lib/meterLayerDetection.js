@@ -39,9 +39,11 @@ const NON_METER_CATEGORIES = [
 export function meterLayerKind(name, category) {
   const n = name || "";
   const c = category || "";
-  if (/insertion|ultrasonic|main[\s_-]?meter/i.test(n) || MAIN_METER_CATEGORIES.includes(c)) {
-    return "main";
-  }
+  // A real layer name in use is "Sub Main Meters" — it contains "Main Meter",
+  // so without this guard a whole sub-meter layer reads as mains.
+  const looksSub = /\bsub\b|^sub[\s_-]/i.test(n) || SUB_METER_CATEGORIES.includes(c);
+  const looksMain = /insertion|ultrasonic|main[\s_-]?meter/i.test(n) || MAIN_METER_CATEGORIES.includes(c);
+  if (looksMain && !looksSub) return "main";
   if (NON_METER_CATEGORIES.includes(c)) return null;
   // A generic "meter"/"connection"/"service" name (or an explicit sub-meter
   // category) means customer meters — the common case for a big meters

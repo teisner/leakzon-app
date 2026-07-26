@@ -1,3 +1,24 @@
+## 1.062 — 2026-07-26
+**Export to LeakZon now analyses the meters first, and reports what it found**
+- Meters **not assigned to any DMA** are written to their own
+  `meters_no_dma.xls` instead of being mixed into the main file. Nothing is
+  dropped — every meter still appears in one file or the other.
+- New **DMA Name** column. A meter's DMA comes from its explicit assignment,
+  or from which DMA polygon it falls inside — the same test the dashboard's
+  DMA counts use, so the numbers agree.
+- The **Type** column ("Main"/"Sub") is replaced by **Is Main**, with `TRUE`
+  for main, insertion and ultrasonic meters and `FALSE` for sub meters.
+- If a DMA has **no main meter**, a placeholder main is added for it: a numeric
+  UID that continues past the highest one already in the project, account name
+  `<DMA name>_Fic`, placed at the centre of the DMA.
+- Column headers are always English, whatever language the app is set to.
+- The finished dialog now shows **export insights**: meters assigned vs not,
+  mains vs subs, DMAs with a main meter, placeholder mains added (and for which
+  DMAs), and meters with no coordinates.
+- **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
+  text "Main Meter", so its meters were being treated as mains — in Woodlawn
+  that was all 5,122 sub meters. Sub-meter layers are no longer promoted.
+
 ## 1.061 — 2026-07-26
 **Each user can have a default country for the projects dashboard**
 - The user list has a new **Country View** column showing which country that

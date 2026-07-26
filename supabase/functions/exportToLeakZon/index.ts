@@ -295,10 +295,60 @@ function groupByGeometryType(features: any[]) {
   return groups;
 }
 
+// Point-in-polygon over dma.polygon_json ([lat, lng] pairs) — the same test
+// dma_enriched/project_stats use in SQL, so the export agrees with the DMA
+// counts shown in the app.
+function pointInPolygon(lat: number, lng: number, polygon: [number, number][]) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [lati, lngi] = polygon[i];
+    const [latj, lngj] = polygon[j];
+    const intersect = lati > lat !== latj > lat && lng < ((lngj - lngi) * (lat - lati)) / (latj - lati) + lngi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// A meter counts as a main when the record says so, or when it sits on a layer
+// that is by definition a main-type meter (insertion / ultrasonic / main).
+// Mirrors src/lib/meterLayerDetection.js.
+function isMainMeter(meter: any, layerNameById: Map<string, string>) {
+  if (meter.is_main) return true;
+  const layerName = meter.layer_id ? layerNameById.get(meter.layer_id) || '' : '';
+  // "Sub Main Meters" contains "Main Meter" — a sub-meter layer must never be
+  // promoted to main, so the sub check wins.
+  if (/\bsub\b|^sub[\s_-]/i.test(layerName)) return false;
+  return /insertion|ultrasonic|main[\s_-]?meter/i.test(layerName);
+}
+
+function parsePolygon(dma: any): [number, number][] | null {
+  const raw = dma.polygon_json ?? dma.polygon;
+  let poly: any;
+  try {
+    poly = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(poly) || poly.length < 3) return null;
+  return poly as [number, number][];
+}
+
+function polygonCentroid(poly: [number, number][]): [number, number] {
+  const lat = poly.reduce((s, p) => s + p[0], 0) / poly.length;
+  const lng = poly.reduce((s, p) => s + p[1], 0) / poly.length;
+  return [lat, lng];
+}
+
+// Headers are intentionally hardcoded English literals and never routed through
+// i18n — the receiving LeakZon system parses them by name, so they must not
+// change with the UI language.
+const METER_HEADERS = [
+  'UID', 'Is Main', 'DMA Name', 'Account Name', 'Address', 'Provider', 'Communication',
+  'Diameter (mm)', 'Status', 'Latitude', 'Longitude', 'Location Source', 'Additional IDs',
+];
+
 function buildMeterXls(meters: any[]) {
-  const headers = [
-    'UID', 'Type', 'Account Name', 'Address', 'Provider', 'Communication', 'Diameter (mm)', 'Status', 'Latitude', 'Longitude', 'Location Source', 'Additional IDs',
-  ];
+  const headers = METER_HEADERS;
   function escapeXML(val: any) {
     return String(val ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -309,7 +359,8 @@ function buildMeterXls(meters: any[]) {
       const addIds = (m.additional_ids || []).map((id: any) => `${id.label}: ${id.value}`).join('; ');
       const cells = [
         `<Cell><Data ss:Type="String">${escapeXML(m.uid || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.is_main ? 'Main' : 'Sub')}</Data></Cell>`,
+        `<Cell><Data ss:Type="String">${m.__is_main ? 'TRUE' : 'FALSE'}</Data></Cell>`,
+        `<Cell><Data ss:Type="String">${escapeXML(m.__dma_name || '')}</Data></Cell>`,
         `<Cell><Data ss:Type="String">${escapeXML(m.payer_name || '')}</Data></Cell>`,
         `<Cell><Data ss:Type="String">${escapeXML(m.address || '')}</Data></Cell>`,
         `<Cell><Data ss:Type="String">${escapeXML(m.provider || '')}</Data></Cell>`,
@@ -338,6 +389,98 @@ function buildMeterXls(meters: any[]) {
   </Table>
  </Worksheet>
 </Workbook>`;
+}
+
+// Analyses the project's meters before they are written out: resolves each
+// meter's DMA, decides main vs sub, splits off the meters with no DMA, and
+// invents a main meter for any DMA that has none (the receiving system requires
+// one main per DMA). Returns the two row sets plus the numbers to report back.
+function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
+  const layerNameById = new Map((layers || []).map((l: any) => [l.id, l.name || '']));
+  const dmaById = new Map((dmas || []).map((d: any) => [d.id, d]));
+  const polys = (dmas || [])
+    .map((d: any) => ({ dma: d, poly: parsePolygon(d) }))
+    .filter((x) => x.poly) as { dma: any; poly: [number, number][] }[];
+
+  let noCoords = 0;
+  for (const m of meters) {
+    m.__is_main = isMainMeter(m, layerNameById);
+    // An explicit dma_id wins; otherwise fall back to which polygon contains it.
+    let dma = m.dma_id ? dmaById.get(m.dma_id) : null;
+    if (!dma) {
+      if (m.latitude == null || m.longitude == null) {
+        noCoords++;
+      } else {
+        dma = polys.find((x) => pointInPolygon(m.latitude, m.longitude, x.poly))?.dma || null;
+      }
+    }
+    m.__dma_id = dma?.id || null;
+    m.__dma_name = dma?.name || '';
+  }
+
+  // A DMA's main can also be linked explicitly, and such a meter often sits
+  // just outside the polygon — count those too, or we'd invent a duplicate.
+  const mainsByDma = new Map<string, number>();
+  for (const m of meters) {
+    if (m.__is_main && m.__dma_id) mainsByDma.set(m.__dma_id, (mainsByDma.get(m.__dma_id) || 0) + 1);
+  }
+  for (const d of dmas || []) {
+    if (!d.main_meter_id) continue;
+    const linked = meters.find((m) => m.id === d.main_meter_id);
+    if (linked) {
+      mainsByDma.set(d.id, (mainsByDma.get(d.id) || 0) + 1);
+      // Attribute the linked main to this DMA so it exports as assigned.
+      if (!linked.__dma_id) {
+        linked.__dma_id = d.id;
+        linked.__dma_name = d.name || '';
+      }
+      linked.__is_main = true;
+    }
+  }
+
+  // Fictitious mains get numeric UIDs continuing past the highest numeric UID
+  // already in the project, so they can't collide with a real meter.
+  let nextUid = meters.reduce((max, m) => {
+    const n = /^\d+$/.test(String(m.uid || '').trim()) ? parseInt(m.uid, 10) : 0;
+    return n > max ? n : max;
+  }, 0) + 1;
+
+  const fictitious: any[] = [];
+  for (const d of dmas || []) {
+    if ((mainsByDma.get(d.id) || 0) > 0) continue;
+    const entry = polys.find((x) => x.dma.id === d.id);
+    const [lat, lng] = entry ? polygonCentroid(entry.poly) : [null, null];
+    fictitious.push({
+      uid: String(nextUid++),
+      payer_name: `${d.name || 'DMA'}_Fic`,
+      address: '', provider: '', communication_type: '', diameter: null,
+      is_active: true, latitude: lat, longitude: lng,
+      location_source: 'generated', additional_ids: [],
+      __is_main: true, __dma_id: d.id, __dma_name: d.name || '',
+    });
+  }
+
+  const all = [...meters, ...fictitious];
+  const assigned = all.filter((m) => m.__dma_id);
+  const unassigned = all.filter((m) => !m.__dma_id);
+
+  return {
+    assigned,
+    unassigned,
+    fictitious,
+    insights: {
+      metersTotal: meters.length,
+      assigned: assigned.length,
+      unassigned: unassigned.length,
+      mains: all.filter((m) => m.__is_main).length,
+      subs: all.filter((m) => !m.__is_main).length,
+      noCoords,
+      dmasTotal: (dmas || []).length,
+      dmasWithMain: (dmas || []).filter((d: any) => (mainsByDma.get(d.id) || 0) > 0).length,
+      fictitiousMains: fictitious.length,
+      fictitiousDmaNames: fictitious.map((f) => f.__dma_name),
+    },
+  };
 }
 
 const PAGE_SIZE = 5000;
@@ -447,8 +590,14 @@ Deno.serve(async (req) => {
     const outerZip = new JSZip();
     outerZip.file('Shapefiles.zip', innerZipBytes);
 
-    const xlsContent = buildMeterXls(meters);
-    outerZip.file('meters.xls', new TextEncoder().encode(xlsContent));
+    const analysis = analyzeMeters(meters, dmas || [], layers || []);
+
+    outerZip.file('meters.xls', new TextEncoder().encode(buildMeterXls(analysis.assigned)));
+    // Meters with no DMA go to their own file rather than being dropped, so
+    // nothing is silently lost and they can be reviewed separately.
+    if (analysis.unassigned.length > 0) {
+      outerZip.file('meters_no_dma.xls', new TextEncoder().encode(buildMeterXls(analysis.unassigned)));
+    }
 
     const zipBuffer = await outerZip.generateAsync({ type: 'base64' });
     const safeProjectName = sanitizeFileName(project.name);
@@ -456,7 +605,13 @@ Deno.serve(async (req) => {
     return json({
       zip: zipBuffer,
       zipName: `${safeProjectName}_Layers`,
-      stats: { layers: exportedLayers, features: totalFeatures, meters: meters.length, dmas: (dmas || []).length },
+      stats: {
+        layers: exportedLayers,
+        features: totalFeatures,
+        meters: analysis.insights.metersTotal,
+        dmas: (dmas || []).length,
+      },
+      insights: analysis.insights,
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Internal error' }, 500);
