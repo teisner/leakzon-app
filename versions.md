@@ -6,6 +6,11 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.046 — 2026-07-26
+**Version number shown on the login screen**
+- The login box now shows "Ver 1.046" in its bottom-right corner, below the
+  Continue button, so the running version is visible before signing in.
+
 ## 1.045 — 2026-07-26
 **Locked projects are tinted on the dashboard**
 - A locked project's card now has a warm amber tint and border instead of the

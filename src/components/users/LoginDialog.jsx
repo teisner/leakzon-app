@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { AlertCircle, Loader2, Lock, Mail, KeyRound, CheckCircle2, ArrowLeft, X } from "lucide-react";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
+import { APP_VERSION } from "@/lib/version";
 
 const BG_IMAGE = "/login-background.png";
 const LOGO_URL = "/leakzon-logo-transparent.png";
@@ -378,6 +379,10 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
               <p className="text-xs text-slate-400">{t('login.secureLogin')}</p>
             </DialogFooter>
           )}
+
+          <p className="text-[10px] text-slate-400 tabular-nums text-right mt-3">
+            Ver {APP_VERSION}
+          </p>
         </div>
       </DialogPortal>
     </Dialog>
