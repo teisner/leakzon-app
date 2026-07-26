@@ -6,6 +6,12 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.038 — 2026-07-26
+**Removed the zero-value / spike shading from the consumption chart**
+- The amber "Zero values" and purple "high spikes" shaded areas (and their
+  legend) are gone from the consumption chart. They were the remaining part of
+  Data Completion, kept back in 1.034.
+
 ## 1.037 — 2026-07-25
 **Pull a layer's style from the dashboard component defaults**
 - When editing a layer that matches a component type configured in dashboard

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, TrendingUp } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
-import { BarChart, Bar, AreaChart, Area, ComposedChart, ReferenceArea, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, AreaChart, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWeatherPeaks } from "@/lib/weatherData";
 import { WeatherTooltip, renderWeatherDot } from "./WeatherPeakDot";
 import { hasContinuousDailyData } from "@/lib/consumptionAnalysis";
@@ -158,44 +158,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   const { peaks, weatherData, loadingWeather } = useWeatherPeaks(viewMode === "amr" ? [] : filtered, project?.city, project?.country);
 
-  // ─── Data-quality highlighting ─────────────────────────────────
-  // Marks two things on the chart: blank/missing readings, and zero values
-  // followed by a very high reading (an accumulated reading).
-  const { hasDataIssues, highlightRanges } = useMemo(() => {
-    const labels = filtered.map(r => r._date ? format(r._date, "MMM dd, yyyy") : getReadingLabel(r));
-    const nonZeroVals = filtered.filter(r => !r.isMissing && r.consumption > 0).map(r => r.consumption);
-    const sorted = [...nonZeroVals].sort((a, b) => a - b);
-    const median = sorted.length >= 3 ? sorted[Math.floor(sorted.length / 2)] : 0;
-    const threshold = median * 3;
-    const pairs = [];
-    for (let i = 0; i < filtered.length - 1; i++) {
-      const curr = filtered[i];
-      const next = filtered[i + 1];
-      if (curr._date && next._date && curr.consumption === 0 && !curr.isMissing && threshold > 0 && next.consumption >= threshold) {
-        pairs.push({ zeroIndex: i, highIndex: i + 1 });
-      }
-    }
-    const ranges = [];
-    filtered.forEach((r, i) => {
-      if (r.isMissing && r._date) {
-        const label = labels[i];
-        const nextLabel = i < labels.length - 1 ? labels[i + 1] : label;
-        ranges.push({ x1: label, x2: nextLabel, color: "#f59e0b", type: "zero" });
-      }
-    });
-    pairs.forEach(p => {
-      const zeroLabel = labels[p.zeroIndex];
-      const zeroNext = p.zeroIndex < labels.length - 1 ? labels[p.zeroIndex + 1] : zeroLabel;
-      ranges.push({ x1: zeroLabel, x2: zeroNext, color: "#f59e0b", type: "zero" });
-      const highLabel = labels[p.highIndex];
-      const highNext = p.highIndex < labels.length - 1 ? labels[p.highIndex + 1] : highLabel;
-      ranges.push({ x1: highLabel, x2: highNext, color: "#a855f7", type: "non-zero" });
-    });
-    const hasBlank = filtered.some(r => r.isMissing);
-    return { hasDataIssues: hasBlank || pairs.length > 0, highlightRanges: ranges };
-  }, [filtered]);
-
-
   // ─── Chart data ─────────────────────────────────────────────────
   const chartData = useMemo(() => {
     return filtered.map((r, i) => {
@@ -341,9 +303,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                       <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={30} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip content={<WeatherTooltip />} />
-                      {highlightRanges.map((range, i) => (
-                        <ReferenceArea key={i} x1={range.x1} x2={range.x2} fill={range.color} fillOpacity={0.12} stroke={range.color} strokeOpacity={0.3} strokeDasharray="3 3" />
-                      ))}
                       <Area type="monotone" dataKey="consumption" stroke="#3b82f6" strokeWidth={2} fill="url(#consumptionGradient)" dot={renderWeatherDot} activeDot={{ r: 6 }} />
                     </ComposedChart>
                   ) : (
@@ -360,21 +319,6 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
             ) : (
               <div className="py-8 text-center text-sm text-slate-400">
                 No readings in the selected range.
-              </div>
-            )}
-
-            {viewMode === "ami" && hasDataIssues && highlightRanges.length > 0 && (
-              <div className="flex items-center gap-3 text-xs flex-wrap">
-                {highlightRanges.some(r => r.type === "zero") && (
-                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                    <span className="w-3 h-3 rounded bg-amber-500/30 border border-amber-500" /> Zero values
-                  </span>
-                )}
-                {highlightRanges.some(r => r.type === "non-zero") && (
-                  <span className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
-                    <span className="w-3 h-3 rounded bg-purple-500/30 border border-purple-500" /> Non-zero values (high spikes)
-                  </span>
-                )}
               </div>
             )}
 
