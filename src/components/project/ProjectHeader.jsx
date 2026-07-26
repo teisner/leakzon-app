@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
+import PreviewBadge from "@/components/PreviewBadge";
 
 export default function ProjectHeader({ project, onZoomToProject, onLogoClick, children, siblingProjects = [], locked, currentUser }) {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export default function ProjectHeader({ project, onZoomToProject, onLogoClick, c
             onClick={onLogoClick}
             className={`h-9 w-auto hidden dark:block ${onLogoClick ? "cursor-pointer" : ""}`}
           />
+          <PreviewBadge className="mt-0.5" />
         </div>
 
         <div className="h-8 w-px bg-border mx-1" />

@@ -7,6 +7,7 @@ import { AlertCircle, Loader2, Lock, Mail, KeyRound, CheckCircle2, ArrowLeft, X 
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
 import { APP_VERSION } from "@/lib/version";
+import PreviewBadge from "@/components/PreviewBadge";
 
 const BG_IMAGE = "/login-background.png";
 const LOGO_URL = "/leakzon-logo-transparent.png";
@@ -207,6 +208,7 @@ export default function LoginDialog({ open, onOpenChange, onLoginSuccess }) {
         <div className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-[calc(50%+220px)] flex flex-col items-center gap-2 pointer-events-none">
           <img src={LOGO_URL} alt="LeakZon" className="h-28 w-auto" />
           <p className="text-base font-medium tracking-[0.2em] text-white/90 uppercase">{t('login.platform')}</p>
+          <PreviewBadge className="!text-xs !text-red-500" />
         </div>
 
         {/* Login card */}

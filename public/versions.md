@@ -1,3 +1,11 @@
+## 1.057 — 2026-07-26
+**Preview builds are marked with a red PREVIEW label**
+- A small red **PREVIEW** appears under the LeakZon logo on the projects
+  dashboard and inside a project, plus under the logo on the login screen — so
+  a preview build is never mistaken for the live site.
+- Production (`ob.leakzon.app`) never shows it. Anything else — the Vercel
+  preview link, a local build — does.
+
 ## 1.056 — 2026-07-26
 **The imported file decides which meters are mains — no field means sub meters**
 - When an imported meter layer has an **"Is Main"** field, that field now decides
