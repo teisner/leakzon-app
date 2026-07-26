@@ -433,37 +433,46 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
   let noCoords = 0;
   for (const m of meters) {
     m.__is_main = isMainMeter(m, layerNameById);
-    // An explicit dma_id wins; otherwise fall back to which polygon contains it.
-    let dma = m.dma_id ? dmaById.get(m.dma_id) : null;
-    if (!dma) {
-      if (m.latitude == null || m.longitude == null) {
-        noCoords++;
-      } else {
-        dma = polys.find((x) => pointInPolygon(m.latitude, m.longitude, x.poly))?.dma || null;
-      }
+    if (m.latitude == null || m.longitude == null) noCoords++;
+
+    const dma = m.dma_id ? dmaById.get(m.dma_id) : null;
+    if (dma) {
+      m.__dma_id = dma.id;
+      m.__dma_name = dma.name || '';
+      continue;
     }
-    m.__dma_id = dma?.id || null;
-    m.__dma_name = dma?.name || '';
+    // A main meter belongs to a DMA only by an explicit link. Mains sit at
+    // inlets and boundaries and are routinely inside a DMA they do not feed —
+    // Obion's 1009868 is linked to nothing yet sits inside "Central DMA", which
+    // made that DMA look like it had a main and suppressed its placeholder.
+    if (m.__is_main || m.latitude == null || m.longitude == null) {
+      m.__dma_id = null;
+      m.__dma_name = '';
+      continue;
+    }
+    const hit = polys.find((x) => pointInPolygon(m.latitude, m.longitude, x.poly))?.dma || null;
+    m.__dma_id = hit?.id || null;
+    m.__dma_name = hit?.name || '';
   }
 
-  // A DMA's main can also be linked explicitly, and such a meter often sits
-  // just outside the polygon — count those too, or we'd invent a duplicate.
   const mainsByDma = new Map<string, number>();
   for (const m of meters) {
     if (m.__is_main && m.__dma_id) mainsByDma.set(m.__dma_id, (mainsByDma.get(m.__dma_id) || 0) + 1);
   }
+
+  // A main meter can feed several DMAs (dma.main_meter_id has no unique
+  // constraint). One row can only name one DMA, so emit a copy per DMA — same
+  // UID on each — otherwise the second DMA has no main row naming it, which is
+  // exactly what the placeholder rule below exists to prevent.
+  const sharedCopies: any[] = [];
+  const copiedMainIds = new Set<string>();
   for (const d of dmas || []) {
     if (!d.main_meter_id) continue;
     const linked = meters.find((m) => m.id === d.main_meter_id);
-    if (linked) {
-      mainsByDma.set(d.id, (mainsByDma.get(d.id) || 0) + 1);
-      // Attribute the linked main to this DMA so it exports as assigned.
-      if (!linked.__dma_id) {
-        linked.__dma_id = d.id;
-        linked.__dma_name = d.name || '';
-      }
-      linked.__is_main = true;
-    }
+    if (!linked) continue;
+    mainsByDma.set(d.id, (mainsByDma.get(d.id) || 0) + 1);
+    copiedMainIds.add(linked.id);
+    sharedCopies.push({ ...linked, __is_main: true, __dma_id: d.id, __dma_name: d.name || '' });
   }
 
   // Fictitious mains get numeric UIDs continuing past the highest numeric UID
@@ -488,7 +497,9 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
     });
   }
 
-  const all = [...meters, ...fictitious];
+  // A main that got per-DMA copies is represented by those copies, so the
+  // original must not also be emitted or it would double-count.
+  const all = [...meters.filter((m) => !copiedMainIds.has(m.id)), ...sharedCopies, ...fictitious];
   const assigned = all.filter((m) => m.__dma_id);
   const unassigned = all.filter((m) => !m.__dma_id);
 
@@ -503,6 +514,9 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
       mains: all.filter((m) => m.__is_main).length,
       subs: all.filter((m) => !m.__is_main).length,
       noCoords,
+      // Mains linked to no DMA at all — the condition that used to be hidden
+      // by the spatial fallback.
+      mainsUnlinked: meters.filter((m) => m.__is_main && !copiedMainIds.has(m.id) && !m.__dma_id).length,
       dmasTotal: (dmas || []).length,
       dmasWithMain: (dmas || []).filter((d: any) => (mainsByDma.get(d.id) || 0) > 0).length,
       fictitiousMains: fictitious.length,

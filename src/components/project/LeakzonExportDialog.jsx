@@ -43,6 +43,9 @@ function InsightsPanel({ insights, t }) {
           value={`${insights.dmasWithMain} / ${insights.dmasTotal}`}
           tone={insights.dmasWithMain < insights.dmasTotal ? "warn" : "ok"}
         />
+        {insights.mainsUnlinked > 0 && (
+          <Insight label={t("leakzonExport.iMainsUnlinked")} value={insights.mainsUnlinked} tone="warn" note={t("leakzonExport.iMainsUnlinkedNote")} />
+        )}
         {insights.fictitiousMains > 0 && (
           <Insight label={t("leakzonExport.iFictitious")} value={insights.fictitiousMains} tone="warn" note={insights.fictitiousDmaNames.join(", ")} />
         )}

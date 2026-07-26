@@ -1,3 +1,21 @@
+## 1.065 — 2026-07-26
+**Export analysis no longer counts a DMA as having a main meter it isn't linked to**
+- A DMA was treated as having a main meter whenever *any* main happened to sit
+  inside its area, even when no main was actually assigned to it. In Obion TN
+  that made "Central DMA" look complete — the analysis said 5/5 DMAs had a main
+  and no placeholder main was created for it.
+- A main meter now counts for a DMA **only when it is actually assigned to it**.
+  Main meters sit at inlets and boundaries and are often inside a DMA they do
+  not feed, so where they happen to fall says nothing about what they serve.
+- **Expect lower numbers here than before, and more placeholder mains.** They
+  reflect what is really assigned: Woodlawn has 2 of 5 DMAs with a main meter,
+  Pardesiya 0 of 4. Assigning the real main meters is what fixes those — the
+  placeholders only keep the export valid.
+- A main meter serving **several DMAs** now appears once per DMA in the export,
+  each row carrying that DMA's name, so no DMA is left without a main meter row.
+- New insight: **main meters not linked to a DMA**. These go to the separate
+  no-DMA file, and are usually the reason a DMA is missing its main.
+
 ## 1.064 — 2026-07-26
 **Removing a DMA's main meter now clears the DMA from that meter's record**
 - Unassigning a main meter from a DMA clears the DMA against that meter in the
