@@ -32,7 +32,10 @@ Installed via: `claude plugin install caveman@caveman`
 The user reviews it on the stable Vercel preview URL, then says "publish" (or
 similar) and only then does it go live.
 
-- `preview` branch  → Vercel preview build (stable URL, same every time)
+- `preview` branch  → Vercel preview build, stable URL (same every time):
+  `https://leakzon-app-git-preview-tomere-leakzoncoms-projects.vercel.app`
+  (behind Vercel SSO — only reachable while signed in to Vercel, so it can't be
+  handed to a customer as-is and can't be verified from here)
 - `main` branch     → production, `ob.leakzon.app`
 
 Do not merge to `main` until the user explicitly approves. When they do:
