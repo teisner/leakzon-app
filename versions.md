@@ -1,3 +1,14 @@
+## 1.060 — 2026-07-26
+**Preview refreshes itself as soon as a new build is deployed**
+- On the preview site the tab now checks for a new build every 30 seconds and
+  reloads itself the moment one lands — no prompt, no manual refresh. Caches are
+  cleared first so it genuinely picks up the new build.
+- This runs on every screen, not only the ones showing the version number.
+- Production is unchanged: it still checks hourly and asks before reloading, so
+  nobody loses work mid-task.
+- Note: on preview an auto-reload will discard anything unsaved, which is the
+  trade for always looking at the newest build.
+
 ## 1.059 — 2026-07-26
 **Import dialogs are readable in dark mode**
 - The meter data import dialog was built with fixed light colours and no dark

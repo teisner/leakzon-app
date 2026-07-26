@@ -14,6 +14,8 @@ import CustomerMode from './pages/CustomerMode';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import PreviewAutoRefresh from './components/PreviewAutoRefresh';
+import { IS_PREVIEW } from './lib/deployEnv';
 
 // Only runs inactivity logout on authenticated routes, not public-facing ones
 const InactivityGuard = () => {
@@ -32,6 +34,7 @@ function App() {
     <QueryClientProvider client={queryClientInstance}>
       <Router>
         <ImpersonationBanner />
+        {IS_PREVIEW && <PreviewAutoRefresh />}
         <ScrollToTop />
         <InactivityGuard />
         <Routes>

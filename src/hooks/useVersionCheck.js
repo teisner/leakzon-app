@@ -1,7 +1,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APP_VERSION } from "@/lib/version";
+import { IS_PREVIEW } from "@/lib/deployEnv";
 
-const CHECK_INTERVAL_MS = 60 * 60 * 1000; // hourly
+// Production waits an hour and asks before reloading. Preview polls fast and
+// reloads itself — the point of preview is to be looking at the newest build.
+const CHECK_INTERVAL_MS = IS_PREVIEW ? 30 * 1000 : 60 * 60 * 1000;
+
+// Remembers which version this tab already auto-reloaded for. Without it, a
+// version.json that stays ahead of the served bundle (CDN lag, a failed build)
+// would reload the tab forever.
+const RELOADED_KEY = "leakzon:auto-reloaded-version";
+
+async function hardReload(version) {
+  try {
+    if (sessionStorage.getItem(RELOADED_KEY) === version) return false;
+    sessionStorage.setItem(RELOADED_KEY, version);
+  } catch {
+    // Private mode with storage blocked — reloading anyway risks a loop.
+    return false;
+  }
+  // Drop anything the Cache Storage API is holding so the reload really
+  // re-fetches rather than replaying the old build.
+  try {
+    if (window.caches?.keys) {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map((k) => window.caches.delete(k)));
+    }
+  } catch {
+    // Not fatal — the reload below still revalidates the document.
+  }
+  window.location.reload();
+  return true;
+}
 
 // Versions are "1.NNN". Compare numerically per part so 1.100 > 1.047 (a plain
 // string compare would get that wrong).
@@ -44,6 +74,10 @@ export function useVersionCheck() {
         if (cancelled || !data?.version) return null;
         const newer = isNewer(data.version, APP_VERSION) ? data.version : null;
         setLatest(newer);
+        // On preview, don't prompt — just pick up the new build. If the reload
+        // was suppressed (already tried for this version) the normal
+        // badge/dialog path still applies as a fallback.
+        if (newer && IS_PREVIEW) await hardReload(newer);
         return newer;
       } catch {
         // Offline or blocked — stay quiet, try again next tick.
