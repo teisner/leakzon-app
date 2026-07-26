@@ -20,7 +20,10 @@ export function isInsertionManualLayer(layer) {
 // mains (is_main=true — network inventory, DMA main-meter linking) or
 // customer/sub meters (is_main=false).
 const MAIN_METER_CATEGORIES = ["Main Meters", "Insertion Meters", "Ultrasonic Meters"];
-const SUB_METER_CATEGORIES = ["Meters", "Sub Meters"];
+// "Meters" is retired (too easily confused with "Main Meters" / "Sub Meters")
+// and is no longer offered in the category picker, but layers already saved
+// under it must keep behaving as sub meters.
+const SUB_METER_CATEGORIES = ["Sub Meters", "Meters"];
 // Categories that are definitely not meters, so a stray "meter" in the layer
 // name (e.g. "meter_valves") doesn't get misread as a meter layer.
 const NON_METER_CATEGORIES = [

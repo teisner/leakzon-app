@@ -11,13 +11,14 @@ const CATEGORY_PATTERNS = [
   { category: "Main Meters", patterns: ["main.?meter"] },
   { category: "Sub Meters", patterns: ["sub.?meter"] },
   { category: "Insertion Meters", patterns: ["insertion"] },
+  { category: "Ultrasonic Meters", patterns: ["ultrasonic"] },
   // An explicit "meter" in the name wins over the pipe words below, so
   // "Water_Mains_Meters" isn't read as a Water Lines layer.
-  { category: "Meters", patterns: ["meter"] },
+  { category: "Sub Meters", patterns: ["meter"] },
   { category: "Water Lines", patterns: ["main", "line", "pipe", "water.?line", "network", "conduct"] },
   // Weaker meter synonyms — after Water Lines, since "service line" and
   // "connection main" are pipes, not meters.
-  { category: "Meters", patterns: ["connection", "service"] },
+  { category: "Sub Meters", patterns: ["connection", "service"] },
   { category: "Water Source", patterns: ["source", "well", "spring"] },
 ];
 

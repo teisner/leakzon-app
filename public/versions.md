@@ -1,3 +1,20 @@
+## 1.056 — 2026-07-26
+**The imported file decides which meters are mains — no field means sub meters**
+- When an imported meter layer has an **"Is Main"** field, that field now decides
+  it, meter by meter. Recognised names: `is_main`, `IsMain`, `Is Main`,
+  `main_meter`. Values `yes / true / 1 / Y / main / primary / master` mean main.
+- When the file has **no such field**, meters are imported as **sub meters**.
+  The one exception: layers that are explicitly a main type by category or name
+  (Main Meters, Insertion Meters, Ultrasonic Meters) — those still come in as
+  mains, since the layer itself already says so.
+- Unrelated attribute columns like `MAIN_ID` or `MAIN SIZE` are ignored, so a
+  pipe-diameter column can't silently mark a whole layer as mains.
+- **Removed the plain "Meters" category** — it was confusing next to Main
+  Meters / Sub Meters. Meter-named layers now auto-detect as **Sub Meters**.
+  Added **Ultrasonic Meters** as a real category (it was landing under Sub
+  Meters while still behaving as a main). Layers already saved under the old
+  "Meters" category keep working as sub meters.
+
 ## 1.055 — 2026-07-26
 **Uploaded meter layers now create meter records, and the category is detected automatically**
 - Uploading a single shapefile/GeoJSON no longer defaults the layer category to

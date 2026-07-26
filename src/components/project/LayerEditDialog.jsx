@@ -25,7 +25,7 @@ const CATEGORY_OPTIONS = [
   "Main Meters",
   "Sub Meters",
   "Insertion Meters",
-  "Meters",
+  "Ultrasonic Meters",
   "Other",
 ];
 
