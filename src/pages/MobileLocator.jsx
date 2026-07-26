@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { callFunction } from "@/lib/publicFunction";
 import { MapPin, Loader2, ChevronDown, Smartphone, CheckCircle2 } from "lucide-react";
 import MobileMeterMap from "@/components/mobile/MobileMeterMap";
@@ -7,6 +7,10 @@ import ProjectOverviewMap from "@/components/mobile/ProjectOverviewMap";
 
 export default function MobileLocator() {
   const { projectId } = useParams();
+  // The emailed link carries a share token — this page is opened in the field
+  // with no login, so every backend call has to present it.
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
   const [meters, setMeters] = useState([]);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,14 +19,14 @@ export default function MobileLocator() {
   const [view, setView] = useState("locate");
 
   useEffect(() => {
-    callFunction("getUnlocatedMeters", { project_id: projectId })
+    callFunction("getUnlocatedMeters", { project_id: projectId, token })
       .then((res) => {
         setMeters(res?.meters || []);
         setProject(res?.project || null);
       })
-      .catch(() => setError("Failed to load meters"))
+      .catch(() => setError(token ? "Failed to load meters — this link may have expired." : "This link is missing its access token. Please use the full link from the email."))
       .finally(() => setLoading(false));
-  }, [projectId]);
+  }, [projectId, token]);
 
   const handleSaved = (meterId) => {
     setMeters((prev) => prev.filter((m) => m.id !== meterId));
@@ -136,7 +140,7 @@ export default function MobileLocator() {
                 </button>
                 {isExpanded && (
                   <div className="px-4 pb-4">
-                    <MobileMeterMap meter={meter} project={project} onSave={handleSaved} />
+                    <MobileMeterMap meter={meter} project={project} onSave={handleSaved} token={token} />
                   </div>
                 )}
               </div>

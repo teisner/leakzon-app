@@ -6,6 +6,17 @@ a one-line **headline** summarizing the main change, followed by the detailed
 notes. The current version is defined in `src/lib/version.js` and shown under
 the logo in the app.
 
+## 1.043 — 2026-07-26
+**Fixed the Mobile Locator link from the email**
+- Opening the emailed Mobile Locator link failed with "Failed to load meters"
+  (or bounced to the login screen). The link is meant to be used in the field
+  without logging in, but the meter endpoints required a logged-in user.
+- The emailed link now carries a secure access token, valid for 30 days, which
+  the app presents when loading meters and saving a location — the same
+  mechanism the customer view already uses. Requests without a valid token are
+  still refused.
+- Links sent before this fix won't work; send a fresh one from the project.
+
 ## 1.042 — 2026-07-26
 **"Find border valves" now finds single valves sitting on a DMA border**
 - It previously only flagged a valve when a *second* valve from the neighbouring

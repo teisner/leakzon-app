@@ -35,7 +35,7 @@ function MapCenterTracker({ onCenterChange }) {
   return null;
 }
 
-export default function MobileMeterMap({ meter, project, onSave }) {
+export default function MobileMeterMap({ meter, project, onSave, token }) {
   const [position, setPosition] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,6 +87,7 @@ export default function MobileMeterMap({ meter, project, onSave }) {
         meter_id: meter.id,
         latitude: position[0],
         longitude: position[1],
+        token,
       });
       onSave?.(meter.id);
     } catch {

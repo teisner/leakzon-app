@@ -1,15 +1,20 @@
 // Replaces base44/functions/getUnlocatedMeters/entry.ts.
 import { admin, getCallerUser, hasProjectAccess, json, CORS_HEADERS } from '../_shared/authz.ts';
+import { validateCustomerToken } from '../_shared/customerToken.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
   try {
-    const { project_id } = await req.json();
+    const { project_id, token } = await req.json();
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
+    // Two ways in: a logged-in user with project access (the app), or a valid
+    // share token (the mobile locator link, opened in the field without login).
     const user = await getCallerUser(req);
-    if (!(await hasProjectAccess(user, project_id))) return json({ error: 'Unauthorized' }, 403);
+    const allowed = (await hasProjectAccess(user, project_id))
+      || (await validateCustomerToken(project_id, token)).valid;
+    if (!allowed) return json({ error: 'Unauthorized' }, 403);
 
     const { data: project } = await admin.from('project').select('*').eq('id', project_id).single();
     if (!project) return json({ error: 'Project not found' }, 404);

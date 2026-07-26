@@ -42,8 +42,33 @@ Deno.serve(async (req) => {
       skip += 5000;
     }
 
+    // The emailed link is opened in the field with no login, so it carries a
+    // share token that getUnlocatedMeters/updateMeterLocation validate — same
+    // mechanism as customer mode. Reuse the project's active link if there is
+    // one, otherwise mint a 30-day token.
+    const now = new Date();
+    const { data: existingLinks } = await admin
+      .from('customer_view_link')
+      .select('*')
+      .eq('project_id', project_id)
+      .eq('is_active', true);
+    let token = (existingLinks || []).find((l) => new Date(l.expires_at) > now)?.token;
+    if (!token) {
+      token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      const { error: linkErr } = await admin.from('customer_view_link').insert({
+        project_id,
+        token,
+        expires_at: expiresAt.toISOString(),
+        is_active: true,
+        created_by_id: user!.id,
+      });
+      if (linkErr) return json({ error: `Could not create access link: ${linkErr.message}` }, 500);
+    }
+
     const origin = clientOrigin || new URL(req.url).origin;
-    const link = `${origin}/mobile-locator/${project_id}`;
+    const link = `${origin}/mobile-locator/${project_id}?token=${token}`;
 
     const html = `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
