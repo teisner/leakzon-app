@@ -346,6 +346,9 @@
   color: #3b82f6;
 }
 .changelog-markdown h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0.25rem; }
+/* The change-type tag on the version line — orange, so it reads as its own
+   thing next to the blue version and date. */
+.changelog-markdown h2 em { color: #f97316; font-style: normal; font-weight: 600; }
 .changelog-markdown p { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin: 0.35rem 0; }
 /* The bold one-line headline under each version */
 .changelog-markdown p strong { color: #22c55e; font-weight: 700; }
