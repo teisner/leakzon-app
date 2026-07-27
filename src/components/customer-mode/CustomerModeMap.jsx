@@ -88,9 +88,20 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
         const dbAnnotations = res?.annotations || [];
         if (dbAnnotations.length > 0) {
           setAnnotations(dbAnnotations.map((a) => {
+            // `data` is a jsonb column, so PostgREST hands it back already
+            // parsed. JSON.parse() on that object throws, and the catch left
+            // every annotation as {} — no type, no text, no coordinates — so
+            // they all rendered as an untitled "Drawing" and never drew on the
+            // map. Base44 stored this as a JSON string, hence the old parse;
+            // accept both, exactly as CustomerAnnotationPanel already does.
             let data = {};
-            try { data = JSON.parse(a.data); } catch { /* skip */ }
-            return { ...data, db_id: a.id };
+            try {
+              data = typeof a.data === "string" ? JSON.parse(a.data) : (a.data || {});
+            } catch { /* malformed row — skip rather than break the whole list */ }
+            // annotation_type is the column; data.type is the payload's copy.
+            // Prefer the column so a row with a half-written payload still
+            // renders as the right kind of annotation.
+            return { ...data, type: a.annotation_type || data.type, db_id: a.id };
           }));
         } else {
           // Migrate from localStorage if exists

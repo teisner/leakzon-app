@@ -11,6 +11,20 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.078 — 2026-07-27 · *Bug fix*
+**Customer view now shows annotations properly instead of blank "Drawing" entries**
+- In the shared customer view, every annotation appeared as an untitled
+  **"Drawing"** and none of them were drawn on the map — comments lost their
+  text, arrows lost their direction, drawings lost their shape.
+- The annotations were being read in a format the database no longer uses (a
+  leftover from the Base44 migration), so their contents were silently thrown
+  away and only an empty shell remained.
+- They now load correctly, keeping their type, text and position. **Existing
+  annotations are unaffected and reappear on their own** — nothing was lost,
+  only misread.
+- The project-side "Customer Annotations" panel was always reading them
+  correctly, which is why the same annotations looked fine there.
+
 ## 1.077 — 2026-07-27 · *Bug fix*
 **Fixes "Project not found" for LeakZon users with an out-of-date sign-in**
 - A LeakZon user could open a project and be told it wasn't found, while an
