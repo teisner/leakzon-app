@@ -11,6 +11,19 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.077 — 2026-07-27 · *Bug fix*
+**Fixes "Project not found" for LeakZon users with an out-of-date sign-in**
+- A LeakZon user could open a project and be told it wasn't found, while an
+  admin opened the same project fine. Their sign-in token was carrying an
+  out-of-date account type, so the database correctly refused rows they were
+  actually entitled to.
+- The app now notices this and **renews the sign-in automatically**, then loads
+  the project. Nothing to do — no signing out and back in.
+- It only retries once per project, so a project you genuinely cannot open still
+  fails cleanly instead of looping.
+- Confirmed the permissions themselves are correct: a freshly signed-in LeakZon
+  account sees all 22 projects and opens them normally.
+
 ## 1.076 — 2026-07-27 · *Updated feature*
 **"Project not found" now tells you which account it refused**
 - "Project not found" was shown for two completely different situations: the

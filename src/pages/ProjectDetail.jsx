@@ -99,6 +99,9 @@ export default function ProjectDetail() {
   const [sessionMissing, setSessionMissing] = useState(false);
   // Whose session was refused, so the not-found screen can name them.
   const [deniedAs, setDeniedAs] = useState(null);
+  // Guards the one-shot token refresh below, so a genuinely inaccessible
+  // project can't loop refresh -> retry -> refresh.
+  const refreshRetriedRef = useRef(false);
   const [mapType, setMapType] = useState("terrain");
   const [mapSource, setMapSource] = useState("google");
   const [showImportLogs, setShowImportLogs] = useState(false);
@@ -719,6 +722,8 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     let cancelled = false;
+    // Per-project guard: opening a different project gets its own retry.
+    refreshRetriedRef.current = false;
     (async () => {
       // Without this the queries below run before the stored session is
       // restored; RLS then hides the row and `.single()` returns null, which
@@ -770,6 +775,27 @@ export default function ProjectDetail() {
             claims = session ? JSON.parse(atob(session.access_token.split(".")[1])) : null;
           } catch {
             // Malformed token — the null session below is the useful signal.
+          }
+
+          // A token minted before the account's user_type was set (or before the
+          // claims hook applied) carries stale or missing authorization, and RLS
+          // then hides rows the user is entitled to. Refreshing re-runs the
+          // claims hook server-side, so retry once with fresh claims rather than
+          // making the user work out that they need to sign out and back in.
+          const claimedType = claims?.user_type ?? claims?.app_metadata?.user_type ?? null;
+          if (session && !refreshRetriedRef.current) {
+            refreshRetriedRef.current = true;
+            console.warn(`[auth] Project refused with user_type=${claimedType} — refreshing token and retrying.`);
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            if (refreshed?.session) {
+              let newType = null;
+              try {
+                newType = JSON.parse(atob(refreshed.session.access_token.split(".")[1]))?.user_type ?? null;
+              } catch { /* fall through to the retry regardless */ }
+              console.warn(`[auth] Token refreshed — user_type is now ${newType}.`);
+              loadProjectPage();
+              return;
+            }
           }
           console.error(
             "[project] not returned:", id,
