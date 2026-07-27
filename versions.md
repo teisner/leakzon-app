@@ -11,6 +11,19 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.075 — 2026-07-27 · *Bug fix*
+**"Forgot password?" now actually sends the email**
+- The forgot-password flow generated a temporary PIN and told you to check your
+  email, but **no email was ever sent** — the sending step was never finished
+  during the migration, so the PIN went nowhere and nobody could reset a PIN
+  without an administrator.
+- It now emails the temporary PIN, using the same mail service the Mobile
+  Locator email already uses. The PIN expires after 30 minutes and works once.
+- Requesting a reset does **not** change your current PIN — it keeps working
+  until you actually complete the reset.
+- The temporary PIN is no longer written to the server logs, where anyone with
+  project access could have read it.
+
 ## 1.074 — 2026-07-27 · *Updated feature*
 **Change-type tags are orange in the changelog**
 - The **Bug fix** / **New feature** / **Updated feature** tag on each version

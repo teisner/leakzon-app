@@ -13,10 +13,6 @@
 //    attached to every issued token via the custom_access_token_hook
 //    Postgres function (migration 20260723100007), not by this function.
 //
-// TODO(Phase 4): forgotPassword currently only logs the temp PIN
-// (visible via `supabase functions logs auth-login`) instead of emailing it —
-// real delivery via Microsoft Graph / Outlook is wired up when the
-// connectors are ported.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import bcrypt from 'npm:bcryptjs@2';
@@ -37,6 +33,65 @@ const CORS_HEADERS = {
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: CORS_HEADERS });
+}
+
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'info@leakzon.app';
+
+// Emails a one-time PIN for the forgot-password flow. Returns rather than
+// throws: a delivery failure must not change the response the caller sees, or
+// it would reveal which identifiers are registered.
+async function sendTempPinEmail(
+  user: { email: string; full_name: string },
+  tempPin: string,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!RESEND_API_KEY) return { ok: false, error: 'RESEND_API_KEY is not configured' };
+
+  const html = `<div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+  <h2 style="color: #0f172a; font-size: 18px; margin: 0 0 4px;">Reset your LeakZon PIN</h2>
+  <p style="color: #475569; font-size: 14px; margin: 0 0 20px;">
+    Hi ${escapeHtml(user.full_name || 'there')}, here is your temporary PIN.
+  </p>
+  <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+    <div style="font-family: ui-monospace, monospace; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #0f172a;">
+      ${escapeHtml(tempPin)}
+    </div>
+  </div>
+  <p style="color: #475569; font-size: 14px; margin: 0 0 8px;">
+    Enter it on the sign-in screen, then choose a new 6-digit PIN.
+  </p>
+  <p style="color: #b45309; font-size: 13px; margin: 0;">
+    This PIN expires in 30 minutes and can only be used once.
+  </p>
+  <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 24px;">
+    If you didn't request this, you can safely ignore this email — your current
+    PIN still works and nothing has changed.
+  </p>
+</div>`;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `LeakZon <${FROM_EMAIL}>`,
+        to: [user.email],
+        subject: 'Your LeakZon temporary PIN',
+        html,
+      }),
+    });
+    if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${await res.text()}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+function escapeHtml(v: string) {
+  return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function generateTempPin() {
@@ -227,9 +282,16 @@ Deno.serve(async (req) => {
         .update({ temp_password_hash: tempHash, temp_password_expires: expires })
         .eq('id', user.id);
 
-      // TODO(Phase 4): send via Microsoft Graph once the Outlook connector
-      // is ported. Logged for now so it's retrievable during local testing.
-      console.log(`[auth-login] forgotPassword temp PIN for ${user.email}: ${tempPin}`);
+      // Delivered via Resend, the same sender the mobile-locator email uses.
+      // The PIN is deliberately not logged: function logs are readable by
+      // anyone with project access, which would make every reset recoverable
+      // by someone who never received the email.
+      const sent = await sendTempPinEmail(user, tempPin);
+      if (!sent.ok) {
+        console.error(`[auth-login] temp PIN email to ${user.email} failed: ${sent.error}`);
+        // Still "success" to the caller — the response must not reveal whether
+        // the identifier exists. The failure is visible in the logs instead.
+      }
       return json({ success: true });
     }
 
