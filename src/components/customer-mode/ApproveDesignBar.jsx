@@ -66,7 +66,7 @@ export default function ApproveDesignBar({ project, token, onApproved }) {
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1200]">
         <Button
           onClick={() => setOpen(true)}
-          className="h-14 px-8 text-base font-bold gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl"
+          className="h-14 px-8 text-base font-bold gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl border-4 border-slate-900 dark:border-black approve-attention hover:[animation-play-state:paused]"
         >
           <ShieldCheck className="w-5 h-5" />
           Approve this design

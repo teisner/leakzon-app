@@ -88,6 +88,9 @@ const ensureBoundaryLayer = async (project, existingLayers, onCreated) => {
   }
 };
 
+// How often the project page checks for customer-side activity.
+const CUSTOMER_POLL_MS = 15 * 1000;
+
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,6 +104,8 @@ export default function ProjectDetail() {
   // Whose session was refused, so the not-found screen can name them.
   const [deniedAs, setDeniedAs] = useState(null);
   // Layer awaiting delete confirmation, and the countdown shown while it runs.
+  // Set when the customer approves while this page is open.
+  const [customerApproval, setCustomerApproval] = useState(null);
   const [layerPendingDelete, setLayerPendingDelete] = useState(null);
   const [deleteProgress, setDeleteProgress] = useState(null);
   const [deleteStep, setDeleteStep] = useState("");
@@ -981,6 +986,43 @@ export default function ProjectDetail() {
     }
   };
 
+  // The customer works in a separate session, so nothing here would otherwise
+  // notice their annotations or their approval until the page is reloaded.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    const poll = async () => {
+      // New/updated customer annotations — drives the badge in the side menu.
+      const { data: anns } = await supabase
+        .from('customer_annotation').select('*').eq('project_id', id)
+        .order('created_at', { ascending: false });
+      if (cancelled) return;
+      if (anns) setCustomerAnnotations(anns);
+
+      const { data: p } = await supabase
+        .from('project')
+        .select('locked, locked_date, approval_requested, customer_approved_at, customer_approved_by')
+        .eq('id', id).single();
+      if (cancelled || !p) return;
+      setProject((prev) => {
+        if (!prev) return prev;
+        // Announce an approval that landed while this page was open — once.
+        if (p.customer_approved_at && !prev.customer_approved_at) {
+          setCustomerApproval({ by: p.customer_approved_by, at: p.customer_approved_at });
+        }
+        return { ...prev, ...p };
+      });
+    };
+    const timer = setInterval(poll, CUSTOMER_POLL_MS);
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [id]);
+
   const handleUpdateLayer = async (layer, data) => {
     await supabase.from('project_layer').update(data).eq('id', layer.id);
     loadLayers();
@@ -1837,6 +1879,28 @@ export default function ProjectDetail() {
       />
 
       {/* Prompt on leaving the network design view after making changes */}
+      <AlertDialog open={!!customerApproval} onOpenChange={(v) => { if (!v) setCustomerApproval(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-500" />
+              {t('project.customerApprovedTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('project.customerApprovedBody', {
+                name: customerApproval?.by || t('project.customerApprovedFallbackName'),
+                project: project?.name || "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setCustomerApproval(null)}>
+              {t('project.customerApprovedOk')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!layerPendingDelete} onOpenChange={(v) => { if (!v) setLayerPendingDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

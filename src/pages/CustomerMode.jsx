@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+
+// How often the customer view checks for an approval request.
+const STATUS_POLL_MS = 15 * 1000;
 import { useParams, useSearchParams } from "react-router-dom";
 import { Loader2, AlertCircle, Building2, User, MapPin } from "lucide-react";
 import { invokeFunction } from "@/api/functionsClient";
@@ -54,6 +57,41 @@ export default function CustomerMode() {
     };
     load();
   }, [projectId]);
+
+  // The operator can request approval while the customer already has this page
+  // open, so poll for it rather than making them reload. Status-only, so it
+  // stays cheap on big projects.
+  useEffect(() => {
+    if (!projectId || !token) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await invokeFunction("getCustomerModeData", {
+          project_id: projectId, token, status_only: true,
+        });
+        const st = res.data?.status;
+        if (cancelled || !st) return;
+        setData((prev) => {
+          if (!prev?.project) return prev;
+          const p = prev.project;
+          if (
+            !!p.approval_requested === st.approval_requested &&
+            p.customer_approved_at === st.customer_approved_at &&
+            !!p.locked === st.locked
+          ) return prev; // nothing changed — don't re-render the map
+          return { ...prev, project: { ...p, ...st } };
+        });
+      } catch { /* offline or expired link — try again next tick */ }
+    };
+    const id = setInterval(poll, STATUS_POLL_MS);
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [projectId, token]);
 
   if (loading) {
     return (

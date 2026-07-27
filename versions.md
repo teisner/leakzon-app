@@ -11,6 +11,21 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.084 — 2026-07-27 · *New feature*
+**The project page and the customer view now keep each other up to date**
+- When the customer adds an annotation, the **annotation badge appears in the
+  project side menu on its own** — no reloading to find out.
+- When you send a **Request Design Approval**, the approve button appears in the
+  customer's view even if they already had the page open. It has a dark border
+  and pulses gently so it is noticed. The pulse stops on hover, and is disabled
+  for anyone who has asked their system to reduce motion.
+- When the customer approves, the project page **locks itself and tells you**,
+  naming who approved and reminding you that unlocking in Project Settings
+  withdraws the approval.
+- Both sides check every 15 seconds, and immediately whenever you switch back to
+  the tab. The check is deliberately tiny — 162 bytes rather than reloading the
+  whole project — so it costs nothing on large projects.
+
 ## 1.083 — 2026-07-27 · *Updated feature*
 **A main meter serving several DMAs is now one row listing them all**
 - A main meter that feeds more than one DMA used to show the first DMA only.

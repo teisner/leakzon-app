@@ -98,6 +98,10 @@ const translations = {
     'project.sessionExpiredHint': 'Sign in again to continue — nothing has been lost.',
     'project.signInAgain': 'Sign in again',
     'project.notFoundSignedInAs': 'You are signed in as {email}. If that is not the account you expected, sign out and sign in again — each site address keeps its own sign-in.',
+    'project.customerApprovedTitle': 'The customer approved the design',
+    'project.customerApprovedBody': '{name} approved the network design for "{project}". The project is now locked as approved. Unlock it in Project Settings to withdraw the approval.',
+    'project.customerApprovedFallbackName': 'The customer',
+    'project.customerApprovedOk': 'Got it',
     'project.notFound': 'Project not found.',
     'project.backToDashboard': 'Back to Dashboard',
 
@@ -1084,6 +1088,10 @@ const translations = {
     'project.sessionExpiredHint': 'התחבר שוב כדי להמשיך — שום דבר לא אבד.',
     'project.signInAgain': 'התחבר שוב',
     'project.notFoundSignedInAs': 'אתה מחובר כ-{email}. אם זה לא החשבון שציפית לו, התנתק והתחבר מחדש — לכל כתובת אתר יש התחברות נפרדת.',
+    'project.customerApprovedTitle': 'הלקוח אישר את התכנון',
+    'project.customerApprovedBody': '{name} אישר את תכנון הרשת עבור "{project}". הפרויקט נעול כעת כמאושר. ניתן לבטל את האישור בהגדרות הפרויקט.',
+    'project.customerApprovedFallbackName': 'הלקוח',
+    'project.customerApprovedOk': 'הבנתי',
     'project.notFound': 'הפרויקט לא נמצא.',
     'project.backToDashboard': 'חזרה ללוח הבקרה',
 

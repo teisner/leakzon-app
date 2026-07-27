@@ -376,3 +376,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 35%);
 }
+/* Approve-design button: pulses so a customer with the page already open
+   notices when the operator requests approval. Respects reduced-motion. */
+@keyframes approveAttention {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); transform: scale(1); }
+  50%      { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); transform: scale(1.04); }
+}
+.approve-attention { animation: approveAttention 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .approve-attention { animation: none; }
+}

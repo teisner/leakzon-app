@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
   try {
-    const { project_id, token } = await req.json();
+    const { project_id, token, status_only } = await req.json();
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
     const tokenCheck = await validateCustomerToken(project_id, token);
@@ -21,6 +21,22 @@ Deno.serve(async (req) => {
 
     const { data: project } = await admin.from('project').select('*').eq('id', project_id).single();
     if (!project) return json({ error: 'Project not found' }, 404);
+
+    // Status-only poll. The customer view checks periodically for an approval
+    // request arriving from the project side; re-sending every layer, DMA and
+    // meter for that would be absurd on a project with tens of thousands of
+    // meters, so answer with just the fields that can change.
+    if (status_only) {
+      return json({
+        status: {
+          approval_requested: !!project.approval_requested,
+          customer_approved_at: project.customer_approved_at,
+          customer_approved_by: project.customer_approved_by,
+          locked: !!project.locked,
+        },
+        link_expires_at: tokenCheck.expiresAt,
+      });
+    }
 
     const [{ data: layers }, { data: dmas }, { data: isolatedPoints }] = await Promise.all([
       admin.from('project_layer').select('*').eq('project_id', project_id).order('sort_order'),
