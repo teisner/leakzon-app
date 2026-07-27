@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
+import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle, Copy } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { Input } from "@/components/ui/input";
@@ -214,6 +214,22 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
     });
   }, [dmas]);
 
+  // Every DMA this meter serves. A main meter can be the main for more than one
+  // DMA (dma.main_meter_id has no unique constraint), and those belong on a
+  // single row as "DMA1, DMA2" rather than as duplicate rows.
+  const getMeterDmaNames = useCallback((m) => {
+    const linked = parsedDmas.filter((d) => d.main_meter_id && d.main_meter_id === m.id);
+    if (linked.length > 0) return linked.map((d) => d.name);
+    // A main belongs to a DMA only by an explicit link (see v1.064).
+    if (m.is_main) return [];
+    for (const dma of parsedDmas) {
+      if (dma.poly && dma.poly.length >= 3 && m.latitude != null && m.longitude != null) {
+        if (pointInPolygon(m.latitude, m.longitude, dma.poly)) return [dma.name];
+      }
+    }
+    return [];
+  }, [parsedDmas]);
+
   const getMeterDma = useCallback((m) => {
     // An explicit link always wins.
     for (const dma of parsedDmas) {
@@ -235,6 +251,24 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
   useEffect(() => {
     setPage(1);
   }, [dmaFilter]);
+
+  // Rows actually rendered. A meter appears once, except when it is a main that
+  // is ALSO metered as a sub-meter of another DMA — then it gets a second,
+  // clearly-marked row. That extra row is presentation only: it is excluded
+  // from every count and from selection, so totals still reflect real meters.
+  const displayRows = useMemo(() => {
+    const rows = [];
+    for (const m of meters) {
+      rows.push({ meter: m, key: m.id, dmaNames: getMeterDmaNames(m), asSubMeter: false });
+      const subDma = m.sub_meter_dma_id
+        ? (dmas || []).find((d) => d.id === m.sub_meter_dma_id)
+        : null;
+      if (m.is_main && subDma) {
+        rows.push({ meter: m, key: `${m.id}:sub`, dmaNames: [subDma.name], asSubMeter: true });
+      }
+    }
+    return rows;
+  }, [meters, dmas, getMeterDmaNames]);
 
   const activeFilterCount = filter === "main" ? counts.main : filter === "main_ins" ? counts.mainIns : filter === "sub" ? counts.sub : counts.total;
   const hasMeters = counts.total > 0 || (hasInitiallyLoaded && meters.length > 0);
@@ -446,13 +480,14 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {meters.map((m) => {
+              {displayRows.map((row) => {
+                const m = row.meter;
                 const hasLocation = m.latitude != null && m.longitude != null;
                 return (
-                  <tr key={m.id} className="hover:bg-muted transition-colors">
+                  <tr key={row.key} className={`hover:bg-muted transition-colors ${row.asSubMeter ? "bg-muted/30" : ""}`}>
                     <td className="px-4 py-2.5 font-mono text-xs font-medium">
                       <div className="flex items-center gap-2">
-                        {deleteMode && (
+                        {deleteMode && !row.asSubMeter && (
                           <Checkbox
                             checked={selectedIds.has(m.id)}
                             onCheckedChange={() => toggleSelect(m.id)}
@@ -481,6 +516,19 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                     </td>
                     <td className="px-4 py-2.5">
                       {(() => {
+                        if (row.asSubMeter) {
+                          // Same physical meter shown a second time because it is
+                          // metered as a consumer of another DMA. Marked so it is
+                          // never mistaken for an extra meter — it is not counted.
+                          return (
+                            <span className="inline-flex items-center gap-1">
+                              <Badge variant="secondary" className="text-[10px]">{t('meterData.sub')}</Badge>
+                              <span title={t('meterData.duplicateRowHint')}>
+                                <Copy className="w-3 h-3 text-amber-500" />
+                              </span>
+                            </span>
+                          );
+                        }
                         const isIns = insertionLayerIds.includes(m.layer_id);
                         if (isIns) {
                           return <Badge variant="default" className="text-[10px] bg-blue-600 hover:bg-blue-700">Mains (Ins)</Badge>;
@@ -511,17 +559,23 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                       )}
                     </td>
                     <td className="px-4 py-2.5">
-                      {(() => {
-                        const dmaName = getMeterDma(m);
-                        return dmaName ? (
-                          <Badge variant="outline" className="text-[10px] gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: (dmas || []).find(d => d.name === dmaName)?.color || "#64748b" }} />
-                            {dmaName}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/50">—</span>
-                        );
-                      })()}
+                      {row.dmaNames.length > 0 ? (
+                        // A main serving several DMAs stays one row, listing them
+                        // all here, rather than appearing once per DMA.
+                        <span className="inline-flex flex-wrap items-center gap-1">
+                          {row.dmaNames.map((name) => (
+                            <Badge key={name} variant="outline" className="text-[10px] gap-1">
+                              <span
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: (dmas || []).find((d) => d.name === name)?.color || "#64748b" }}
+                              />
+                              {name}
+                            </Badge>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
                     </td>
                     <td className={`px-4 py-2.5 text-xs font-mono whitespace-nowrap ${hasLocation ? "text-muted-foreground" : "text-red-600 font-semibold"}`}>
                       {hasLocation ? (

@@ -11,6 +11,17 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.083 — 2026-07-27 · *Updated feature*
+**A main meter serving several DMAs is now one row listing them all**
+- A main meter that feeds more than one DMA used to show the first DMA only.
+  It now stays as **a single row** with every area listed in the DMA column —
+  "North DMA, North Central".
+- The one case that does add a row: a main meter that is also **metered as a
+  sub-meter of another DMA** (the "Sub-Meter in" field). It then appears a
+  second time as a **Sub** row for that area, with a copy icon beside it.
+- That extra row is a view of the same meter, not another meter — it is **not
+  included in any of the counts** and can't be selected for deletion.
+
 ## 1.082 — 2026-07-27 · *Updated feature*
 **Deleting a layer now asks first, and shows its progress**
 - Deleting a layer used to happen the instant you clicked the bin. It now asks
