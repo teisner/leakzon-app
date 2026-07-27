@@ -100,6 +100,10 @@ export default function ProjectDetail() {
   const [sessionMissing, setSessionMissing] = useState(false);
   // Whose session was refused, so the not-found screen can name them.
   const [deniedAs, setDeniedAs] = useState(null);
+  // Layer awaiting delete confirmation, and the countdown shown while it runs.
+  const [layerPendingDelete, setLayerPendingDelete] = useState(null);
+  const [deleteProgress, setDeleteProgress] = useState(null);
+  const [deleteStep, setDeleteStep] = useState("");
   // Guards the one-shot token refresh below, so a genuinely inaccessible
   // project can't loop refresh -> retry -> refresh.
   const refreshRetriedRef = useRef(false);
@@ -843,7 +847,26 @@ export default function ProjectDetail() {
     loadLayers();
   };
 
-  const handleDeleteLayer = async (layer) => {
+  // Asks first. Deleting a layer also removes its meters and their consumption
+  // history, which is not recoverable from the app.
+  // How many meters the delete would take with it, so the confirmation can say
+  // so plainly. Mirrors the delete's own matching: layer_id first, and the
+  // shared-file fallback only when no sibling layer uses the same file.
+  const layerMeterCount = (layer) => {
+    if (!layer) return 0;
+    const byLayer = (meters || []).filter((m) => m.layer_id === layer.id);
+    if (byLayer.length > 0) return byLayer.length;
+    if (!layer.file_url) return 0;
+    const sharedByAnother = (layers || []).some(
+      (l) => l.id !== layer.id && l.file_url === layer.file_url
+    );
+    if (sharedByAnother) return 0;
+    return (meters || []).filter((m) => m.source_file_url === layer.file_url).length;
+  };
+
+  const handleRequestDeleteLayer = (layer) => setLayerPendingDelete(layer);
+
+  const runDeleteLayer = async (layer) => {
     // A project_layer can't be deleted while other rows reference it: both
     // meter.layer_id and isolated_point.layer_id are ON DELETE NO ACTION
     // foreign keys, and meters may in turn be referenced by dma.main_meter_id
@@ -867,6 +890,9 @@ export default function ProjectDetail() {
       return false;
     };
 
+    setDeleteProgress(100);
+    setDeleteStep(t('layers.deleteStepUnlink'));
+
     // 1. Unlink any DMA whose main meter belongs to this layer. Work from the
     //    DMA side (few DMAs) so we're never limited by the meter read cap.
     const { data: dmasWithMain } = await supabase
@@ -888,6 +914,9 @@ export default function ProjectDetail() {
       }
     }
 
+    setDeleteProgress(75);
+    setDeleteStep(t('layers.deleteStepIsolated'));
+
     // 2. Delete isolated points that reference this layer (NOT NULL FK).
     await supabase.from('isolated_point').delete().eq('layer_id', layer.id);
 
@@ -903,6 +932,9 @@ export default function ProjectDetail() {
     //    readings via the indexed FK. The old explicit delete-by-source_file_url
     //    scanned all of a project's readings on *every* layer delete (even
     //    boundary/shp layers with no meters), which made deletes very slow.
+    setDeleteProgress(50);
+    setDeleteStep(t('layers.deleteStepMeters'));
+
     let fileIsSharedByAnotherLayer = false;
     if (layer.file_url) {
       const { data: siblings } = await supabase
@@ -915,16 +947,38 @@ export default function ProjectDetail() {
       await deleteMetersWhere('source_file_url', layer.file_url);
     }
 
+    setDeleteProgress(25);
+    setDeleteStep(t('layers.deleteStepLayer'));
+
     // 4. Finally delete the layer itself, and surface any remaining failure.
     const { error: delError } = await supabase.from('project_layer').delete().eq('id', layer.id);
     if (delError) {
       alert(`Could not delete the layer: ${delError.message}. Please reload and try again.`);
     }
 
+    setDeleteProgress(0);
+    setDeleteStep("");
+
     loadMeters();
     loadDmas();
     loadIsolatedPoints();
     loadLayers();
+    // Leave the empty bar on screen briefly so the countdown visibly finishes.
+    setTimeout(() => setDeleteProgress(null), 600);
+  };
+
+  const handleConfirmDeleteLayer = async () => {
+    const layer = layerPendingDelete;
+    setLayerPendingDelete(null);
+    if (!layer) return;
+    try {
+      await runDeleteLayer(layer);
+    } catch (e) {
+      console.error("Layer delete failed:", e);
+      alert(`Could not delete the layer: ${e?.message || e}`);
+      setDeleteProgress(null);
+      setDeleteStep("");
+    }
   };
 
   const handleUpdateLayer = async (layer, data) => {
@@ -1663,7 +1717,7 @@ export default function ProjectDetail() {
               layers={layers}
               meters={meters}
               onToggleVisibility={handleToggleVisibility}
-              onDeleteLayer={handleDeleteLayer}
+              onDeleteLayer={handleRequestDeleteLayer}
               onZoomToLayer={handleZoomToLayer}
               onEditLayer={setEditLayer}
               onUpdateLayer={handleUpdateLayer}
@@ -1783,6 +1837,48 @@ export default function ProjectDetail() {
       />
 
       {/* Prompt on leaving the network design view after making changes */}
+      <AlertDialog open={!!layerPendingDelete} onOpenChange={(v) => { if (!v) setLayerPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('layers.deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('layers.deleteConfirmBody', { name: layerPendingDelete?.name || "" })}
+              {layerPendingDelete && layerMeterCount(layerPendingDelete) > 0 && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                  {t('layers.deleteConfirmMeters', { count: layerMeterCount(layerPendingDelete) })}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('layers.deleteConfirmCancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteLayer}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {t('layers.deleteConfirmAction')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {deleteProgress !== null && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50">
+          <div className="w-[340px] rounded-xl border border-border bg-card p-5 shadow-2xl">
+            <p className="text-sm font-semibold text-foreground mb-1">{t('layers.deletingTitle')}</p>
+            <p className="text-xs text-muted-foreground mb-3 h-4">{deleteStep}</p>
+            {/* Counts down 100 -> 0 as each stage completes. */}
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-red-500 transition-all duration-500 ease-out"
+                style={{ width: `${deleteProgress}%` }}
+              />
+            </div>
+            <p className="mt-2 text-right text-xs tabular-nums text-muted-foreground">{deleteProgress}%</p>
+          </div>
+        </div>
+      )}
+
       <AlertDialog open={showNetworkDonePrompt} onOpenChange={(v) => { if (!v) handleDismissNetworkDone(); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

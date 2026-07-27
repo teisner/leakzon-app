@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.082 — 2026-07-27 · *Updated feature*
+**Deleting a layer now asks first, and shows its progress**
+- Deleting a layer used to happen the instant you clicked the bin. It now asks
+  for confirmation and states plainly that it cannot be undone.
+- When the layer has meters, the confirmation says **how many will be deleted**
+  along with their consumption history — so a layer with thousands of meters
+  can't be removed by a stray click.
+- While it runs, a progress bar counts down from **100% to 0%** and names each
+  stage: unlinking DMA main meters, removing isolation points, deleting meters
+  and readings, removing the layer. Large layers take a while, and it was
+  previously impossible to tell whether anything was happening.
+
 ## 1.081 — 2026-07-27 · *Bug fix*
 **Auto-created DMAs no longer leave the outermost meters unassigned**
 - An auto-drawn DMA was traced exactly through the outermost meters, so those
