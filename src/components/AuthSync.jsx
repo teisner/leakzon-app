@@ -17,9 +17,12 @@ export default function AuthSync() {
       // on. Only react to the session actually going away.
       if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) {
         if (localStorage.getItem("loggedInUser")) {
+          // Clear the stale record only. Deliberately no redirect: supabase-js
+          // also emits SIGNED_OUT when a token refresh fails transiently, and
+          // navigating on that yanks the user out of whatever they were doing.
+          // Each page decides what to show instead.
           console.warn("[auth] Supabase session ended — clearing stored login.");
           clearStaleLogin();
-          window.location.replace("/");
         }
       }
     });

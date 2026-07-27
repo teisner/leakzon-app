@@ -89,9 +89,10 @@ export default function UploadData() {
     waitForSession().then((session) => {
       if (cancelled) return;
       if (!session) {
-        console.warn("[auth] No session on the upload page — signing out.");
-        clearStaleLogin();
-        navigate("/");
+        // Same reasoning as ProjectDetail: don't eject the user over what may
+        // just be an in-flight token refresh.
+        console.warn("[auth] No session yet on the upload page — waiting.");
+        setLoading(false);
         return;
       }
       Promise.all([

@@ -7,7 +7,10 @@ import { supabase } from "@/api/supabaseClient";
 // as an empty dashboard and again as "Project not found".
 //
 // Every mount-time loader must await this before its first query.
-export async function waitForSession({ timeoutMs = 3000 } = {}) {
+// 3s was too tight: getSession() can have a token refresh in flight, and on a
+// slow connection that alone outlasts the timeout — which then reads as "signed
+// out" for a perfectly healthy session.
+export async function waitForSession({ timeoutMs = 15000 } = {}) {
   const { data: { session } } = await supabase.auth.getSession();
   if (session) return session;
 

@@ -96,6 +96,7 @@ export default function ProjectDetail() {
   const [meters, setMeters] = useState([]);
   const [allProjects, setAllProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sessionMissing, setSessionMissing] = useState(false);
   const [mapType, setMapType] = useState("terrain");
   const [mapSource, setMapSource] = useState("google");
   const [showImportLogs, setShowImportLogs] = useState(false);
@@ -723,17 +724,30 @@ export default function ProjectDetail() {
       const session = await waitForSession();
       if (cancelled) return;
       if (!session) {
-        // The stored login outlived its Supabase session. Clear it so the
-        // dashboard shows the sign-in screen rather than cached projects that
-        // bounce straight back here.
-        console.warn("[auth] No session when opening project — signing out.");
-        clearStaleLogin();
-        navigate("/");
+        // Never navigate away on a missing session: an in-flight token refresh
+        // looks identical to being signed out, and redirecting turns a moment
+        // of uncertainty into the user losing their place. Show the state and
+        // load as soon as a session actually arrives.
+        console.warn("[auth] No session yet when opening project — waiting.");
+        setSessionMissing(true);
+        setLoading(false);
         return;
       }
+      setSessionMissing(false);
       loadProjectPage();
     })();
-    return () => { cancelled = true; };
+    // If the session lands later (slow refresh, another tab signing in), load
+    // then rather than leaving the page stuck.
+    const { data: authSub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (s && !cancelled) {
+        setSessionMissing(false);
+        loadProjectPage();
+      }
+    });
+    return () => {
+      cancelled = true;
+      authSub?.subscription?.unsubscribe();
+    };
   }, [id]);
 
   const loadProjectPage = () => {
@@ -1384,10 +1398,22 @@ export default function ProjectDetail() {
     );
   }
 
+  if (sessionMissing) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-background gap-3">
+        <p className="text-foreground font-medium">{t('project.sessionExpired')}</p>
+        <p className="text-sm text-muted-foreground">{t('project.sessionExpiredHint')}</p>
+        <Button onClick={() => { clearStaleLogin(); navigate("/"); }}>
+          {t('project.signInAgain')}
+        </Button>
+      </div>
+    );
+  }
+
   if (!project) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background">
-        <p className="text-slate-600 mb-4">{t('project.notFound')}</p>
+        <p className="text-muted-foreground mb-4">{t('project.notFound')}</p>
         <Button onClick={() => navigate("/")}>{t('project.backToDashboard')}</Button>
       </div>
     );

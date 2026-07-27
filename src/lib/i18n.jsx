@@ -94,6 +94,9 @@ const translations = {
     // Project Detail
     'project.backToProjects': 'Exit to Projects',
     'project.uploadData': 'Upload Data',
+    'project.sessionExpired': 'Your sign-in has expired',
+    'project.sessionExpiredHint': 'Sign in again to continue — nothing has been lost.',
+    'project.signInAgain': 'Sign in again',
     'project.notFound': 'Project not found.',
     'project.backToDashboard': 'Back to Dashboard',
 
@@ -1065,6 +1068,9 @@ const translations = {
     // Project Detail
     'project.backToProjects': 'יציאה לפרויקטים',
     'project.uploadData': 'העלאת נתונים',
+    'project.sessionExpired': 'תוקף ההתחברות פג',
+    'project.sessionExpiredHint': 'התחבר שוב כדי להמשיך — שום דבר לא אבד.',
+    'project.signInAgain': 'התחבר שוב',
     'project.notFound': 'הפרויקט לא נמצא.',
     'project.backToDashboard': 'חזרה ללוח הבקרה',
 

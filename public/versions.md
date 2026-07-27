@@ -1,3 +1,15 @@
+## 1.072 — 2026-07-27
+**Opening a project no longer throws you back to the dashboard**
+- The bounce was caused by a change of mine in 1.068: if the sign-in had not
+  finished being restored within 3 seconds, the app assumed you were signed out
+  and sent you back to the dashboard. A slow token refresh looks exactly the
+  same as being signed out, so a perfectly valid sign-in got treated as expired.
+- The app no longer navigates you anywhere on its own. It waits, and loads the
+  project the moment the sign-in is ready — however long that takes.
+- If the sign-in really has expired you now get a clear **"Your sign-in has
+  expired"** message with a button, instead of being silently bounced.
+- The waiting time before giving up went from 3 seconds to 15.
+
 ## 1.071 — 2026-07-27
 **Fixed being bounced back to the dashboard when opening a project**
 - Root cause of this and the last two problems: your sign-in can quietly expire
