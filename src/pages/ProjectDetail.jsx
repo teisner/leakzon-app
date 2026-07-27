@@ -97,6 +97,8 @@ export default function ProjectDetail() {
   const [allProjects, setAllProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sessionMissing, setSessionMissing] = useState(false);
+  // Whose session was refused, so the not-found screen can name them.
+  const [deniedAs, setDeniedAs] = useState(null);
   const [mapType, setMapType] = useState("terrain");
   const [mapSource, setMapSource] = useState("google");
   const [showImportLogs, setShowImportLogs] = useState(false);
@@ -756,7 +758,28 @@ export default function ProjectDetail() {
       supabase.from('project_layer').select('*, layer_type_ref:layer_type(name)').eq('project_id', id).order('created_at', { ascending: false }),
       invokeFunction("getProjectMeters", { project_id: id }).then((res) => res.data?.meters || []),
     ])
-      .then(([{ data: p }, { data: rawLayers }, m]) => {
+      .then(async ([{ data: p, error: projectError }, { data: rawLayers }, m]) => {
+        // A row hidden by RLS and a row that doesn't exist both arrive here as
+        // data: null. They mean very different things — "you're signed in as
+        // someone without access" vs "this project is gone" — so record which
+        // one it is instead of showing "Project not found" for both.
+        if (!p) {
+          const { data: { session } } = await supabase.auth.getSession();
+          let claims = null;
+          try {
+            claims = session ? JSON.parse(atob(session.access_token.split(".")[1])) : null;
+          } catch {
+            // Malformed token — the null session below is the useful signal.
+          }
+          console.error(
+            "[project] not returned:", id,
+            "| postgrest:", projectError?.code || "(no error)",
+            "| signed in as:", claims?.email || "(no session)",
+            "| user_type:", claims?.user_type || claims?.app_metadata?.user_type || "(none)",
+            "| token expired:", claims?.exp ? claims.exp * 1000 < Date.now() : "(unknown)"
+          );
+          setDeniedAs(claims?.email || null);
+        }
         const l = (rawLayers || []).map((layer) => ({ ...layer, category: layer.layer_type_ref?.name || null }));
         // Resolve the locker's name for display (join may be null for non-admins
         // who can't read other users' rows — the "Locked by …" label degrades to
@@ -1413,7 +1436,12 @@ export default function ProjectDetail() {
   if (!project) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background">
-        <p className="text-muted-foreground mb-4">{t('project.notFound')}</p>
+        <p className="text-foreground font-medium mb-1">{t('project.notFound')}</p>
+        {deniedAs && (
+          <p className="text-sm text-muted-foreground mb-4 text-center max-w-sm px-6">
+            {t('project.notFoundSignedInAs', { email: deniedAs })}
+          </p>
+        )}
         <Button onClick={() => navigate("/")}>{t('project.backToDashboard')}</Button>
       </div>
     );

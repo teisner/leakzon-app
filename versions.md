@@ -11,6 +11,20 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.076 — 2026-07-27 · *Updated feature*
+**"Project not found" now tells you which account it refused**
+- "Project not found" was shown for two completely different situations: the
+  project genuinely not existing, and the database refusing it because the
+  account you are signed in as has no access. They looked identical, which made
+  the real cause impossible to see.
+- The screen now names the account it was signed in as, and points out that
+  **each web address keeps its own separate sign-in** — the preview site and the
+  live site do not share one, so you can be signed in as different people on
+  each without realising.
+- The browser console now records exactly why: the database's own error code,
+  the signed-in email, that account's user type, and whether its token had
+  expired.
+
 ## 1.075 — 2026-07-27 · *Bug fix*
 **"Forgot password?" now actually sends the email**
 - The forgot-password flow generated a temporary PIN and told you to check your

@@ -97,6 +97,7 @@ const translations = {
     'project.sessionExpired': 'Your sign-in has expired',
     'project.sessionExpiredHint': 'Sign in again to continue — nothing has been lost.',
     'project.signInAgain': 'Sign in again',
+    'project.notFoundSignedInAs': 'You are signed in as {email}. If that is not the account you expected, sign out and sign in again — each site address keeps its own sign-in.',
     'project.notFound': 'Project not found.',
     'project.backToDashboard': 'Back to Dashboard',
 
@@ -1071,6 +1072,7 @@ const translations = {
     'project.sessionExpired': 'תוקף ההתחברות פג',
     'project.sessionExpiredHint': 'התחבר שוב כדי להמשיך — שום דבר לא אבד.',
     'project.signInAgain': 'התחבר שוב',
+    'project.notFoundSignedInAs': 'אתה מחובר כ-{email}. אם זה לא החשבון שציפית לו, התנתק והתחבר מחדש — לכל כתובת אתר יש התחברות נפרדת.',
     'project.notFound': 'הפרויקט לא נמצא.',
     'project.backToDashboard': 'חזרה ללוח הבקרה',
 
