@@ -82,3 +82,19 @@ never push a broken build.
   drops to `anon`, so **always check the `error` on destructive writes**
   (delete/update) from the browser client before proceeding.
 - Run `npm run build` before finishing any code change.
+
+### Changelog entry format
+
+Every `versions.md` entry is tagged with what it contains, so the reader can
+tell at a glance without reading the detail:
+
+```
+## 1.073 — 2026-07-27 · Updated feature
+**One-line headline**
+- detail bullets
+```
+
+Tags are **Bug fix**, **New feature**, **Updated feature**, or a combination
+joined with ` + ` (e.g. `New feature + Bug fix`). Keep the `## <version> — <date> · <tag>`
+shape — the changelog is rendered straight through ReactMarkdown, and the
+heading line is what the reader scans.
