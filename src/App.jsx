@@ -17,6 +17,9 @@ import ImpersonationBanner from './components/ImpersonationBanner';
 import PreviewAutoRefresh from './components/PreviewAutoRefresh';
 import { IS_PREVIEW } from './lib/deployEnv';
 
+// Temporarily off while investigating a production-only repaint flicker.
+const SPEED_INSIGHTS_ENABLED = false;
+
 // Only runs inactivity logout on authenticated routes, not public-facing ones
 const InactivityGuard = () => {
   const location = useLocation();
@@ -47,7 +50,13 @@ function App() {
         </Routes>
       </Router>
       <Toaster />
-      <SpeedInsights />
+      {/* Vercel Speed Insights instruments every interaction (INP) via
+          PerformanceObserver. It is the one thing that runs on production but
+          not on preview — the preview URL sits behind Vercel SSO, so its
+          /_vercel/speed-insights/script.js returns 302 and never loads. That
+          matches a flicker seen only on production. Disabled while we confirm;
+          flip back to true to re-enable. */}
+      {SPEED_INSIGHTS_ENABLED && <SpeedInsights />}
     </QueryClientProvider>
     </ThemeProvider>
     </LanguageProvider>

@@ -1,3 +1,14 @@
+## 1.069 — 2026-07-27
+**Turned off Vercel Speed Insights while chasing a screen flicker**
+- Investigating a flicker seen when moving the mouse over the map — reported on
+  the live site only, never on preview.
+- Speed Insights is the one thing that genuinely runs on the live site but not
+  on preview (the preview URL is behind a login, so its script never loads),
+  and it hooks into every mouse interaction to measure responsiveness. It is
+  switched off so we can confirm whether it is the cause.
+- Nothing else changes. If the flicker continues, it is not this, and the
+  setting goes straight back on.
+
 ## 1.068 — 2026-07-27
 **Fixed "Project not found" when opening a project**
 - Opening a project straight after loading the app could show **"Project not
