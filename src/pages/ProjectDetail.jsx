@@ -34,6 +34,7 @@ import { recordProgress } from "@/lib/progressTracker";
 import { reverseGeocode } from "@/lib/reverseGeocode";
 import { findNearestPipeDiameter } from "@/lib/nearestPipe";
 import { isMeterManualLayer, isInsertionManualLayer } from "@/lib/meterLayerDetection";
+import { pointToFeature } from "@/lib/editablePoints";
 import { useLanguage } from "@/lib/i18n";
 import ProjectSettingsPage from "@/components/project/ProjectSettingsPage";
 import WaterLogoLoader from "@/components/WaterLogoLoader";
@@ -983,11 +984,7 @@ export default function ProjectDetail() {
 
     const geojson = {
       type: "FeatureCollection",
-      features: points.map((p) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [p.lng, p.lat] },
-        properties: { name: p.name || "Unnamed", id: p.id, location_source: "manual", endpoint_id: p.endpoint_id || "", account_name: p.account_name || "", address: p.address || "" },
-      })),
+      features: points.map(pointToFeature),
     };
     const file = new File([JSON.stringify(geojson)], `${layer.name}_manual.geojson`, { type: "application/json" });
     const { file_url } = await uploadFile({ file });

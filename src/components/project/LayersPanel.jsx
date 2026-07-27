@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Trash2, FileText, Map as MapIcon, ZoomIn, Lock, Pencil, ChevronDown, ChevronRight, GripVertical, ShieldCheck, MapPin, Plus, Layers as LayersIcon, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { isPointEditableLayer } from "@/lib/editablePoints";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -163,7 +164,7 @@ export default function LayersPanel({ layers, meters, onToggleVisibility, onDele
               <ZoomIn className="w-3.5 h-3.5" />
             </Button>
           )}
-          {layer.is_manual && (
+          {isPointEditableLayer(layer) && (
             <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600" onClick={() => onEditManualLayer?.(layer)} title={t('layers.editPoints')} disabled={locked}>
               <MapPin className="w-3.5 h-3.5" />
             </Button>

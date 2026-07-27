@@ -11,6 +11,23 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.079 — 2026-07-27 · *New feature + Bug fix*
+**Valve points can now be moved on the map**
+- Any imported point layer — valves, hydrants, structures — now has the same
+  **edit points on map** button that manual layers have. Turn it on, drag a
+  point to its correct position, and save.
+- Useful where a surveyed valve sits a few metres off and you want to correct it
+  while reviewing the network.
+- **Fixed a data-loss risk found while adding this:** saving a point layer used
+  to rebuild each point from a short fixed list of fields, throwing away every
+  other attribute. Woodlawn's valve layer carries 21 columns — diameter,
+  condition, turns, install date, GPS accuracy and more — and all of them would
+  have been wiped by a single point move. Every attribute is now kept; only the
+  coordinates change.
+- Line layers (water mains) and boundary layers are deliberately not included:
+  the line editor rebuilds features from drawn segments and keeps only the
+  diameter, and boundaries have their own editor.
+
 ## 1.078 — 2026-07-27 · *Bug fix*
 **Customer view now shows annotations properly instead of blank "Drawing" entries**
 - In the shared customer view, every annotation appeared as an untitled

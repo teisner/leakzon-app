@@ -262,6 +262,11 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           address: f.properties?.address || "",
           lat: f.geometry?.coordinates?.[1] || 0,
           lng: f.geometry?.coordinates?.[0] || 0,
+          // Keep every original attribute. Imported layers (valves, hydrants)
+          // carry arbitrary shapefile columns, and the save path rebuilds
+          // properties from a fixed list — without this, moving one point
+          // would strip the attributes off every feature in the layer.
+          _props: f.properties || {},
         }));
         setManualPoints(pts);
       })
