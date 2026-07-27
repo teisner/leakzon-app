@@ -5,7 +5,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Hexagon, MapPin, AlertTriangle, Check } from "lucide-react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { convexHull } from "@/lib/convexHull";
+import { convexHull, expandHull } from "@/lib/convexHull";
+
+// Breathing room around an auto-drawn DMA, in metres.
+const DMA_MARGIN_METERS = 25;
 import { recordProgress } from "@/lib/progressTracker";
 
 const DMA_COLORS = ["#3b82f6", "#16a34a", "#dc2626", "#9333ea", "#ea580c", "#0891b2", "#db2777", "#65a30d", "#facc15"];
@@ -56,7 +59,9 @@ export default function AutoCreateDmasDialog({ open, onOpenChange, projectId, on
 
       const groupList = Object.values(groupMap)
         .map((g, i) => {
-          const hull = g.coords.length >= 3 ? convexHull(g.coords) : null;
+          // Expanded so meters that define the boundary fall inside it rather
+          // than exactly on it, where they read as unassigned.
+          const hull = g.coords.length >= 3 ? expandHull(convexHull(g.coords), DMA_MARGIN_METERS) : null;
           return {
             name: g.name,
             meterCount: g.meters.length,

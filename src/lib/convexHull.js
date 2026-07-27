@@ -45,3 +45,37 @@ export function convexHull(points) {
   // Concatenate (last point of each is first point of the other)
   return lower.slice(0, -1).concat(upper.slice(0, -1));
 }
+// Pushes a hull outward by a fixed distance so the points it was built from sit
+// safely inside it.
+//
+// A convex hull passes exactly *through* its outermost points, and
+// point-in-polygon by ray casting treats a point on an edge as outside. So
+// every meter that defined the boundary came back unassigned — 26 of them on
+// "Obion Oren (test)", all at distance 0 from the polygon.
+//
+// Each vertex moves along the centroid→vertex direction, by a real distance in
+// metres rather than a percentage, so the margin is the same on a small DMA and
+// a large one. The polygon stays convex and still contains every original point.
+export function expandHull(hull, marginMeters = 25) {
+  if (!hull || hull.length < 3 || marginMeters <= 0) return hull || [];
+
+  const cLat = hull.reduce((s, p) => s + p[0], 0) / hull.length;
+  const cLng = hull.reduce((s, p) => s + p[1], 0) / hull.length;
+
+  // Degrees per metre: latitude is constant, longitude shrinks with latitude.
+  const latPerM = 1 / 111320;
+  const cosLat = Math.cos((cLat * Math.PI) / 180);
+  const lngPerM = 1 / (111320 * (Math.abs(cosLat) < 1e-6 ? 1e-6 : cosLat));
+
+  return hull.map(([lat, lng]) => {
+    // Work in metres so the offset is uniform in both axes.
+    const dLatM = (lat - cLat) / latPerM;
+    const dLngM = (lng - cLng) / lngPerM;
+    const len = Math.hypot(dLatM, dLngM);
+    if (len < 1e-9) return [lat, lng]; // vertex sits on the centroid
+    return [
+      lat + (dLatM / len) * marginMeters * latPerM,
+      lng + (dLngM / len) * marginMeters * lngPerM,
+    ];
+  });
+}

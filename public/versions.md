@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.081 — 2026-07-27 · *Bug fix*
+**Auto-created DMAs no longer leave the outermost meters unassigned**
+- An auto-drawn DMA was traced exactly through the outermost meters, so those
+  meters sat precisely *on* the edge and counted as outside it — they showed up
+  as unassigned along the rim of every DMA.
+- Auto-created DMAs now get **25 m of breathing room** beyond the outermost
+  meters, so the meters that define the shape sit inside it.
+- On "Obion Oren (test)" this takes the unassigned sub-meters from **26 to 0**,
+  without any meter falling into two DMAs.
+- **DMAs already created keep their current shape.** Delete and re-create them
+  to pick up the margin, or nudge their outline by hand.
+
 ## 1.080 — 2026-07-27 · *Bug fix*
 **Meter imports keep their DMA names, and land in the right category**
 - Importing meters with a DMA column announced "DMA names detected", then
