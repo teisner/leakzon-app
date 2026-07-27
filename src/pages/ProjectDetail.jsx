@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
-import { waitForSession } from "@/lib/authReady";
+import { waitForSession, clearStaleLogin } from "@/lib/authReady";
 import { invokeFunction } from "@/api/functionsClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
@@ -723,7 +723,11 @@ export default function ProjectDetail() {
       const session = await waitForSession();
       if (cancelled) return;
       if (!session) {
-        // Genuinely signed out — the dashboard surfaces the login dialog.
+        // The stored login outlived its Supabase session. Clear it so the
+        // dashboard shows the sign-in screen rather than cached projects that
+        // bounce straight back here.
+        console.warn("[auth] No session when opening project — signing out.");
+        clearStaleLogin();
         navigate("/");
         return;
       }

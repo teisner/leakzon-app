@@ -9,7 +9,7 @@ import { Upload, FileText, Map as MapIcon, Check, AlertCircle, Loader2, ChevronR
 import { uploadFile } from "@/api/storageClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { waitForSession } from "@/lib/authReady";
+import { waitForSession, clearStaleLogin } from "@/lib/authReady";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
@@ -89,6 +89,8 @@ export default function UploadData() {
     waitForSession().then((session) => {
       if (cancelled) return;
       if (!session) {
+        console.warn("[auth] No session on the upload page — signing out.");
+        clearStaleLogin();
         navigate("/");
         return;
       }

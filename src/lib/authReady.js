@@ -29,3 +29,24 @@ export async function waitForSession({ timeoutMs = 3000 } = {}) {
     }));
   });
 }
+
+// The Supabase session can end on its own — a refresh token expires, is rotated
+// by another tab, or is invalidated server-side — and supabase-js just drops it.
+// Nothing used to clear `loggedInUser` in that case, so the app went on
+// believing you were signed in: the dashboard kept showing its cached projects
+// while every RLS query returned nothing, and opening a project looked like the
+// project had vanished. Clearing the local trace of the login makes the app
+// agree with reality and show the sign-in screen.
+export function clearStaleLogin() {
+  try {
+    const raw = localStorage.getItem("loggedInUser");
+    const userId = raw ? JSON.parse(raw)?.id : null;
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("lastActivityTime");
+    // Stale project cache belongs to that dead session — drop it too, or the
+    // dashboard shows projects the signed-out user can no longer load.
+    if (userId) localStorage.removeItem(`dashboardProjectsCache_${userId}`);
+  } catch {
+    // Storage unavailable — nothing to clear.
+  }
+}

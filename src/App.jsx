@@ -14,6 +14,7 @@ import CustomerMode from './pages/CustomerMode';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import ImpersonationBanner from './components/ImpersonationBanner';
+import AuthSync from './components/AuthSync';
 import PreviewAutoRefresh from './components/PreviewAutoRefresh';
 import { IS_PREVIEW } from './lib/deployEnv';
 
@@ -36,6 +37,7 @@ function App() {
     <ThemeProvider>
     <QueryClientProvider client={queryClientInstance}>
       <Router>
+        <AuthSync />
         <ImpersonationBanner />
         {IS_PREVIEW && <PreviewAutoRefresh />}
         <ScrollToTop />

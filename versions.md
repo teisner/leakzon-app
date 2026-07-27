@@ -1,3 +1,17 @@
+## 1.071 — 2026-07-27
+**Fixed being bounced back to the dashboard when opening a project**
+- Root cause of this and the last two problems: your sign-in can quietly expire
+  on the Supabase side, but the app kept a local record saying you were still
+  signed in. It then looked logged in while the database refused every request —
+  showing an empty dashboard, "Project not found", or bouncing you back to the
+  dashboard after a few seconds.
+- The app now notices when the sign-in has ended and takes you to the **sign-in
+  screen**, instead of pretending you are still signed in. Signing in again
+  restores everything.
+- The dashboard no longer keeps showing cached projects once the sign-in has
+  gone, which is what made the problem look like it was only about opening a
+  project.
+
 ## 1.070 — 2026-07-27
 **New "Sub-Meter in" field on main meters, with suggested DMAs**
 - Editing a main meter (any type) now has a **Sub-Meter in** field alongside

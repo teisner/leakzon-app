@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { waitForSession } from "@/lib/authReady";
+import { waitForSession, clearStaleLogin } from "@/lib/authReady";
 import { Plus, Droplets, FolderOpen, Users as UsersIcon, LogOut, LayoutGrid, RefreshCw, Globe, ChevronDown, Archive, Search, ArrowDownUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -144,7 +144,17 @@ export default function Home() {
       // returns zero rows with HTTP 200 — indistinguishable from "this user
       // has no projects". Wait for the session rather than guess.
       const session = await waitForSession();
-      if (!session) return;
+      if (!session) {
+        // Stored login without a live session — show the sign-in screen rather
+        // than leaving stale cached projects on display.
+        if (localStorage.getItem("loggedInUser")) {
+          console.warn("[auth] No session on the dashboard — signing out.");
+          clearStaleLogin();
+          setLoggedInUser(null);
+          setProjects([]);
+        }
+        return;
+      }
 
       // RLS (has_project_access) already restricts which projects a Project
       // User can see server-side — no client-side assigned_user_ids filter
