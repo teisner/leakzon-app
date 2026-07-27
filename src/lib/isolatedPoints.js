@@ -37,10 +37,11 @@ export function parseDmaPolygons(dmas) {
     .map((dma) => {
       let poly;
       try {
-        poly =
-          typeof dma.polygon === "string"
-            ? JSON.parse(dma.polygon)
-            : dma.polygon;
+        // Base44's `polygon` (JSON string) became `polygon_json` (jsonb).
+        // Accept either — callers that read `dma` directly rather than through
+        // ProjectDetail's aliasing loader only have polygon_json.
+        const raw = dma.polygon_json ?? dma.polygon;
+        poly = typeof raw === "string" ? JSON.parse(raw) : raw;
       } catch {
         return null;
       }

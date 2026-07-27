@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/api/supabaseClient";
-import { Loader2, Link2, Unlink, MapPin, ChevronUp, ChevronDown } from "lucide-react";
+import { Loader2, Link2, Unlink, MapPin, ChevronUp, ChevronDown, Gauge } from "lucide-react";
 import MeterLocationPicker from "@/components/project/MeterLocationPicker";
 import { useLanguage } from "@/lib/i18n";
+import { recommendLinkedDmaId, recommendSubMeterDmaId } from "@/lib/dmaRecommendation";
 
 export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dmas, projectId, onPinpoint, project }) {
   const { t } = useLanguage();
@@ -26,6 +27,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
   });
   const [linkedDmaId, setLinkedDmaId] = useState("");
   const [originalDmaId, setOriginalDmaId] = useState("");
+  const [subMeterDmaId, setSubMeterDmaId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showMap, setShowMap] = useState(false);
@@ -49,9 +51,37 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       const dmaId = linkedDma?.id || "";
       setLinkedDmaId(dmaId);
       setOriginalDmaId(dmaId);
+      setSubMeterDmaId(meter.sub_meter_dma_id || "");
       setError("");
     }
   }, [meter, dmas]);
+
+  // Suggestions only — never applied automatically. The Linked DMA suggestion
+  // is the DMA containing the meter (or the closest boundary); the Sub-Meter
+  // suggestion is the nearest DMA that isn't already the Linked one, so it
+  // updates as soon as the Linked DMA changes.
+  const recommendedLinkedId = useMemo(
+    () => recommendLinkedDmaId(meter, dmas),
+    [meter, dmas]
+  );
+  const recommendedSubId = useMemo(
+    () => recommendSubMeterDmaId(meter, dmas, linkedDmaId),
+    [meter, dmas, linkedDmaId]
+  );
+
+  const dmaOption = (dma, recommendedId) => (
+    <SelectItem key={dma.id} value={dma.id}>
+      <span className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: dma.color }} />
+        {dma.name}
+        {dma.id === recommendedId && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+            {t('meterEdit.recommended')}
+          </span>
+        )}
+      </span>
+    </SelectItem>
+  );
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -63,6 +93,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
     setError("");
     try {
       const updates = {
+        sub_meter_dma_id: form.is_main ? (subMeterDmaId || null) : null,
         uid: form.uid || null,
         endpoint_id: form.endpoint_id || null,
         payer_name: form.payer_name || null,
@@ -291,16 +322,35 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
                       <Unlink className="w-3.5 h-3.5" /> {t('meterEdit.noDmaLinked')}
                     </span>
                   </SelectItem>
-                  {dmas.map((dma) => (
-                    <SelectItem key={dma.id} value={dma.id}>
-                      <span className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: dma.color }} />
-                        {dma.name}
-                      </span>
-                    </SelectItem>
-                  ))}
+                  {dmas.map((dma) => dmaOption(dma, recommendedLinkedId))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {form.is_main && (dmas || []).length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Gauge className="w-3.5 h-3.5" /> {t('meterEdit.subMeterIn')}
+              </Label>
+              <Select value={subMeterDmaId || "none"} onValueChange={(v) => setSubMeterDmaId(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder={t('meterEdit.selectDma')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Unlink className="w-3.5 h-3.5" /> {t('meterEdit.noSubMeterDma')}
+                    </span>
+                  </SelectItem>
+                  {/* A meter cannot supply a DMA and be metered by it, so the
+                      Linked DMA is not offered here. */}
+                  {dmas
+                    .filter((dma) => dma.id !== linkedDmaId)
+                    .map((dma) => dmaOption(dma, recommendedSubId))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t('meterEdit.subMeterInHint')}</p>
             </div>
           )}
 

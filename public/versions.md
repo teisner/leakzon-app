@@ -1,3 +1,18 @@
+## 1.070 — 2026-07-27
+**New "Sub-Meter in" field on main meters, with suggested DMAs**
+- Editing a main meter (any type) now has a **Sub-Meter in** field alongside
+  **Linked DMA** — for the DMA that meters this meter as one of its consumers.
+  A main meter usually supplies one DMA while sitting inside a neighbouring one.
+- The DMA already chosen as Linked DMA is not offered under Sub-Meter in, since
+  a meter cannot both supply a DMA and be metered by it.
+- Both dropdowns now mark a suggestion with **(recommended)**, worked out from
+  the network: the Linked DMA suggestion is the DMA the meter sits inside (or
+  the closest one), and the Sub-Meter suggestion is the nearest other DMA. The
+  Sub-Meter suggestion updates as soon as you change the Linked DMA.
+- **Nothing is selected for you** — the suggestion is only a label, the choice
+  stays yours.
+- Meters with no coordinates get no suggestion rather than a misleading one.
+
 ## 1.069 — 2026-07-27
 **Turned off Vercel Speed Insights while chasing a screen flicker**
 - Investigating a flicker seen when moving the mouse over the map — reported on
