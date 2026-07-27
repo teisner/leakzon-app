@@ -326,11 +326,11 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
           const subRecs = records.filter((r) => !r.is_main);
           const subColorIdx = (LAYER_COLORS.indexOf(layerColor) + 1) % LAYER_COLORS.length;
           layerSets = [
-            { name: `${layerName} - Main`, records: mainRecs, color: layerColor },
-            { name: `${layerName} - Sub`, records: subRecs, color: LAYER_COLORS[subColorIdx] },
+            { name: `${layerName} - Main`, records: mainRecs, color: layerColor, category: "Main Meters" },
+            { name: `${layerName} - Sub`, records: subRecs, color: LAYER_COLORS[subColorIdx], category: "Sub Meters" },
           ];
         } else {
-          layerSets = [{ name: layerName, records, color: layerColor }];
+          layerSets = [{ name: layerName, records, color: layerColor, category: isMain ? "Main Meters" : "Sub Meters" }];
         }
 
         setPhase("saving");
@@ -353,6 +353,7 @@ export default function UploadLayerDialog({ open, onOpenChange, projectId, dateF
               project_id: projectId,
               name: set.name,
               layer_type: layerType,
+              layer_type_id: await resolveLayerTypeId(set.category),
               file_url: fileUrl,
               color: set.color,
               visible: true,

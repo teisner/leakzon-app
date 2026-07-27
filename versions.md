@@ -11,6 +11,22 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.080 — 2026-07-27 · *Bug fix*
+**Meter imports keep their DMA names, and land in the right category**
+- Importing meters with a DMA column announced "DMA names detected", then
+  **"Auto-Create DMAs" reported none**. The names were being thrown away during
+  the import: they were only kept when a matching DMA already existed, and on a
+  first import none do — which is exactly when you need them.
+- The name from the file is now stored with each meter, so Auto-Create DMAs can
+  build the areas from it. Once the areas are created, the meters that named
+  them are **linked to them automatically**.
+- Imported meter layers showed a category of **Other**. They were never given a
+  category at all. A split import now creates its layers as **Main Meters** and
+  **Sub Meters**, and an unsplit one follows the Main/Sub choice you made.
+- **For a file already imported before this fix:** re-import it to pick up the
+  DMA names. The layer category can be corrected in the layer's settings
+  without re-importing.
+
 ## 1.079 — 2026-07-27 · *New feature + Bug fix*
 **Valve points can now be moved on the map**
 - Any imported point layer — valves, hydrants, structures — now has the same

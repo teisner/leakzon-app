@@ -194,8 +194,13 @@ export function toMeterInsertRows(records, dmas) {
     (dmas || []).filter((d) => d?.name).map((d) => [d.name.trim().toLowerCase(), d.id])
   );
   return records.map(({ dma_name, ...rest }) => {
-    const dmaId = dma_name ? byName.get(String(dma_name).trim().toLowerCase()) : null;
-    return dmaId ? { ...rest, dma_id: dmaId } : rest;
+    const name = dma_name ? String(dma_name).trim() : "";
+    const dmaId = name ? byName.get(name.toLowerCase()) : null;
+    // Keep the name from the file even when no DMA matches yet — on a first
+    // import the DMAs are created *from* these names, so dropping them left
+    // "Auto-Create DMAs" with nothing to read.
+    const row = name ? { ...rest, import_dma_name: name } : rest;
+    return dmaId ? { ...row, dma_id: dmaId } : row;
   });
 }
 

@@ -28,9 +28,20 @@ export default function AutoCreateDmasDialog({ open, onOpenChange, projectId, on
       ]);
       const allMeters = metersRes.data?.meters || [];
       const existingNames = new Set((existingDmas || []).map((d) => d.name));
+      // getProjectMeters' dma_name is derived from an existing DMA, so on a
+      // first import — the very case this dialog exists for — it is always
+      // empty. The name the file supplied lives on import_dma_name.
+      const { data: importedNames } = await supabase
+        .from('meter')
+        .select('id, import_dma_name')
+        .eq('project_id', projectId)
+        .not('import_dma_name', 'is', null);
+      const importedById = new Map((importedNames || []).map((r) => [r.id, r.import_dma_name]));
 
       const groupMap = {};
       for (const m of allMeters) {
+        // Prefer the name from the import file; fall back to a resolved DMA.
+        m.dma_name = importedById.get(m.id) || m.dma_name;
         if (!m.dma_name) continue;
         if (!groupMap[m.dma_name]) {
           groupMap[m.dma_name] = { name: m.dma_name, meters: [], coords: [], mainMeters: [], subMeters: [] };
@@ -98,8 +109,21 @@ export default function AutoCreateDmasDialog({ open, onOpenChange, projectId, on
         sort_order: i,
       }));
       if (records.length > 0) {
-        const { error } = await supabase.from('dma').insert(records);
-        if (!error) count = records.length;
+        const { data: created, error } = await supabase.from('dma').insert(records).select('id, name');
+        if (!error) {
+          count = records.length;
+          // Point each meter at the DMA its file named, so the assignment is
+          // real rather than only implied by the polygon.
+          for (const d of created || []) {
+            const { error: linkError } = await supabase
+              .from('meter')
+              .update({ dma_id: d.id })
+              .eq('project_id', projectId)
+              .eq('import_dma_name', d.name)
+              .is('dma_id', null);
+            if (linkError) console.error("Failed to link meters to DMA", d.name, linkError);
+          }
+        }
       }
       setCreatedCount(count);
       if (count > 0) {
