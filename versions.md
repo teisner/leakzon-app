@@ -11,6 +11,17 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.113 — 2026-07-28 · *Bug fix + Updated feature*
+**No duplicate meters in the export, and files named after the project**
+- A main meter serving more than one DMA appeared **once per DMA** in the Meter
+  Data file. It is one meter, so it now appears once.
+- The **Groups** file is unchanged and still lists it once per DMA — that file
+  describes which areas a meter belongs to, so those rows are meant to be there.
+- Exported files now start with the project name:
+  **`Obion TN_meter_data.xlsx`**, **`Obion TN_groups.xlsx`**,
+  **`Obion TN_meters_no_dma.xlsx`** — so several exports can sit in one folder
+  without guessing which is which.
+
 ## 1.112 — 2026-07-28 · *Bug fix*
 **Excel files open without a warning**
 - Every spreadsheet the platform produced made Excel warn that *"the file format

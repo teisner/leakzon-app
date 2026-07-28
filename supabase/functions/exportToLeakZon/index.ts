@@ -457,10 +457,31 @@ const METER_DATA_COLUMNS = [
   "Communication", "METER TYPE", "new identifier", "new meter number",
 ];
 
+// One row per physical meter.
+//
+// analyzeMeters emits a copy of a main meter for each DMA it serves, which is
+// what the Groups file needs — a membership row per DMA. Meter Data describes
+// the meters themselves, so those copies collapse back to one. Deduped on the
+// Identifier, since that is the key the receiving system matches on and two
+// rows sharing one would collide on import regardless of why.
+function dedupeMeterRows(rows: any[]) {
+  const seen = new Set<string>();
+  const out: any[] = [];
+  for (const r of rows) {
+    // An empty Identifier carries no identity, so those rows are kept as they
+    // are rather than being collapsed into a single row.
+    const key = String(r['Identifier'] ?? '').trim();
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    out.push(r);
+  }
+  return out;
+}
+
 export function buildMeterDataRows(meters: any[], project: any, opts: any) {
   const installed = new Date().toISOString().slice(0, 10);
   const unit = unitLabel(project?.water_unit);
-  return meters.map((m) => ({
+  return dedupeMeterRows(meters.map((m) => ({
     "Identifier": buildIdentifier(m, opts.identifierFields),
     "Meter Number": String(meterFieldValue(m, opts.meterNumberField) ?? ""),
     "Address": m.address ?? "",
@@ -484,7 +505,7 @@ export function buildMeterDataRows(meters: any[], project: any, opts: any) {
     "METER TYPE": "water",
     "new identifier": "",
     "new meter number": "",
-  }));
+  })));
 }
 
 const GROUPS_COLUMNS = [
@@ -785,19 +806,23 @@ Deno.serve(async (req) => {
       identifierFields: identifier_fields?.length ? identifier_fields : ['address', 'meter_id'],
       meterNumberField: meter_number_field || 'meter_id',
     };
+    // Files are named for the project so they stay identifiable once several
+    // exports are sitting in the same downloads folder.
+    const filePrefix = sanitizeFileName(project.name);
+
     // Real .xlsx — see buildSheetXlsx for why these are no longer .xls.
-    outerZip.file('meter_data.xlsx', await buildSheetXlsx(
+    outerZip.file(`${filePrefix}_meter_data.xlsx`, await buildSheetXlsx(
       'Meter Data', METER_DATA_COLUMNS, buildMeterDataRows(analysis.assigned, project, exportOpts)
     ));
     // Groups — which DMA each meter belongs to, and how it participates.
-    outerZip.file('groups.xlsx', await buildSheetXlsx(
+    outerZip.file(`${filePrefix}_groups.xlsx`, await buildSheetXlsx(
       'Groups', GROUPS_COLUMNS, buildGroupsRows(analysis.assigned, project, exportOpts)
     ));
     // Meters with no DMA keep their own file so nothing is silently lost and
     // they can be reviewed apart from the rest.
     if (analysis.unassigned.length > 0) {
       const noDma = buildNoDmaRows(analysis.unassigned);
-      outerZip.file('meters_no_dma.xlsx', await buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
+      outerZip.file(`${filePrefix}_meters_no_dma.xlsx`, await buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
     }
 
     const zipBuffer = await outerZip.generateAsync({ type: 'base64' });
