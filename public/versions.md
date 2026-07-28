@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.112 — 2026-07-28 · *Bug fix*
+**Excel files open without a warning**
+- Every spreadsheet the platform produced made Excel warn that *"the file format
+  and extension don't match — the file could be corrupted or unsafe"*. The files
+  were named **.xls** but their contents were a different format, so Excel
+  refused to open them without a confirmation.
+- They are now genuine **.xlsx** files and open normally.
+- Affects the LeakZon export (Meter Data, Groups, meters without a DMA), the
+  meter table export, and the DMA data export.
+- Existing files already downloaded still show the warning — export again to get
+  a clean copy.
+
 ## 1.111 — 2026-07-28 · *Updated feature*
 **Export to LeakZon rewritten to the Main platform's import format**
 - The export now produces **three files** plus the shapefiles: **Meter Data**,

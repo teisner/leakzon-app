@@ -1,3 +1,21 @@
+function buildNoDmaRows(meters: any[]) {
+  return meters.map((m) => ({
+    'UID': m.uid || '',
+    'Is Main': m.__is_main ? 'TRUE' : 'FALSE',
+    'DMA Name': m.__dma_name || '',
+    'Account Name': m.payer_name || '',
+    'Address': m.address || '',
+    'Provider': m.provider || '',
+    'Communication': m.communication_type || '',
+    'Diameter (mm)': m.diameter ?? '',
+    'Status': m.is_active === false ? 'Inactive' : 'Active',
+    'Latitude': m.latitude ?? '',
+    'Longitude': m.longitude ?? '',
+    'Location Source': m.location_source || (m.latitude != null ? 'imported' : ''),
+    'Additional IDs': (m.additional_ids || []).map((id: any) => `${id.label}: ${id.value}`).join('; '),
+  }));
+}
+
 // Replaces base44/functions/exportToLeakZon/entry.ts. The hand-rolled
 // Shapefile writer (generalized for Point/Polyline/Polygon) and the hand-
 // rolled Excel SpreadsheetML writer are portable as-is — plain binary/XML
@@ -370,11 +388,6 @@ function polygonCentroid(poly: [number, number][]): [number, number] {
 // Headers are intentionally hardcoded English literals and never routed through
 // i18n — the receiving LeakZon system parses them by name, so they must not
 // change with the UI language.
-const METER_HEADERS = [
-  'UID', 'Is Main', 'DMA Name', 'Account Name', 'Address', 'Provider', 'Communication',
-  'Diameter (mm)', 'Status', 'Latitude', 'Longitude', 'Location Source', 'Additional IDs',
-];
-
 // ── LeakZon Main import format ───────────────────────────────────────────────
 // Column names, order and constant values are dictated by the receiving system,
 // so they are literals here and never translated.
@@ -490,70 +503,25 @@ export function buildGroupsRows(meters: any[], project: any, opts: any) {
   }));
 }
 
-// Generic SpreadsheetML writer for a fixed column list.
-function buildSheetXls(sheetName: string, columns: string[], rows: any[]) {
-  const esc = (v: any) => String(v ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const header = columns.map((c) => `<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join('');
-  const body = rows.map((r) =>
-    `<Row>${columns.map((c) => `<Cell><Data ss:Type="String">${esc(r[c])}</Data></Cell>`).join('')}</Row>`
-  ).join('');
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Worksheet ss:Name="${esc(sheetName)}">
-  <Table>
-   <Row>${header}</Row>
-   ${body}
-  </Table>
- </Worksheet>
-</Workbook>`;
+// Writes a genuine .xlsx workbook.
+//
+// These were SpreadsheetML 2003 (an XML dialect) saved as .xls. Excel inspects
+// the content, sees XML where the binary .xls format is claimed, and warns that
+// the file "could be corrupted or unsafe" before it will open — on every file
+// the platform produced. SheetJS emits the real format, so the warning goes.
+async function buildSheetXlsx(sheetName: string, columns: string[], rows: any[]) {
+  const XLSX = await import('npm:xlsx@0.18.5');
+  // aoa keeps the column order exactly as given; json_to_sheet would take it
+  // from the first object's key order.
+  const aoa = [columns, ...rows.map((r) => columns.map((c) => r[c] ?? ''))];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  // Excel rejects sheet names over 31 characters or containing []:*?/\
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31).replace(/[[\]:*?/\\]/g, '-'));
+  return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }));
 }
 
-function buildMeterXls(meters: any[]) {
-  const headers = METER_HEADERS;
-  function escapeXML(val: any) {
-    return String(val ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-  const headerCells = headers.map((h) => `<Cell><Data ss:Type="String">${escapeXML(h)}</Data></Cell>`).join('');
-  const bodyRows = meters
-    .map((m) => {
-      const hasLoc = m.latitude != null && m.longitude != null;
-      const addIds = (m.additional_ids || []).map((id: any) => `${id.label}: ${id.value}`).join('; ');
-      const cells = [
-        `<Cell><Data ss:Type="String">${escapeXML(m.uid || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${m.__is_main ? 'TRUE' : 'FALSE'}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.__dma_name || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.payer_name || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.address || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.provider || '')}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.communication_type || '')}</Data></Cell>`,
-        m.diameter != null
-          ? `<Cell><Data ss:Type="Number">${escapeXML(m.diameter)}</Data></Cell>`
-          : `<Cell><Data ss:Type="String"></Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.is_active ? 'Active' : 'Inactive')}</Data></Cell>`,
-        hasLoc ? `<Cell><Data ss:Type="Number">${escapeXML(m.latitude)}</Data></Cell>` : `<Cell><Data ss:Type="String"></Data></Cell>`,
-        hasLoc ? `<Cell><Data ss:Type="Number">${escapeXML(m.longitude)}</Data></Cell>` : `<Cell><Data ss:Type="String"></Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(m.location_source || (hasLoc ? 'imported' : ''))}</Data></Cell>`,
-        `<Cell><Data ss:Type="String">${escapeXML(addIds)}</Data></Cell>`,
-      ].join('');
-      return `<Row>${cells}</Row>`;
-    })
-    .join('');
 
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Worksheet ss:Name="Meters">
-  <Table>
-   <Row>${headerCells}</Row>
-   ${bodyRows}
-  </Table>
- </Worksheet>
-</Workbook>`;
-}
 
 // Analyses the project's meters before they are written out: resolves each
 // meter's DMA, decides main vs sub, splits off the meters with no DMA, and
@@ -817,20 +785,19 @@ Deno.serve(async (req) => {
       identifierFields: identifier_fields?.length ? identifier_fields : ['address', 'meter_id'],
       meterNumberField: meter_number_field || 'meter_id',
     };
-    const enc = new TextEncoder();
-
-    // Meter Data — the LeakZon Main import format.
-    outerZip.file('meter_data.xls', enc.encode(
-      buildSheetXls('Meter Data', METER_DATA_COLUMNS, buildMeterDataRows(analysis.assigned, project, exportOpts))
+    // Real .xlsx — see buildSheetXlsx for why these are no longer .xls.
+    outerZip.file('meter_data.xlsx', await buildSheetXlsx(
+      'Meter Data', METER_DATA_COLUMNS, buildMeterDataRows(analysis.assigned, project, exportOpts)
     ));
     // Groups — which DMA each meter belongs to, and how it participates.
-    outerZip.file('groups.xls', enc.encode(
-      buildSheetXls('Groups', GROUPS_COLUMNS, buildGroupsRows(analysis.assigned, project, exportOpts))
+    outerZip.file('groups.xlsx', await buildSheetXlsx(
+      'Groups', GROUPS_COLUMNS, buildGroupsRows(analysis.assigned, project, exportOpts)
     ));
-    // Meters with no DMA keep their existing separate file, unchanged, so
-    // nothing is silently lost and they can be reviewed apart from the rest.
+    // Meters with no DMA keep their own file so nothing is silently lost and
+    // they can be reviewed apart from the rest.
     if (analysis.unassigned.length > 0) {
-      outerZip.file('meters_no_dma.xls', enc.encode(buildMeterXls(analysis.unassigned)));
+      const noDma = buildNoDmaRows(analysis.unassigned);
+      outerZip.file('meters_no_dma.xlsx', await buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
     }
 
     const zipBuffer = await outerZip.generateAsync({ type: 'base64' });

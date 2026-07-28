@@ -1,4 +1,5 @@
 // Export meters to XLS — supports field selection, custom filename, and prepared rows
+import * as XLSX from "xlsx";
 import { findAdditionalId } from "@/lib/meterIds";
 
 export const ALL_COLUMNS = [
@@ -57,34 +58,21 @@ function escapeXML(val) {
 }
 
 function buildXLS(rows, columns) {
-  const headerCells = columns.map(
-    (c) => `<Cell><Data ss:Type="String">${escapeXML(c.label)}</Data></Cell>`
-  ).join("");
-
-  const bodyRows = rows
-    .map((r) => {
-      const cells = columns.map((c) => {
-        const v = r[c.key];
-        if (c.type === "number" && v !== "" && v != null) {
-          return `<Cell><Data ss:Type="Number">${escapeXML(v)}</Data></Cell>`;
-        }
-        return `<Cell><Data ss:Type="String">${escapeXML(v)}</Data></Cell>`;
-      }).join("");
-      return `<Row>${cells}</Row>`;
-    })
-    .join("");
-
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Worksheet ss:Name="Meters">
-  <Table>
-   <Row>${headerCells}</Row>
-   ${bodyRows}
-  </Table>
- </Worksheet>
-</Workbook>`;
+  // Real .xlsx via SheetJS. This used to emit SpreadsheetML 2003 (XML) named
+  // .xls, which makes Excel warn that the file "could be corrupted or unsafe"
+  // before it will open it.
+  const aoa = [
+    columns.map((c) => c.label),
+    ...rows.map((r) => columns.map((c) => {
+      const v = r[c.key];
+      if (c.type === "number" && v !== "" && v != null) return Number(v);
+      return v ?? "";
+    })),
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Meters");
+  return XLSX.write(wb, { type: "array", bookType: "xlsx" });
 }
 
 function download(content, filename, mime) {
@@ -100,9 +88,9 @@ function download(content, filename, mime) {
 }
 
 export function exportMetersXLS(rows, columns, filename) {
-  const xls = buildXLS(rows, columns);
-  const name = filename.endsWith(".xls") ? filename : `${filename}.xls`;
-  download(xls, name, "application/vnd.ms-excel");
+  const wbArray = buildXLS(rows, columns);
+  const name = filename.replace(/\.xlsx?$/i, "") + ".xlsx";
+  download(wbArray, name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 
 function escapeCSV(val) {

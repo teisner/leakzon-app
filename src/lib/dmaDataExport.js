@@ -1,4 +1,6 @@
-// Multi-sheet XLS export of all data within each DMA.
+import * as XLSX from "xlsx";
+
+// Multi-sheet XLSX export of all data within each DMA.
 // One sheet per DMA containing stacked tables: Sub Meters, Main Meters, and one table per layer
 // (valves, hydrants, water lines, etc.) whose features fall within the DMA polygon.
 
@@ -38,37 +40,24 @@ function meterRow(m) {
   };
 }
 
-function buildCell(val) {
-  if (typeof val === "number" && !isNaN(val)) {
-    return `<Cell><Data ss:Type="Number">${escapeXML(val)}</Data></Cell>`;
+function cellValue(val) {
+  if (typeof val === "number" && !isNaN(val)) return val;
+  let v = val;
+  if (v !== null && typeof v === "object") {
+    try { v = JSON.stringify(v); } catch { v = String(v); }
   }
-  let s = val;
-  if (s !== null && typeof s === "object") {
-    try { s = JSON.stringify(s); } catch { s = String(s); }
-  }
-  if (s === null || s === undefined) s = "";
-  return `<Cell><Data ss:Type="String">${escapeXML(s)}</Data></Cell>`;
+  return v ?? "";
 }
 
+// A stacked block: bold-ish title row, header row, data rows, blank separator.
+// Returned as arrays so the sheet can be assembled with SheetJS.
 function buildTable(title, columns, rows) {
-  const parts = [];
-  // Title row (bold)
-  parts.push(
-    `<Row><Cell ss:StyleID="Title"><Data ss:Type="String">${escapeXML(title)}</Data></Cell></Row>`
-  );
-  // Header row
-  const headerCells = columns
-    .map((c) => `<Cell><Data ss:Type="String">${escapeXML(c.label)}</Data></Cell>`)
-    .join("");
-  parts.push(`<Row>${headerCells}</Row>`);
-  // Data rows
-  for (const r of rows) {
-    const cells = columns.map((c) => buildCell(r[c.key])).join("");
-    parts.push(`<Row>${cells}</Row>`);
-  }
-  // Blank separator row
-  parts.push(`<Row></Row>`);
-  return parts.join("");
+  return [
+    [title],
+    columns.map((c) => c.label),
+    ...rows.map((r) => columns.map((c) => cellValue(r[c.key]))),
+    [],
+  ];
 }
 
 export function buildDmaDataXLS(dmas) {
@@ -105,32 +94,26 @@ export function buildDmaDataXLS(dmas) {
       }
 
       const sheetName = sanitizeSheetName(dma.name, idx);
-      const content = tables.length
-        ? tables.join("")
-        : `<Row><Cell><Data ss:Type="String">No objects found in this DMA.</Data></Cell></Row>`;
+      const aoa = tables.length ? tables.flat() : [["No objects found in this DMA."]];
+      return { sheetName, aoa };
+    });
 
-      return `<Worksheet ss:Name="${escapeXML(sheetName)}"><Table>${content}</Table></Worksheet>`;
-    })
-    .join("");
-
-  return `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
- <Styles>
-  <Style ss:ID="Title"><Font ss:Bold="1" ss:Size="12"/></Style>
- </Styles>
- ${worksheets}
-</Workbook>`;
+  // Real .xlsx. This was SpreadsheetML 2003 (XML) written as .xls, which makes
+  // Excel warn the file "could be corrupted or unsafe" before opening it.
+  const wb = XLSX.utils.book_new();
+  for (const { sheetName, aoa } of worksheets) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), sheetName);
+  }
+  return XLSX.write(wb, { type: "array", bookType: "xlsx" });
 }
 
 export function downloadDmaDataXLS(dmas, filename) {
-  const xls = buildDmaDataXLS(dmas);
-  const blob = new Blob([xls], { type: "application/vnd.ms-excel" });
+  const wbArray = buildDmaDataXLS(dmas);
+  const blob = new Blob([wbArray], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  const name = filename && filename.endsWith(".xls") ? filename : `${filename || "dma_data"}.xls`;
+  const name = (filename || "dma_data").replace(/\.xlsx?$/i, "") + ".xlsx";
   a.download = name;
   document.body.appendChild(a);
   a.click();
