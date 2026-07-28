@@ -11,6 +11,19 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.105 — 2026-07-28 · *Bug fix*
+**Deleting a main meter now works instead of silently doing nothing**
+- Selecting a main meter in the Meter Data table and confirming the delete
+  appeared to work, but the meter stayed. The database refuses to delete a meter
+  that a DMA is using as its main, and that refusal was only written to the
+  browser log — so the dialog closed as if it had succeeded.
+- The DMA is now unlinked first, so the delete goes through, and the
+  confirmation **names the DMAs that will be left without a main meter**.
+- If a delete still fails for any reason, it now says so instead of closing
+  quietly. It also checks the meters are really gone before reporting success.
+- Sub-meters and mains not linked to any DMA were never affected — they deleted
+  normally.
+
 ## 1.104 — 2026-07-28 · *Bug fix + Updated feature*
 **Pipe diameters use the project's own units, and the DMA editor can be moved**
 - Diameter labels always said **mm**, whatever the project used. On a project set

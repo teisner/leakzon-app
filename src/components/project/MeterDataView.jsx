@@ -170,11 +170,50 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
 
   const handleConfirmDelete = async () => {
     setDeleting(true);
-    const { error } = await supabase.from('meter').delete().in('id', [...selectedIds]);
-    if (error) console.error('Delete error:', error);
+    const ids = [...selectedIds];
+
+    // A DMA's main_meter_id references the meter with ON DELETE NO ACTION, so
+    // deleting a meter that is some DMA's main is refused outright. Unlink those
+    // DMAs first — otherwise nothing is deleted and, because the error was only
+    // logged, the dialog closed as though it had worked.
+    const { data: linkedDmas, error: dmaReadError } = await supabase
+      .from('dma').select('id, name').eq('project_id', projectId).in('main_meter_id', ids);
+    if (dmaReadError) {
+      setDeleting(false);
+      alert(`Could not delete: ${dmaReadError.message}`);
+      return;
+    }
+    if (linkedDmas && linkedDmas.length > 0) {
+      const { error: unlinkError } = await supabase
+        .from('dma').update({ main_meter_id: null }).in('id', linkedDmas.map((d) => d.id));
+      if (unlinkError) {
+        setDeleting(false);
+        alert(`Could not unlink the DMA main meter: ${unlinkError.message}`);
+        return;
+      }
+    }
+    const { error } = await supabase.from('meter').delete().in('id', ids);
+    if (error) {
+      setDeleting(false);
+      alert(`Could not delete the selected meters: ${error.message}`);
+      return;
+    }
+
+    // Confirm they are actually gone before reporting success — a filtered
+    // delete can return no error while matching nothing.
+    const { data: survivors } = await supabase.from('meter').select('id').in('id', ids).limit(1);
+    if (survivors && survivors.length > 0) {
+      setDeleting(false);
+      alert("The selected meters could not be deleted. Please reload and try again.");
+      return;
+    }
+
     setDeleting(false);
     setShowDeleteConfirm(false);
     exitDeleteMode();
+    if (linkedDmas && linkedDmas.length > 0) {
+      onMetersUpdated?.();
+    }
     if (selectedIds.size >= meters.length && page > 1) {
       const np = Math.max(1, page - 1);
       setPage(np);
@@ -656,6 +695,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         count={selectedIds.size}
+        linkedDmaNames={(dmas || []).filter((d) => selectedIds.has(d.main_meter_id)).map((d) => d.name)}
         onConfirm={handleConfirmDelete}
       />
       <CreateLayerFromMetersDialog

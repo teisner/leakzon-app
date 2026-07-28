@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
 
-export default function DeleteMetersDialog({ open, onOpenChange, count, onConfirm }) {
+export default function DeleteMetersDialog({ open, onOpenChange, count, onConfirm, linkedDmaNames = [] }) {
   const [typed, setTyped] = useState("");
   const [deleting, setDeleting] = useState(false);
 
@@ -49,6 +49,17 @@ export default function DeleteMetersDialog({ open, onOpenChange, count, onConfir
             <span className="font-bold text-red-600">{count}</span> meter{count !== 1 ? "s" : ""}.
             This action cannot be undone.
           </p>
+
+          {linkedDmaNames.length > 0 && (
+            // Deleting a DMA's main meter unlinks that DMA. It has to happen for
+            // the delete to be allowed at all, so say so rather than letting a
+            // DMA quietly lose its main.
+            <p className="text-sm rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-300">
+              {linkedDmaNames.length === 1
+                ? `"${linkedDmaNames[0]}" will be left without a main meter.`
+                : `${linkedDmaNames.length} DMAs will be left without a main meter: ${linkedDmaNames.join(", ")}.`}
+            </p>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs text-slate-500">
