@@ -14,7 +14,7 @@ export default function ProjectFooterBar() {
   const [showUpdate, setShowUpdate] = useState(false);
 
   return (
-    <div className="h-7 shrink-0 bg-background border-t border-border flex items-center justify-center gap-1.5">
+    <div className="h-7 shrink-0 bg-background flex items-center justify-start gap-1.5 px-3">
       <p className="text-[10px] text-green-600 dark:text-green-400 tabular-nums">
         Ver {APP_VERSION}
       </p>

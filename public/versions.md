@@ -11,6 +11,12 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.100 — 2026-07-28 · *Updated feature*
+**Version number moved to the left of the bottom strip**
+- The version now sits on the **left** of the strip instead of the centre.
+- The dividing line above the strip is gone — it shares its background with the
+  side menu, so the line only split one surface in two.
+
 ## 1.099 — 2026-07-28 · *Updated feature*
 **Bottom strip is thinner and matches the side menu**
 - The strip is now **28px** instead of 40px.
