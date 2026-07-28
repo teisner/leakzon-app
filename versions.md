@@ -11,6 +11,14 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.110 — 2026-07-28 · *New feature*
+**Project type — AMI or Hybrid**
+- New projects now choose a **Project type**: **AMI** (all meters read remotely)
+  or **Hybrid** (a mix of remote and manual reads). New projects start on AMI.
+- Existing projects can be set from **Edit project** on the dashboard.
+- Projects created before this show **no type** rather than being assumed to be
+  AMI — pick one when you next edit them.
+
 ## 1.109 — 2026-07-28 · *New feature*
 **Root field on the meter editor**
 - Editing a meter now has a **Root** field with **Yes / No** radio buttons,

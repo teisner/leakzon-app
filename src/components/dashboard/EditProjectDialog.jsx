@@ -22,6 +22,7 @@ export default function EditProjectDialog({ open, onOpenChange, project, onUpdat
     distance_unit: "Km",
     date_format: "EU",
     parent_project_name: "",
+    project_type: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -41,6 +42,9 @@ export default function EditProjectDialog({ open, onOpenChange, project, onUpdat
         distance_unit: project.distance_unit || "Km",
         date_format: project.date_format || "EU",
         parent_project_name: project.parent_project_name || "",
+        // Blank for the projects that predate this field — they read as "not
+        // set" rather than being silently claimed as AMI.
+        project_type: project.project_type || "",
       });
     }
   }, [project]);
@@ -61,6 +65,7 @@ export default function EditProjectDialog({ open, onOpenChange, project, onUpdat
       .update({
         ...form,
         parent_project_name: form.parent_project_name?.trim() || undefined,
+        project_type: form.project_type || null,
       })
       .eq('id', project.id)
       .select()
@@ -134,6 +139,26 @@ export default function EditProjectDialog({ open, onOpenChange, project, onUpdat
             <p className="text-xs text-slate-400 -mt-2">{t('editProject.autoCalc')}</p>
 
             <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>{t('projectType.label')}</Label>
+                <div className="flex gap-2 mt-1.5">
+                  {["AMI", "Hybrid"].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => set("project_type", opt)}
+                      className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        form.project_type === opt
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{t('projectType.hint')}</p>
+              </div>
               <div>
                 <Label>{t('editProject.waterUnit')}</Label>
                 <Select value={form.water_unit} onValueChange={(v) => set("water_unit", v)}>

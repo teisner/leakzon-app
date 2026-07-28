@@ -56,6 +56,7 @@ export default function CreateProjectDialog({ open, onOpenChange, onCreated }) {
     distance_unit: "Km",
     date_format: "EU",
     parent_project_name: "",
+    project_type: "AMI",
   });
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function CreateProjectDialog({ open, onOpenChange, onCreated }) {
       setStep(1);
       setForm({
         name: "", owner_id: "", utility_name: "", country: "", city: "", state: "",
-        latitude: null, longitude: null, water_unit: "m3", distance_unit: "Km", date_format: "EU",
+        latitude: null, longitude: null, water_unit: "m3", distance_unit: "Km", date_format: "EU", project_type: "AMI",
         parent_project_name: "",
       });
       setLocationConfirmed(false);
@@ -194,6 +195,26 @@ export default function CreateProjectDialog({ open, onOpenChange, onCreated }) {
               <div>
                 <Label>{t('createProject.utilityName')}</Label>
                 <Input value={form.utility_name} onChange={(e) => set("utility_name", e.target.value)} placeholder="City Water Authority" />
+              </div>
+              <div>
+                <Label>{t('projectType.label')}</Label>
+                <div className="flex gap-2 mt-1.5">
+                  {["AMI", "Hybrid"].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => set("project_type", opt)}
+                      className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        form.project_type === opt
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{t('projectType.hint')}</p>
               </div>
               <div>
                 <Label>{t('createProject.parentProject')}</Label>
