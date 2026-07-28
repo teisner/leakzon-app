@@ -394,18 +394,62 @@
 .ruler-measuring .leaflet-map-pane > .leaflet-pane { pointer-events: none; }
 .ruler-measuring .leaflet-popup-pane { pointer-events: auto; }
 
-/* Product overview — reuses the changelog's markdown styling, with headings
-   coloured by level: sections blue, components green, wizard stages amber. */
-.product-overview h1 { font-size: 1.15rem; color: hsl(var(--foreground)); margin-bottom: 0.75rem; }
-.product-overview h2 { color: #3fbee5; font-size: 0.95rem; margin-top: 1.25rem; }
-.product-overview h3 { color: #92c141; font-size: 0.85rem; font-weight: 700; margin: 0.9rem 0 0.35rem; border-top: none; padding-top: 0; }
-.product-overview h4 { color: #f59e0b; font-size: 0.82rem; font-weight: 700; margin: 0.9rem 0 0.35rem; }
-.product-overview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.78rem; }
+/* Product overview.
+   It shares the changelog's container class for the base reset, but the
+   changelog's rules are tuned for a version list — muted body text, green bold,
+   a rule above every h2 — which made a long document look disorganised. These
+   override the lot so the panel reads like the source file. */
+.product-overview h1 {
+  font-size: 1.2rem; font-weight: 700; color: hsl(var(--foreground));
+  margin: 0 0 0.5rem; padding: 0; border: none;
+}
+/* Major sections — blue, with clear air above and a divider. */
+.product-overview h2 {
+  font-size: 1rem; font-weight: 700; color: #3fbee5;
+  margin: 1.6rem 0 0.6rem; padding-top: 0.9rem;
+  border-top: 1px solid hsl(var(--border));
+}
+.product-overview h2:first-of-type { margin-top: 0.5rem; }
+/* Components — green. */
+.product-overview h3 {
+  font-size: 0.88rem; font-weight: 700; color: #92c141;
+  margin: 1.1rem 0 0.35rem; padding: 0; border: none;
+}
+/* Wizard stages — amber. */
+.product-overview h4 {
+  font-size: 0.85rem; font-weight: 700; color: #f59e0b;
+  margin: 1.1rem 0 0.4rem; padding: 0; border: none;
+}
+/* Body copy is the main content here, so it gets full contrast and room to
+   breathe — the changelog renders paragraphs muted and tight. */
+.product-overview p {
+  font-size: 0.82rem; line-height: 1.6; color: hsl(var(--foreground));
+  margin: 0.5rem 0;
+}
+/* Bold is used throughout for emphasis; the changelog paints it green, which
+   turned half the document green. */
+.product-overview p strong,
+.product-overview li strong,
+.product-overview td strong { color: hsl(var(--foreground)); font-weight: 600; }
+.product-overview ul { list-style: disc; padding-inline-start: 1.25rem; margin: 0.5rem 0; }
+.product-overview li { font-size: 0.82rem; line-height: 1.55; margin: 0.3rem 0; }
+.product-overview em { font-style: italic; color: inherit; }
+.product-overview hr {
+  border: none; border-top: 1px solid hsl(var(--border)); margin: 1.5rem 0;
+}
+.product-overview table {
+  width: 100%; border-collapse: collapse; margin: 0.7rem 0; font-size: 0.78rem;
+}
 .product-overview th, .product-overview td {
-  border: 1px solid hsl(var(--border)); padding: 0.3rem 0.5rem; text-align: start;
+  border: 1px solid hsl(var(--border)); padding: 0.4rem 0.55rem;
+  text-align: start; vertical-align: top;
 }
-.product-overview th { background: hsl(var(--muted)); font-weight: 600; }
+.product-overview th { background: hsl(var(--muted)); font-weight: 600; color: hsl(var(--foreground)); }
+.product-overview td { color: hsl(var(--foreground)); }
 .product-overview blockquote {
-  border-inline-start: 3px solid hsl(var(--border)); padding-inline-start: 0.75rem;
-  margin: 0.5rem 0; color: hsl(var(--muted-foreground)); font-size: 0.78rem;
+  border-inline-start: 3px solid #3fbee5;
+  background: hsl(var(--muted) / 0.4);
+  padding: 0.5rem 0.75rem; border-radius: 0 6px 6px 0;
+  margin: 0.7rem 0;
 }
+.product-overview blockquote p { margin: 0; color: hsl(var(--muted-foreground)); font-size: 0.78rem; }

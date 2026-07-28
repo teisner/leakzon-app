@@ -11,6 +11,17 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.103 — 2026-07-28 · *Bug fix*
+**Product Overview now reads like the document it came from**
+- The overview was borrowing the changelog's styling, which is built for a
+  version list: body text was greyed out and cramped, **every bold phrase came
+  out green**, and a horizontal rule was drawn above each section.
+- It now has its own typography — full-contrast body text with proper line
+  spacing, normal bold, clear gaps between sections, styled tables, dividers and
+  note boxes — so the panel matches the file it is written in.
+- Heading colours are unchanged: blue sections, green components, amber wizard
+  stages.
+
 ## 1.102 — 2026-07-28 · *New feature*
 **Network blocks show their main meter, and linked DMAs arrive together**
 - A DMA block now shows its **main meter** — the meter measuring water into that
