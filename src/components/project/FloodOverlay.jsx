@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 
-// Seconds of rising water before the tank is full and the fish arrive.
-const FILL_SECONDS = 8;
+// The pipe cracks, then water pours out of it, then the screen fills.
+const BURST_MS = 1400;   // crack and first spray, before the water gets going
+const FILL_SECONDS = 9;  // rising water, from the burst until the tank is full
 
 function Fish({ color = "#f9a825", size = 26 }) {
   return (
@@ -44,24 +45,54 @@ function Turtle({ size = 40 }) {
   );
 }
 
-// Ctrl+Shift+F on the GIS map. Water washes in, then the tank fills with life.
+// Ctrl+Shift+F on the GIS map. The thickest main on screen bursts, the water
+// pours out of it and fills the screen, and the tank then comes alive.
 // Runs until Escape — there is no timer, so it behaves like a screen saver.
 //
 // The overlay is pointer-events: none throughout. A screen saver that swallowed
 // clicks could strand someone on a map they were mid-edit on if the key never
 // registered; Escape is the way out, but the app is never actually blocked.
-export default function FloodOverlay({ onDone }) {
+//
+// `map` and `origin` are optional: a project with no pipe layer loaded has
+// nothing to burst, so the water simply rises from the bottom instead.
+export default function FloodOverlay({ onDone, map, origin }) {
+  const [phase, setPhase] = useState(origin ? "burst" : "rising");
   const [full, setFull] = useState(false);
+  // Where on screen the pipe is. Recomputed as the map moves, so the jet stays
+  // on the pipe while the fly-to zoom is still settling.
+  const [point, setPoint] = useState(null);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onDone(); };
     window.addEventListener("keydown", onKey);
-    const filled = setTimeout(() => setFull(true), FILL_SECONDS * 1000);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      clearTimeout(filled);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [onDone]);
+
+  useEffect(() => {
+    if (!origin) return undefined;
+    const gush = setTimeout(() => setPhase("rising"), BURST_MS);
+    return () => clearTimeout(gush);
+  }, [origin]);
+
+  useEffect(() => {
+    if (phase !== "rising") return undefined;
+    const filled = setTimeout(() => setFull(true), FILL_SECONDS * 1000);
+    return () => clearTimeout(filled);
+  }, [phase]);
+
+  useEffect(() => {
+    if (!map || !origin) return undefined;
+    const update = () => {
+      const container = map.getContainer();
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const p = map.latLngToContainerPoint([origin.lat, origin.lng]);
+      setPoint({ x: rect.left + p.x, y: rect.top + p.y });
+    };
+    update();
+    map.on("move zoom viewreset", update);
+    return () => map.off("move zoom viewreset", update);
+  }, [map, origin]);
 
   // Spread out so they don't swim in formation.
   const fish = [
@@ -73,14 +104,51 @@ export default function FloodOverlay({ onDone }) {
     { top: "47%", color: "#aed581", size: 16, dur: 12, delay: 12, dir: "ltr" },
   ];
 
+  // Jets fan out across the upper half — a pressurised main sprays up and out,
+  // not down into the ground.
+  const jets = [-150, -125, -100, -75, -55, -30, -5];
+
   return (
     <div className="fixed inset-0 z-[11000] pointer-events-none overflow-hidden">
+      {/* The break itself, pinned to the pipe on the map. */}
+      {point && (
+        <div className="flood-burst" style={{ left: point.x, top: point.y }}>
+          <span className="flood-shock" />
+          <span className="flood-shock flood-shock-late" />
+          {jets.map((angle, i) => (
+            <span
+              key={angle}
+              className="flood-jet"
+              style={{
+                // Angle rides on a custom property: the keyframes need to
+                // rotate AND stretch the jet, and a `scale` property alongside
+                // an inline `transform` would scale in the parent's axes
+                // instead of the jet's own.
+                "--jet-angle": `${angle}deg`,
+                animationDelay: `${i * 0.09}s`,
+                height: 90 + (i % 3) * 55,
+              }}
+            />
+          ))}
+          {/* Spray that keeps coming while the water is still rising. */}
+          <span className="flood-plume" />
+        </div>
+      )}
+
       {/* Water body — rises, then stays. */}
-      <div className="flood-body">
-        <div className="flood-wave flood-wave-back" />
-        <div className="flood-wave flood-wave-front" />
-        <div className="flood-water" />
-      </div>
+      {phase === "rising" && (
+        <div className="flood-body">
+          <div className="flood-wave flood-wave-back" />
+          <div className="flood-wave flood-wave-front" />
+          <div className="flood-water">
+            {/* Two drifting caustic layers, so the water itself keeps moving
+                once the surface has stopped climbing. */}
+            <span className="flood-caustics" />
+            <span className="flood-caustics flood-caustics-slow" />
+            <span className="flood-current" />
+          </div>
+        </div>
+      )}
 
       {/* Bubbles, once there is water to rise through. */}
       {full && [8, 19, 31, 44, 57, 68, 79, 91].map((left, i) => (
@@ -120,6 +188,12 @@ export default function FloodOverlay({ onDone }) {
         </>
       )}
 
+      {origin && (
+        <p className="flood-label">
+          Burst main — {origin.label}
+          {origin.layerName ? ` · ${origin.layerName}` : ""}
+        </p>
+      )}
       <p className="flood-hint">Press Esc</p>
     </div>
   );

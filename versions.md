@@ -11,6 +11,21 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.117 — 2026-07-28 · *Updated feature*
+**The flood now starts as a burst main**
+- The easter egg picks the thickest water line on screen, zooms in on it, and
+  bursts it: a shock ring, jets spraying out under pressure, and a plume that
+  keeps boiling while the water rises out of the break.
+- The largest diameter wins, and among pipes of that diameter the longest run;
+  hidden layers and switched-off diameters are skipped. A project with no pipe
+  layer loaded just floods from the bottom as before.
+- The water itself moves now — drifting caustics and a slow swell inside the
+  body, so it keeps flowing after the surface has stopped climbing.
+- The break is labelled with the pipe diameter and layer name, in the project's
+  own units.
+- Escape still ends it, and now also returns the map to where you were before
+  it zoomed in.
+
 ## 1.116 — 2026-07-28 · *Updated feature*
 **The flood turns into an aquarium**
 - Waves now roll in as the water rises, instead of the surface simply climbing.

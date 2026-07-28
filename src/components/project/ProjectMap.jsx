@@ -4,7 +4,8 @@ import L from "leaflet";
 import { Satellite, Mountain, Map as MapIcon, Eye, EyeOff, Maximize2, Square, Plus, Minus, Undo2, Check, X, Ruler, Trash2, MapPin, Pencil, RefreshCw, Globe, Sun, ChevronDown, ChevronRight, AlertTriangle, ListOrdered } from "lucide-react";
 import { MAP_SOURCES, SOURCE_KEYS } from "@/lib/mapSources";
 import { reprojectToWGS84 } from "@/lib/geoAnalysis";
-import { isPipeLayer, detectDiameterField, buildPipeConfig, getPipeStyle, ensureDiameterCounts } from "@/lib/pipeStyling";
+import { isPipeLayer, detectDiameterField, buildPipeConfig, getPipeStyle, ensureDiameterCounts, formatDiameter } from "@/lib/pipeStyling";
+import { findThickestPipe } from "@/lib/floodBurst";
 import { supabase } from "@/api/supabaseClient";
 import { buildFeaturePopup } from "@/lib/featurePopup";
 import { filterFeaturesByBoundary } from "@/lib/boundaryFilter";
@@ -327,6 +328,42 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   const [editPoints, setEditPoints] = useState([]);
   const [coffeeBreak, setCoffeeBreak] = useState(false);
   const [flooding, setFlooding] = useState(false);
+  const [floodOrigin, setFloodOrigin] = useState(null);
+  // View to put back when the flood ends — the egg zooms into the pipe, and
+  // dropping the user somewhere else afterwards would be its own little bug.
+  const floodPrevView = useRef(null);
+
+  // The key handler is bound once, so it reads the current layers and cached
+  // GeoJSON through refs rather than a stale closure.
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
+  const geojsonCacheRef = useRef(geojsonCache);
+  geojsonCacheRef.current = geojsonCache;
+
+  const startFlood = () => {
+    const pipe = findThickestPipe(layersRef.current, geojsonCacheRef.current);
+    const map = mapRef?.current;
+    if (pipe && map) {
+      floodPrevView.current = { center: map.getCenter(), zoom: map.getZoom() };
+      // Close enough to see the main it is bursting out of, without losing the
+      // surrounding network entirely.
+      map.flyTo([pipe.lat, pipe.lng], Math.min(map.getZoom() + 2, 19), { duration: 1.1 });
+      setFloodOrigin({ ...pipe, label: formatDiameter(pipe.raw, project?.distance_unit) });
+    } else {
+      setFloodOrigin(null);
+    }
+    setFlooding(true);
+  };
+
+  const endFlood = () => {
+    setFlooding(false);
+    setFloodOrigin(null);
+    const view = floodPrevView.current;
+    if (view && mapRef?.current) {
+      mapRef.current.setView(view.center, view.zoom, { animate: true });
+      floodPrevView.current = null;
+    }
+  };
 
   useEffect(() => {
     const onKey = (e) => {
@@ -337,7 +374,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         setCoffeeBreak(true);
       } else if (key === "f") {
         e.preventDefault();
-        setFlooding(true);
+        startFlood();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -1848,7 +1885,9 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
       />
 
       {coffeeBreak && <CoffeeBreak onDone={() => setCoffeeBreak(false)} />}
-      {flooding && <FloodOverlay onDone={() => setFlooding(false)} />}
+      {flooding && (
+        <FloodOverlay onDone={endFlood} map={mapRef?.current} origin={floodOrigin} />
+      )}
     </div>
   );
 }
