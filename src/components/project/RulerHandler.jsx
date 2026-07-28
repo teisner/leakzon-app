@@ -27,11 +27,25 @@ export function formatDistance(meters, distanceUnit) {
   return `${(meters / 1000).toFixed(2)} km`;
 }
 
+const RULER_PANE = "ruler-pane";
+
 export default function RulerHandler({ active, points, setPoints, onDistanceChange, distanceUnit }) {
   const map = useMap();
   const layerRef = useRef(null);
   const markersRef = useRef([]);
   const labelsRef = useRef([]);
+
+  // The measurement must sit above every layer. ProjectMap's layer panes run to
+  // 490, so claim a pane above that rather than landing in the default overlay
+  // pane, where a high layer would cover the line and its labels.
+  useEffect(() => {
+    let pane = map.getPane(RULER_PANE);
+    if (!pane) pane = map.createPane(RULER_PANE);
+    pane.style.zIndex = "650";
+    // Nothing here is clickable, and letting it eat clicks would block placing
+    // the next point on top of an existing one.
+    pane.style.pointerEvents = "none";
+  }, [map]);
 
   // Rebuild visual layers whenever points change
   useEffect(() => {
@@ -55,6 +69,7 @@ export default function RulerHandler({ active, points, setPoints, onDistanceChan
         color: "#2563eb",
         weight: 3,
         dashArray: "6,4",
+        pane: RULER_PANE,
       }).addTo(map);
     }
 
@@ -66,6 +81,7 @@ export default function RulerHandler({ active, points, setPoints, onDistanceChan
         weight: 2,
         fillColor: "#ffffff",
         fillOpacity: 1,
+        pane: RULER_PANE,
       }).addTo(map);
       markersRef.current.push(m);
     });
@@ -81,6 +97,7 @@ export default function RulerHandler({ active, points, setPoints, onDistanceChan
           iconSize: [0, 0],
         }),
         interactive: false,
+        pane: RULER_PANE,
       }).addTo(map);
       labelsRef.current.push(label);
     });
@@ -109,17 +126,24 @@ export default function RulerHandler({ active, points, setPoints, onDistanceChan
           weight: 2,
           opacity: 0.5,
           dashArray: "4,4",
+          pane: RULER_PANE,
         }).addTo(map);
         map._rulerPreview = preview;
       }
       preview.setLatLngs([points[points.length - 1], [e.latlng.lat, e.latlng.lng]]);
     };
 
+    // Leaflet gives a click to the topmost interactive layer and never fires
+    // the map's own click, so a point could not be placed on a meter, valve or
+    // pipe — only on bare map. Making the overlay panes ignore the pointer
+    // while measuring lets every click reach the map.
+    map.getContainer().classList.add("ruler-measuring");
     map.getContainer().style.cursor = "crosshair";
     map.on("click", onClick);
     map.on("mousemove", onMouseMove);
 
     return () => {
+      map.getContainer().classList.remove("ruler-measuring");
       map.getContainer().style.cursor = "";
       map.off("click", onClick);
       map.off("mousemove", onMouseMove);

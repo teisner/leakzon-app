@@ -11,6 +11,16 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.092 — 2026-07-28 · *Bug fix*
+**The ruler can now be placed anywhere, including on top of components**
+- Measuring points could not be placed on a meter, valve, pipe or any other
+  component — the click was taken by that component instead, so you had to aim
+  at bare map just beside it. Exactly where you most often want a measurement.
+- Clicks now reach the map wherever you point while the ruler is active.
+- The measurement line, its points and its distance labels now draw **above
+  every layer**, so a layer on top can no longer hide what you are measuring.
+- Popups still work normally; only measuring mode changes this.
+
 ## 1.091 — 2026-07-28 · *Bug fix + Updated feature*
 **Sub-meters can now be properly filled, and dark colours are available**
 - Choosing **filled** on a sub-meter layer still looked washed out. Sub-meters

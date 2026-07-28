@@ -386,3 +386,10 @@
 @media (prefers-reduced-motion: reduce) {
   .approve-attention { animation: none; }
 }
+
+/* While the ruler is active, layers must not swallow clicks — otherwise a
+   measurement point can't be placed on top of a meter, valve or pipe, which is
+   exactly where you usually want one. The map container itself still receives
+   the click, so Leaflet reports the right coordinates. */
+.ruler-measuring .leaflet-map-pane > .leaflet-pane { pointer-events: none; }
+.ruler-measuring .leaflet-popup-pane { pointer-events: auto; }
