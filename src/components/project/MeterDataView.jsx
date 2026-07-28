@@ -4,6 +4,7 @@ import { supabase } from "@/api/supabaseClient";
 import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle, Copy } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
+import { meterIdOf, accountIdOf } from "@/lib/meterIds";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -440,16 +441,17 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
               <tr className="text-start text-xs text-muted-foreground uppercase tracking-wide">
                 {[
                   { key: "uid", label: t('meterData.colUid') },
+                  { key: null, label: t('meterData.colMeterId') },
+                  { key: null, label: t('meterData.colAccountId') },
+                  { key: null, label: t('meterData.colEndpointId') },
                   { key: "type", label: t('meterData.colType') },
                   { key: "payer_name", label: t('meterData.colAccountName') },
                   { key: "address", label: t('meterData.colAddress') },
                   { key: null, label: t('meterData.colProvider') },
-                  { key: null, label: t('meterData.colComm') },
                   { key: null, label: t('meterData.colDiameter') },
                   { key: "status", label: t('meterData.colStatus') },
                   { key: null, label: t('meterData.colDma') },
                   { key: null, label: t('meterData.colLocation') },
-                  { key: null, label: t('meterData.colAdditionalIds') },
                   { key: null, label: "" },
                 ].map((col, i) => (
                   <th key={i} className="px-4 py-2.5 font-semibold">
@@ -514,6 +516,9 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                         )}
                       </div>
                     </td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{meterIdOf(m) || "—"}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{accountIdOf(m) || "—"}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{m.endpoint_id || "—"}</td>
                     <td className="px-4 py-2.5">
                       {(() => {
                         if (row.asSubMeter) {
@@ -543,7 +548,6 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                     <td className="px-4 py-2.5 text-foreground/90 max-w-[180px] truncate">{m.payer_name || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground max-w-[200px] truncate">{m.address || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground max-w-[140px] truncate">{m.provider || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{m.communication_type || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground text-xs">{m.diameter != null ? `${m.diameter} mm` : "—"}</td>
                     <td className="px-4 py-2.5">
                       {m.is_active == null ? (
@@ -597,22 +601,6 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                         </span>
                       ) : (
                         t('meterData.noLocation')
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      {m.additional_ids && m.additional_ids.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {m.additional_ids.slice(0, 2).map((id, i) => (
-                            <span key={i} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-mono">
-                              {id.label}: {id.value}
-                            </span>
-                          ))}
-                          {m.additional_ids.length > 2 && (
-                            <span className="text-[10px] text-muted-foreground/70">+{m.additional_ids.length - 2}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/50">—</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right whitespace-nowrap">

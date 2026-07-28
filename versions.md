@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.085 — 2026-07-28 · *Updated feature + Bug fix*
+**Meter table shows Meter ID, Account ID and Endpoint ID**
+- The meter table now has **Meter ID**, **Account ID** and **Endpoint ID**
+  columns next to the UID. **Comm.** and **Additional IDs** have been removed.
+- **Fixed the reason those columns would have been empty:** importing meter data
+  only kept *one* extra ID column — whichever became the UID — and threw the
+  rest away. The Account ID in your files was being discarded at import, so it
+  existed nowhere in the system. All ID columns in the file are now kept.
+- **Files imported before this keep only what they kept at the time.** Re-import
+  to pick up the Account ID and any other ID columns; the discarded values
+  aren't recoverable from what was stored.
+
 ## 1.084 — 2026-07-27 · *New feature*
 **The project page and the customer view now keep each other up to date**
 - When the customer adds an annotation, the **annotation badge appears in the

@@ -1,10 +1,5 @@
 // Export meters to XLS — supports field selection, custom filename, and prepared rows
-
-function findAdditionalId(meter, patterns) {
-  const ids = meter.additional_ids || [];
-  const found = ids.find((id) => patterns.some((p) => new RegExp(p, "i").test(id.label)));
-  return found ? found.value : "";
-}
+import { findAdditionalId } from "@/lib/meterIds";
 
 export const ALL_COLUMNS = [
   { key: "uid", label: "UID", type: "string" },

@@ -303,7 +303,12 @@ export default function UploadData() {
 
         setMeterAnalysis(result);
         setMeterMappings(result.suggestions);
-        setExtraIdColumns(result.suggestions?.uid ? [result.suggestions.uid] : []);
+        // Keep every ID-ish column the file has, not just the one chosen as the
+        // UID. Defaulting to the UID alone meant the others — Account ID above
+        // all — were discarded at import and could never be shown or exported.
+        // extractMeterRecords already skips any column mapped to a real field,
+        // so this cannot duplicate them.
+        setExtraIdColumns(result.idColumns || []);
         const detectedMain = detectMainColumn(result.columns || []);
         setMainColumn(detectedMain);
         setSplitMainSub(false);
