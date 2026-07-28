@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.087 — 2026-07-28 · *Bug fix*
+**Dashboard project figures were frozen and are now kept up to date**
+- The meter and DMA numbers on the projects dashboard were a stored snapshot
+  that **nothing was updating**. Obion TN showed 4 imported meters and 0
+  assigned to a DMA, against 599 and 594 actually in the project, and a project
+  created since the last manual refresh was **missing from the chart entirely**.
+- The scheduled job that keeps these figures current was never set up when the
+  platform moved off Base44. It now runs **every 15 minutes**.
+- The figures have also been refreshed once now, so the dashboard is already
+  correct — Obion TN reads 599 meters and 594 assigned.
+- The "force refresh" button still works for an immediate update.
+
 ## 1.086 — 2026-07-28 · *Updated feature*
 **Imported meters default to Active**
 - Meters now come in as **Active** unless the file explicitly says they are not.
