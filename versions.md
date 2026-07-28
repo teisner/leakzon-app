@@ -11,6 +11,16 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.116 — 2026-07-28 · *Updated feature*
+**The flood turns into an aquarium**
+- Waves now roll in as the water rises, instead of the surface simply climbing.
+- Once the screen is full the water stays, and the tank comes alive: bubbles
+  drift up, six fish swim past at different depths and speeds, and a shark and
+  a sea turtle cross from time to time.
+- It runs as a screen saver now — no timer. **Escape** is the only way out, and
+  a small "Press Esc" hint sits at the bottom.
+- The map underneath is still fully usable throughout.
+
 ## 1.115 — 2026-07-28 · *New feature*
 **Flood**
 - **Ctrl + Shift + F** on the GIS map slowly floods the screen with water —

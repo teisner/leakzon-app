@@ -507,49 +507,69 @@
   .coffee-steam, .coffee-drip { animation: none; opacity: 0.5; }
 }
 
-/* Flood (Ctrl+Shift+F on the GIS map). Rises over 7s, holds, then drains.
-   Everything is pointer-events: none so the map stays usable underneath. */
+/* Flood (Ctrl+Shift+F on the GIS map). Water washes in over 8s and stays until
+   Escape; the tank then fills with bubbles and swimmers. Everything is
+   pointer-events: none so the map is never actually blocked. */
 .flood-body {
   position: absolute; left: 0; right: 0; bottom: 0; height: 0;
-  animation: floodRise 15s cubic-bezier(0.4, 0, 0.5, 1) forwards;
+  animation: floodRise 8s cubic-bezier(0.33, 0, 0.3, 1) forwards;
 }
 .flood-water {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(56, 160, 220, 0.45) 0%, rgba(12, 74, 122, 0.65) 100%);
-  backdrop-filter: blur(1px);
+  background: linear-gradient(180deg, rgba(56, 160, 220, 0.42) 0%, rgba(9, 62, 105, 0.72) 100%);
 }
-/* The moving surface. Two copies side by side translate by exactly half their
-   width, so the loop is seamless. */
+/* Surface. Two copies side by side translating by exactly half the width, so
+   the loop is seamless; the pair drift at different speeds and directions so
+   the crests never line up twice. */
 .flood-wave {
-  position: absolute; left: 0; top: -18px; width: 200%; height: 20px;
-  background-repeat: repeat-x; background-size: 50% 100%;
-  background-image: radial-gradient(ellipse 50% 18px at 50% 100%, rgba(56, 160, 220, 0.85) 0%, rgba(56, 160, 220, 0) 70%);
+  position: absolute; left: 0; width: 200%; height: 26px;
+  background-repeat: repeat-x; background-size: 25% 100%;
+  background-image: radial-gradient(ellipse 50% 26px at 50% 100%,
+    rgba(120, 200, 240, 0.9) 0%, rgba(120, 200, 240, 0) 72%);
 }
-.flood-wave-back  { animation: floodDrift 7s linear infinite; opacity: 0.55; }
-.flood-wave-front { animation: floodDrift 4.5s linear infinite reverse; }
+.flood-wave-back  { top: -22px; animation: floodDrift 9s linear infinite; opacity: 0.5; }
+.flood-wave-front { top: -14px; animation: floodDrift 5.5s linear infinite reverse; opacity: 0.85; }
+
 .flood-bubble {
-  position: absolute; bottom: 0; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  animation: floodBubble 5s ease-in infinite;
+  position: absolute; bottom: -20px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  opacity: 0; animation: floodBubble linear infinite;
 }
-@keyframes floodRise {
-  0%   { height: 0; }
-  47%  { height: 100%; }   /* ~7s rising */
-  73%  { height: 100%; }   /* hold */
-  100% { height: 0; }      /* drain */
+
+/* Swimmers cross the full width plus their own size, so they enter and leave
+   entirely off screen rather than appearing at the edge. */
+.flood-swimmer { position: absolute; left: 0; will-change: transform; }
+.flood-swim-rtl { animation: floodSwimRtl linear infinite; }
+.flood-swim-ltr { animation: floodSwimLtr linear infinite; }
+
+.flood-hint {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  animation: floodHint 3.5s ease-in-out infinite;
 }
-@keyframes floodDrift {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
+
+@keyframes floodRise { from { height: 0; } to { height: 100%; } }
+@keyframes floodDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes floodBubble {
-  0%   { opacity: 0; transform: translateY(0) scale(0.8); }
-  15%  { opacity: 0.8; }
-  100% { opacity: 0; transform: translateY(-70vh) scale(1.1); }
+  0%   { opacity: 0; transform: translateY(0) translateX(0) scale(0.7); }
+  12%  { opacity: 0.75; }
+  100% { opacity: 0; transform: translateY(-102vh) translateX(14px) scale(1.15); }
 }
+/* scaleX(-1) faces the swimmer the way it is travelling. */
+@keyframes floodSwimRtl {
+  from { transform: translateX(100vw) scaleX(1); }
+  to   { transform: translateX(-220px) scaleX(1); }
+}
+@keyframes floodSwimLtr {
+  from { transform: translateX(-220px) scaleX(-1); }
+  to   { transform: translateX(100vw) scaleX(-1); }
+}
+@keyframes floodHint { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .flood-body { animation: none; height: 45%; }
-  .flood-wave, .flood-bubble { animation: none; }
+  .flood-body { animation: none; height: 100%; }
+  .flood-wave, .flood-bubble, .flood-hint { animation: none; }
+  .flood-swimmer { animation-duration: 60s; }
 }
