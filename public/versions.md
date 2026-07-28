@@ -11,6 +11,16 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.088 — 2026-07-28 · *New feature*
+**Edit a meter straight from the map**
+- Clicking a meter on the map — main, insertion, ultrasonic or sub — now offers
+  **Edit meter details**, opening the same editor as the Meter Data table.
+- Everything is editable there as usual: UID, account, address, provider,
+  diameter, coordinates, meter type, and the DMA links.
+- Saving refreshes the map and the DMA panel straight away, so a changed main
+  meter or DMA link shows without leaving the map.
+- The button is hidden on locked projects, matching the Meter Data table.
+
 ## 1.087 — 2026-07-28 · *Bug fix*
 **Dashboard project figures were frozen and are now kept up to date**
 - The meter and DMA numbers on the projects dashboard were a stored snapshot

@@ -13,6 +13,7 @@ import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import ProjectMap from "@/components/project/ProjectMap";
 import ProjectSidePanel from "@/components/project/ProjectSidePanel";
 import MeterDataView from "@/components/project/MeterDataView";
+import MeterEditDialog from "@/components/project/MeterEditDialog";
 import ImportLogsView from "@/components/project/ImportLogsView";
 import LayerEditDialog from "@/components/project/LayerEditDialog";
 import ProjectNav from "@/components/project/ProjectNav";
@@ -105,6 +106,8 @@ export default function ProjectDetail() {
   const [deniedAs, setDeniedAs] = useState(null);
   // Layer awaiting delete confirmation, and the countdown shown while it runs.
   // Set when the customer approves while this page is open.
+  // Meter opened for editing from a map popup — same dialog the meter table uses.
+  const [mapEditMeter, setMapEditMeter] = useState(null);
   const [customerApproval, setCustomerApproval] = useState(null);
   const [layerPendingDelete, setLayerPendingDelete] = useState(null);
   const [deleteProgress, setDeleteProgress] = useState(null);
@@ -1431,6 +1434,8 @@ export default function ProjectDetail() {
     setViewMode("gis");
   };
 
+  const handleEditMeterFromMap = (meter) => setMapEditMeter(meter);
+
   const handleStartPinpoint = (meter) => {
     setPinpointMeter(meter);
     setPinpointCoords(null);
@@ -1680,6 +1685,7 @@ export default function ProjectDetail() {
                 highlightBorderValves={highlightBorderValves}
                 isolationViewMode={isolationViewMode}
                 onToggleMeterMain={handleToggleMeterMain}
+                onEditMeter={isLocked ? undefined : handleEditMeterFromMap}
                 annotations={annotations}
                 annotationMode={annotationMode}
                 onAnnotationClick={handleAnnotationMapClick}
@@ -1879,6 +1885,17 @@ export default function ProjectDetail() {
       />
 
       {/* Prompt on leaving the network design view after making changes */}
+      <MeterEditDialog
+        open={!!mapEditMeter}
+        onOpenChange={(o) => !o && setMapEditMeter(null)}
+        meter={mapEditMeter}
+        dmas={dmas}
+        projectId={id}
+        project={project}
+        onSaved={() => { setMapEditMeter(null); loadMeters(); loadDmas(); }}
+        onPinpoint={(m) => { setMapEditMeter(null); handleStartPinpoint(m); }}
+      />
+
       <AlertDialog open={!!customerApproval} onOpenChange={(v) => { if (!v) setCustomerApproval(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>

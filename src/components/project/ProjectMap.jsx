@@ -196,7 +196,7 @@ function BoxZoomHandler({ active, onDone }) {
   return null;
 }
 
-export default function ProjectMap({ project, layers, meters, mapType, setMapType, mapSource, setMapSource, onToggleVisibility, mapRef, onLayerUpdated, clipToBoundary, dmas, onDmaCreated, drawMode, setDrawMode, drawTarget, onBoundaryDrawn, editDma, setEditDma, estimationTarget, onDragProposed, manualEditLayer, onSaveManualLayer, onCancelManualLayer, focusedDmaIds, onToggleFocusDma, highlightedMeterIds, focusMeter, editBoundary, onBoundaryEditSave, onBoundaryEditCancel, onRedrawBoundary, onRefetchBoundary, refetchingBoundary, pinpointMeter, pinpointCoords, onPinpointPlaced, pinpointAddress, pinpointLoading, onPinpointConfirm, onPinpointCancel, pinpointDiameter, onPinpointDiameterChange, imageOverlays, editingOverlayId, onImageOverlayBoundsChange, croppingOverlayId, onCropApplied, onCropCancel, isolatedMode, isolatedPoints, onValveClick, onDeleteIsolatedPoint, onExitIsolatedMode, onToggleMeterMain, highlightBorderValves, isolationViewMode, annotations, annotationMode, onAnnotationClick, onArrowFirstClick, onArrowSecondClick, arrowStart, highlightedAnnotationId, onCancelAnnotation,   annotationsHidden, hiddenAnnotationIds, focusIsolatedPoint, customerAnnotations, customerAnnotationsHidden, hiddenCustomerAnnotationIds }) {
+export default function ProjectMap({ project, layers, meters, mapType, setMapType, mapSource, setMapSource, onToggleVisibility, mapRef, onLayerUpdated, clipToBoundary, dmas, onDmaCreated, drawMode, setDrawMode, drawTarget, onBoundaryDrawn, editDma, setEditDma, estimationTarget, onDragProposed, manualEditLayer, onSaveManualLayer, onCancelManualLayer, focusedDmaIds, onToggleFocusDma, highlightedMeterIds, focusMeter, editBoundary, onBoundaryEditSave, onBoundaryEditCancel, onRedrawBoundary, onRefetchBoundary, refetchingBoundary, pinpointMeter, pinpointCoords, onPinpointPlaced, pinpointAddress, pinpointLoading, onPinpointConfirm, onPinpointCancel, pinpointDiameter, onPinpointDiameterChange, imageOverlays, editingOverlayId, onImageOverlayBoundsChange, croppingOverlayId, onCropApplied, onCropCancel, isolatedMode, isolatedPoints, onValveClick, onDeleteIsolatedPoint, onExitIsolatedMode, onToggleMeterMain, onEditMeter, highlightBorderValves, isolationViewMode, annotations, annotationMode, onAnnotationClick, onArrowFirstClick, onArrowSecondClick, arrowStart, highlightedAnnotationId, onCancelAnnotation,   annotationsHidden, hiddenAnnotationIds, focusIsolatedPoint, customerAnnotations, customerAnnotationsHidden, hiddenCustomerAnnotationIds }) {
   const proximityMeters = feetToMeters(project?.boundary_deviation_feet ?? DEFAULT_PROXIMITY_FEET);
   const [geojsonCache, setGeojsonCache] = useState({});
   const [highlightedUid, setHighlightedUid] = useState(null);
@@ -880,6 +880,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   highlightedUid={highlightedUid}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
+                  onEditMeter={onEditMeter}
                   pane={layerPane}
                 />
               );
@@ -1085,6 +1086,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   highlightedUid={highlightedUid}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
+                  onEditMeter={onEditMeter}
                   pane={layerPane}
                 />
               );

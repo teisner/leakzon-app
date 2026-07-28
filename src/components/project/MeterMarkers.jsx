@@ -4,7 +4,7 @@ import L from "leaflet";
 import { createShapeIcon } from "@/lib/shapeIcons";
 import { resolvePointColors } from "@/lib/colorPalette";
 
-export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, pane }) {
+export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, onEditMeter, pane }) {
   // Optional Leaflet pane so these markers land in their layer's z-order slot.
   const paneProp = pane ? { pane } : {};
   const validMeters = useMemo(
@@ -50,6 +50,14 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
             ))}
           </tbody>
         </table>
+        {onEditMeter && (
+          <button
+            onClick={() => onEditMeter(m)}
+            className="mt-2 w-full px-2 py-1.5 text-xs font-medium rounded-md border border-border bg-secondary text-foreground hover:bg-accent transition-colors"
+          >
+            Edit meter details
+          </button>
+        )}
         {onToggleMain && (
           <button
             onClick={() => onToggleMain(m.id, !m.is_main)}
