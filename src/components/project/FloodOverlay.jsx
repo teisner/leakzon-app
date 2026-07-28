@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 // Seconds of rising water before the tank is full and the fish arrive.
-const FILL_SECONDS = 9;
+const FILL_SECONDS = 8;
 
 function Fish({ color = "#f9a825", size = 26 }) {
   return (
@@ -64,14 +64,17 @@ export default function FloodOverlay({ onDone }) {
     };
   }, [onDone]);
 
-  // Spread out so they don't swim in formation.
+  // `at` is how far into its crossing each fish already is when the water
+  // finishes filling — it becomes a NEGATIVE animation-delay, so the tank is
+  // populated the instant it is full instead of filling up over the next
+  // half-minute as each fish waits its turn.
   const fish = [
-    { top: "22%", color: "#f9a825", size: 22, dur: 17, delay: 0.5, dir: "rtl" },
-    { top: "38%", color: "#ef6c54", size: 30, dur: 23, delay: 3, dir: "ltr" },
-    { top: "55%", color: "#ffd166", size: 18, dur: 14, delay: 1.8, dir: "rtl" },
-    { top: "68%", color: "#4dd0e1", size: 26, dur: 20, delay: 6, dir: "ltr" },
-    { top: "80%", color: "#f48fb1", size: 20, dur: 26, delay: 9, dir: "rtl" },
-    { top: "47%", color: "#aed581", size: 16, dur: 12, delay: 12, dir: "ltr" },
+    { top: "22%", color: "#f9a825", size: 22, dur: 17, at: 0.18, dir: "rtl" },
+    { top: "38%", color: "#ef6c54", size: 30, dur: 23, at: 0.62, dir: "ltr" },
+    { top: "55%", color: "#ffd166", size: 18, dur: 14, at: 0.40, dir: "rtl" },
+    { top: "68%", color: "#4dd0e1", size: 26, dur: 20, at: 0.05, dir: "ltr" },
+    { top: "80%", color: "#f48fb1", size: 20, dur: 26, at: 0.78, dir: "rtl" },
+    { top: "47%", color: "#aed581", size: 16, dur: 12, at: 0.30, dir: "ltr" },
   ];
 
   return (
@@ -89,14 +92,15 @@ export default function FloodOverlay({ onDone }) {
         </div>
       </div>
 
-      {/* Bubbles, once there is water to rise through. */}
+      {/* Bubbles, once there is water to rise through. Negative delays for the
+          same reason as the fish: a column already rising, not one starting. */}
       {full && [8, 19, 31, 44, 57, 68, 79, 91].map((left, i) => (
         <span
           key={left}
           className="flood-bubble"
           style={{
             left: `${left}%`,
-            animationDelay: `${i * 1.3}s`,
+            animationDelay: `-${(i * 0.9).toFixed(1)}s`,
             animationDuration: `${6 + (i % 4) * 1.8}s`,
             width: 5 + (i % 3) * 5,
             height: 5 + (i % 3) * 5,
@@ -110,18 +114,25 @@ export default function FloodOverlay({ onDone }) {
             <span
               key={i}
               className={`flood-swimmer ${f.dir === "ltr" ? "flood-swim-ltr" : "flood-swim-rtl"}`}
-              style={{ top: f.top, animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s` }}
+              style={{
+                top: f.top,
+                animationDuration: `${f.dur}s`,
+                animationDelay: `-${(f.dur * f.at).toFixed(1)}s`,
+              }}
             >
               <Fish color={f.color} size={f.size} />
             </span>
           ))}
 
-          {/* Occasional visitors — long durations with big delays, so they
-              cross now and then rather than circling constantly. */}
-          <span className="flood-swimmer flood-swim-rtl" style={{ top: "30%", animationDuration: "34s", animationDelay: "10s" }}>
+          {/* Occasional visitors — long crossings, and they wait a little
+              before the first one, so they turn up now and then rather than
+              circling constantly. The delay is safe because .flood-swimmer
+              fills backwards: they sit off screen until their turn, not parked
+              at the edge. */}
+          <span className="flood-swimmer flood-swim-rtl" style={{ top: "30%", animationDuration: "30s", animationDelay: "5s" }}>
             <Shark />
           </span>
-          <span className="flood-swimmer flood-swim-ltr" style={{ top: "72%", animationDuration: "46s", animationDelay: "24s" }}>
+          <span className="flood-swimmer flood-swim-ltr" style={{ top: "72%", animationDuration: "40s", animationDelay: "14s" }}>
             <Turtle />
           </span>
         </>

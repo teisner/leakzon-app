@@ -514,7 +514,7 @@
 /* --- Rising water ------------------------------------------------------- */
 .flood-body {
   position: absolute; left: 0; right: 0; bottom: 0; height: 0;
-  animation: floodRise 9s cubic-bezier(0.4, 0, 0.35, 1) forwards;
+  animation: floodRise 8s cubic-bezier(0.4, 0, 0.35, 1) forwards;
 }
 .flood-water {
   position: absolute; inset: 0; overflow: hidden;
@@ -561,8 +561,14 @@
   opacity: 0; animation: floodBubble linear infinite;
 }
 /* Swimmers cross the full width plus their own size, so they enter and leave
-   entirely off screen rather than appearing at the edge. */
-.flood-swimmer { position: absolute; left: 0; will-change: transform; }
+   entirely off screen rather than appearing at the edge.
+   animation-fill-mode: backwards matters — without it an element with a delay
+   renders at its untransformed position (left: 0) until the delay elapses,
+   which parked a pile of fish against the left edge of the screen. */
+.flood-swimmer {
+  position: absolute; left: 0; will-change: transform;
+  animation-fill-mode: backwards;
+}
 .flood-swim-rtl { animation: floodSwimRtl linear infinite; }
 .flood-swim-ltr { animation: floodSwimLtr linear infinite; }
 

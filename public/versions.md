@@ -11,6 +11,16 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.121 — 2026-07-28 · *Bug fix*
+**Fish no longer pile up at the edge, and the tank is alive the moment it fills**
+- Fish and bubbles used to wait their turn — up to half a minute before the last
+  one appeared. They now start mid-crossing, so the tank is fully populated the
+  instant the water reaches the top.
+- Fixed the pile of fish stuck against the side of the screen: an element with a
+  start delay was being drawn at its untransformed position until its turn came,
+  instead of waiting off screen.
+- The water fills a second faster.
+
 ## 1.120 — 2026-07-28 · *Updated feature*
 **The flood goes back to just filling the screen**
 - The bursting-pipe build is gone: no zoom, no shaking map, no plume, no drawn
