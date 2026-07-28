@@ -57,6 +57,7 @@ export default function ProjectSidePanel({ project, layers, meters, onToggleVisi
               locked={locked}
               dmas={dmas}
               isolatedPoints={isolatedPoints}
+              distanceUnit={project?.distance_unit}
             />
             <NotesList
               annotations={annotations || []}

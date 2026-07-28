@@ -1,6 +1,7 @@
 import React from "react";
 import { Marker } from "react-leaflet";
 import L from "leaflet";
+import { formatDiameter } from "@/lib/pipeStyling";
 
 // Interpolated midpoint at 50% of total line length (GeoJSON [lng,lat] coords)
 function lineMidpoint(coords) {
@@ -45,7 +46,7 @@ function extractMidpoints(geometry) {
   return points;
 }
 
-export default function PipeDiameterLabels({ data, pipeConfig, pane }) {
+export default function PipeDiameterLabels({ data, pipeConfig, pane, distanceUnit }) {
   if (!data || !pipeConfig?.diameter_field) return null;
   const field = pipeConfig.diameter_field;
   const diameters = pipeConfig.diameters || [];
@@ -58,7 +59,10 @@ export default function PipeDiameterLabels({ data, pipeConfig, pane }) {
     const diam = diameters.find((d) => String(d.value) === String(rawVal));
     // Skip hidden diameters in per-diameter mode
     if (!pipeConfig.uniform && diam && !diam.visible) return;
-    const label = diam?.label || (isNaN(parseFloat(rawVal)) ? String(rawVal) : `${rawVal}mm`);
+    // Formatted from the raw value rather than diam.label: the stored label was
+    // written as "<value>mm" when the layer was imported, so it is wrong on any
+    // imperial project and cannot be corrected without re-importing.
+    const label = formatDiameter(rawVal, distanceUnit);
     const mids = extractMidpoints(f.geometry);
     mids.forEach((mid, mi) => {
       const [lng, lat] = mid;

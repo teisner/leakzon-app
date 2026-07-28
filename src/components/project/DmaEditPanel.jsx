@@ -1,5 +1,5 @@
-import React from "react";
-import { Check, X, Link2, Unlink } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Check, X, Link2, Unlink, GripVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -7,13 +7,61 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/lib/i18n";
 import DmaColorPicker from "@/components/project/DmaColorPicker";
 
-// Floating panel for editing DMA properties (name, color, transparency) alongside shape editing on the map.
+// Draggable panel for editing DMA properties (name, color, transparency)
+// alongside shape editing on the map. Draggable rather than pinned to the top
+// centre: the DMA being edited is often under that exact spot, and the same
+// interaction is used by the layer and meter editors.
 export default function DmaEditPanel({ name, color, transparency, pointCount, onNameChange, onColorChange, onTransparencyChange, onSave, onCancel, mainMeters, mainMeterId, onMainMeterChange }) {
   const { t } = useLanguage();
+  const [pos, setPos] = useState(() => ({
+    x: Math.max(16, Math.round((window.innerWidth - 340) / 2)),
+    y: 84,
+  }));
+  const dragState = useRef(null);
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!dragState.current) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      setPos({
+        x: Math.max(0, Math.min(clientX - dragState.current.offsetX, window.innerWidth - 120)),
+        y: Math.max(0, Math.min(clientY - dragState.current.offsetY, window.innerHeight - 60)),
+      });
+    };
+    const handleUp = () => { dragState.current = null; };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleMove);
+    window.addEventListener("touchend", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleUp);
+    };
+  }, []);
+
+  const handleDragStart = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragState.current = { offsetX: clientX - pos.x, offsetY: clientY - pos.y };
+  };
+
   return (
-    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-card/95 backdrop-blur rounded-lg shadow-lg border border-border px-4 py-3 w-[340px] space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-foreground">{t('dmaEdit.title', { count: pointCount })}</span>
+    <div
+      className="fixed z-[1000] bg-card/95 backdrop-blur rounded-lg shadow-lg border border-border px-4 py-3 w-[340px] space-y-3"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      <div
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        className="flex items-center justify-between cursor-grab active:cursor-grabbing select-none -mx-4 -mt-3 px-4 pt-3 pb-2"
+      >
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+          {t('dmaEdit.title', { count: pointCount })}
+        </span>
         <div className="flex items-center gap-1">
           <button
             onClick={onSave}

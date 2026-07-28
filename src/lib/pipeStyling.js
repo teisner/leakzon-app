@@ -109,3 +109,26 @@ export function getPipeStyle(feature, pipeConfig) {
 }
 
 export { PIPE_COLOR_TIERS as PIPE_COLOR_PALETTE };
+// A pipe diameter is stored exactly as the source file wrote it, and different
+// utilities write it differently: a metric project carries plain millimetres
+// ("110", "225") while a US project carries inches already marked up ("12\"",
+// "6\""). The label was hardcoded to append "mm", which produced "12\"mm" on an
+// imperial project and simply the wrong unit on any of them.
+//
+// So: never convert — the number is whatever the utility surveyed. Only supply
+// the unit, and only when the value doesn't already carry one.
+const HAS_UNIT_RE = /["'′″”]|mm|inch|\bin\b|מ"מ/i;
+
+export function diameterUnit(distanceUnit) {
+  // Project unit is a distance setting (Miles vs Km); imperial projects quote
+  // pipe bores in inches.
+  return distanceUnit === "Miles" ? '"' : "mm";
+}
+
+export function formatDiameter(value, distanceUnit) {
+  const raw = value == null ? "" : String(value).trim();
+  if (!raw) return "";
+  if (HAS_UNIT_RE.test(raw)) return raw;      // already says what it is
+  if (isNaN(parseFloat(raw))) return raw;     // free text like "unknown"
+  return `${raw}${diameterUnit(distanceUnit)}`;
+}

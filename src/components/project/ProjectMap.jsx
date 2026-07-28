@@ -27,6 +27,7 @@ import PinpointPanel from "@/components/project/PinpointPanel";
 import MapImageOverlay from "@/components/project/MapImageOverlay";
 
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
+import { diameterUnit } from "@/lib/pipeStyling";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import NumberStyleControls from "@/components/project/NumberStyleControls";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
@@ -1060,7 +1061,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
               }}
             />
             {pipe?.show_diameter_labels && (
-              <PipeDiameterLabels data={data} pipeConfig={pipe} pane={layerPane} />
+              <PipeDiameterLabels data={data} pipeConfig={pipe} pane={layerPane} distanceUnit={project?.distance_unit} />
             )}
             {layerHasMeters && (() => {
               const layerMeters = (meters || []).filter(
@@ -1438,7 +1439,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
       {/* Diameter prompt for finished line */}
       {lineDiameterDialog && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1001] flex items-center gap-2 bg-card/95 backdrop-blur rounded-lg shadow-lg border border-border px-4 py-3">
-          <span className="text-sm font-medium text-foreground">Diameter (mm):</span>
+          <span className="text-sm font-medium text-foreground">Diameter ({diameterUnit(project?.distance_unit)}):</span>
           <input
             type="text"
             value={lineDiameterValue}

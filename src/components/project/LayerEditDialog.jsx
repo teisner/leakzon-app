@@ -9,6 +9,7 @@ import { resolveLayerTypeId } from "@/lib/layerType";
 import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
 import { SHAPE_OPTIONS, SHAPE_PATHS } from "@/lib/shapeIcons";
+import { formatDiameter } from "@/lib/pipeStyling";
 import { useLanguage } from "@/lib/i18n";
 import LayerColorPicker from "./LayerColorPicker";
 import { COMPONENTS, matchComponentKey, componentPointConfig, componentColor } from "@/lib/componentDefaults";
@@ -64,7 +65,7 @@ function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
   );
 }
 
-export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) {
+export default function LayerEditDialog({ open, onOpenChange, layer, onSaved, distanceUnit }) {
   const { t } = useLanguage();
   const [color, setColor] = useState("#3b82f6");
   const [name, setName] = useState("");
@@ -456,7 +457,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                       className="w-8 h-8 rounded border border-slate-200 cursor-pointer shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800">{d.label}</p>
+                      <p className="text-sm font-medium text-foreground">{formatDiameter(d.value, distanceUnit)}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-slate-400">{t('layerEdit.weight')}</span>
                         <input

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Trash2, FileText, Map as MapIcon, ZoomIn, Lock, Pencil, ChevronDown, ChevronRight, GripVertical, ShieldCheck, MapPin, Plus, Layers as LayersIcon, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { isPointEditableLayer } from "@/lib/editablePoints";
+import { formatDiameter } from "@/lib/pipeStyling";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +12,7 @@ import { useLanguage } from "@/lib/i18n";
 
 const isBoundary = (layer) => /boundary/i.test(layer.name);
 
-export default function LayersPanel({ layers, meters, onToggleVisibility, onDelete, onZoomToLayer, onEdit, onUpdateLayer, onReorder, clipToBoundary, onClipToBoundaryChange, onCreateManualLayer, onEditManualLayer, onRedrawBoundary, onEditBoundary, locked }) {
+export default function LayersPanel({ layers, meters, onToggleVisibility, onDelete, onZoomToLayer, onEdit, onUpdateLayer, onReorder, clipToBoundary, onClipToBoundaryChange, onCreateManualLayer, onEditManualLayer, onRedrawBoundary, onEditBoundary, locked, distanceUnit }) {
   const { t } = useLanguage();
   const [expandedPipes, setExpandedPipes] = useState({});
   const [layersExpanded, setLayersExpanded] = useState(true);
@@ -215,7 +216,7 @@ export default function LayersPanel({ layers, meters, onToggleVisibility, onDele
             {!pipe.uniform && pipe.diameters.map((d, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs py-1">
                 <span className="w-8 h-0 border-t-2 shrink-0" style={{ borderColor: d.color, borderTopWidth: Math.min(d.weight, 4) }} />
-                <span className="flex-1 text-muted-foreground">{d.label}</span>
+                <span className="flex-1 text-muted-foreground">{formatDiameter(d.value, distanceUnit)}</span>
                 {d.count !== undefined && (
                   <span className="text-[10px] text-muted-foreground/70">{d.count}</span>
                 )}

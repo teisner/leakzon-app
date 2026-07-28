@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.104 — 2026-07-28 · *Bug fix + Updated feature*
+**Pipe diameters use the project's own units, and the DMA editor can be moved**
+- Diameter labels always said **mm**, whatever the project used. On a project set
+  to miles/feet they now read in **inches**, and the same unit is used in the
+  layer panel legend, the layer editor's pipe list and the prompt when drawing a
+  line by hand.
+- The number itself is never converted — it is whatever the utility surveyed.
+  Where a value already carries its own unit (`12"`, `63 מ"מ`) it is left
+  exactly as written, so nothing reads `12"mm` any more.
+- The **DMA edit panel can now be dragged**. It was pinned to the top centre of
+  the map — often directly over the DMA being edited.
+
 ## 1.103 — 2026-07-28 · *Bug fix*
 **Product Overview now reads like the document it came from**
 - The overview was borrowing the changelog's styling, which is built for a
