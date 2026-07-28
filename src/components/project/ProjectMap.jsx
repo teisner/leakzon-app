@@ -28,6 +28,7 @@ import MapImageOverlay from "@/components/project/MapImageOverlay";
 
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
 import CoffeeBreak from "@/components/project/CoffeeBreak";
+import FloodOverlay from "@/components/project/FloodOverlay";
 import { diameterUnit } from "@/lib/pipeStyling";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import NumberStyleControls from "@/components/project/NumberStyleControls";
@@ -325,13 +326,19 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
 
   const [editPoints, setEditPoints] = useState([]);
   const [coffeeBreak, setCoffeeBreak] = useState(false);
+  const [flooding, setFlooding] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => {
       if (!e.ctrlKey || !e.shiftKey) return;
-      if ((e.key || "").toLowerCase() !== "c") return;
-      e.preventDefault();
-      setCoffeeBreak(true);
+      const key = (e.key || "").toLowerCase();
+      if (key === "c") {
+        e.preventDefault();
+        setCoffeeBreak(true);
+      } else if (key === "f") {
+        e.preventDefault();
+        setFlooding(true);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1841,6 +1848,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
       />
 
       {coffeeBreak && <CoffeeBreak onDone={() => setCoffeeBreak(false)} />}
+      {flooding && <FloodOverlay onDone={() => setFlooding(false)} />}
     </div>
   );
 }

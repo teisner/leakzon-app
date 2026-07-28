@@ -11,6 +11,14 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.115 — 2026-07-28 · *New feature*
+**Flood**
+- **Ctrl + Shift + F** on the GIS map slowly floods the screen with water —
+  rising surface, drifting waves and bubbles — then drains away. Escape ends it
+  early.
+- The water never blocks the map: you can keep panning, clicking and editing
+  while it rises.
+
 ## 1.114 — 2026-07-28 · *New feature*
 **Choose whether the DMA boundaries ship as a shapefile**
 - The export now asks whether to include the **DMA shapefile**. It is **off by
