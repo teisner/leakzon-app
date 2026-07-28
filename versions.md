@@ -11,6 +11,17 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.118 — 2026-07-28 · *Updated feature*
+**The burst now looks like a broken main, not a firework**
+- The break is drawn as a cut pipe end — flange, barrel and open bore — with
+  water pouring out of it in an arc and spreading into a pool below, in the flat
+  vector style of the reference.
+- Animated throughout: the pipe kicks as it lets go, the jet grows out of the
+  bore and sways, light streaks run down the water, the pool spreads and
+  breathes, and spray arcs off the break.
+- The bore sits exactly on the real pipe on the map, and stays on it while the
+  view zooms in.
+
 ## 1.117 — 2026-07-28 · *Updated feature*
 **The flood now starts as a burst main**
 - The easter egg picks the thickest water line on screen, zooms in on it, and

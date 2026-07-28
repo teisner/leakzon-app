@@ -513,30 +513,49 @@
 
 /* --- The break, pinned to the pipe ------------------------------------- */
 .flood-burst { position: absolute; width: 0; height: 0; }
-/* Pressure shock ring off the break. */
+/* One pressure shock at the moment it goes. */
 .flood-shock {
   position: absolute; left: 0; top: 0; width: 26px; height: 26px;
   margin: -13px 0 0 -13px; border-radius: 999px;
   border: 3px solid rgba(190, 235, 255, 0.95);
-  animation: floodShock 1.4s ease-out forwards;
+  animation: floodShock 1s ease-out forwards;
 }
-.flood-shock-late { animation-delay: 0.35s; }
-/* Jets fan out from a single origin; transform-origin at the bottom means the
-   rotation on the element aims the jet and the scaleY animation shoots it. */
-.flood-jet {
-  position: absolute; left: -5px; bottom: 0; width: 10px;
-  transform-origin: 50% 100%;
-  transform: rotate(var(--jet-angle)) scaleY(0.1);
-  border-radius: 999px;
-  background: linear-gradient(0deg, rgba(190, 235, 255, 0.95) 0%, rgba(150, 215, 250, 0.5) 60%, rgba(255, 255, 255, 0) 100%);
-  animation: floodJet 1.1s ease-out infinite;
+/* The pipe drawing. Its bore sits on the burst point (offset inline), so the
+   whole thing rocks around that point when it lets go. */
+.flood-pipe {
+  position: absolute; left: 0; top: 0;
+  filter: drop-shadow(0 6px 14px rgba(8, 40, 70, 0.35));
+  animation: floodShake 0.55s ease-out 2;
+  transform-origin: 157px 100px;
+  transform-box: view-box;
 }
-/* Boiling spray that keeps going while the water climbs. */
-.flood-plume {
-  position: absolute; left: -70px; top: -70px; width: 140px; height: 140px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(215, 245, 255, 0.85) 0%, rgba(160, 220, 250, 0.35) 45%, rgba(160, 220, 250, 0) 70%);
-  animation: floodPlume 1.6s ease-in-out infinite;
+/* Water grows out of the bore rather than popping in at full size. */
+.flood-stream, .flood-pool-group {
+  transform-box: view-box;
+  animation-fill-mode: both;
+}
+.flood-stream {
+  transform-origin: 157px 100px;
+  animation: floodGush 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards,
+             floodStreamSway 1.9s ease-in-out 0.7s infinite;
+}
+.flood-pool-group {
+  transform-origin: 180px 250px;
+  animation: floodSpread 1.5s ease-out 0.35s forwards,
+             floodPoolBreathe 3.4s ease-in-out 1.85s infinite;
+}
+/* Dashes running down the stream read as water actually moving through it. */
+.flood-flow {
+  stroke-dasharray: 26 34;
+  animation: floodFlow 0.85s linear infinite;
+  opacity: 0.85;
+}
+.flood-flow-fast { animation-duration: 0.55s; opacity: 0.7; }
+/* Spray thrown off the break, each drop on its own arc. */
+.flood-drops circle {
+  transform-box: fill-box; transform-origin: 50% 50%;
+  animation: floodDrop 2.1s ease-out infinite;
+  opacity: 0;
 }
 
 /* --- Rising water ------------------------------------------------------- */
@@ -606,15 +625,35 @@
   from { transform: scale(0.2); opacity: 0.95; }
   to   { transform: scale(9); opacity: 0; }
 }
-@keyframes floodJet {
-  0%   { opacity: 0; transform: rotate(var(--jet-angle)) scaleY(0.1); }
-  25%  { opacity: 1; }
-  70%  { opacity: 0.75; transform: rotate(var(--jet-angle)) scaleY(1); }
-  100% { opacity: 0; transform: rotate(var(--jet-angle)) scaleY(1.15); }
+@keyframes floodShake {
+  0%   { transform: rotate(0deg) translateX(0); }
+  25%  { transform: rotate(-1.6deg) translateX(-3px); }
+  60%  { transform: rotate(1.2deg) translateX(2px); }
+  100% { transform: rotate(0deg) translateX(0); }
 }
-@keyframes floodPlume {
-  0%, 100% { transform: scale(0.75); opacity: 0.55; }
-  50%      { transform: scale(1.15); opacity: 0.9; }
+@keyframes floodGush {
+  from { transform: scale(0.05); opacity: 0.3; }
+  to   { transform: scale(1); opacity: 1; }
+}
+/* Slight sway, so the jet never looks frozen once it is at full size. */
+@keyframes floodStreamSway {
+  0%, 100% { transform: scale(1) skewX(0deg); }
+  50%      { transform: scale(1.02) skewX(1.6deg); }
+}
+@keyframes floodSpread {
+  from { transform: scaleX(0.15) scaleY(0.4); opacity: 0; }
+  to   { transform: scaleX(1) scaleY(1); opacity: 1; }
+}
+@keyframes floodPoolBreathe {
+  0%, 100% { transform: scaleX(1) scaleY(1); }
+  50%      { transform: scaleX(1.06) scaleY(1.04); }
+}
+@keyframes floodFlow { to { stroke-dashoffset: -60; } }
+@keyframes floodDrop {
+  0%   { transform: translate(-30px, 26px) scale(0.4); opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 0.9; }
+  100% { transform: translate(34px, 54px) scale(0.5); opacity: 0; }
 }
 @keyframes floodRise { from { height: 0; } to { height: 100%; } }
 @keyframes floodDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -649,6 +688,7 @@
 @media (prefers-reduced-motion: reduce) {
   .flood-body { animation: none; height: 100%; }
   .flood-wave, .flood-bubble, .flood-hint, .flood-caustics, .flood-current,
-  .flood-jet, .flood-plume, .flood-shock { animation: none; }
+  .flood-shock, .flood-pipe, .flood-drops circle { animation: none; }
+  .flood-stream, .flood-pool-group, .flood-flow { animation: none; opacity: 1; }
   .flood-swimmer { animation-duration: 60s; }
 }

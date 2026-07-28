@@ -45,6 +45,93 @@ function Turtle({ size = 40 }) {
   );
 }
 
+// The broken main itself: a cut pipe end with water pouring out of it into a
+// spreading pool. Drawn so that the bore sits exactly on the burst point, which
+// is why the wrapper offsets by the bore's coordinates in the viewBox.
+const BORE = { x: 157, y: 100 };
+
+function BurstPipe() {
+  return (
+    <svg
+      className="flood-pipe"
+      viewBox="0 0 340 280"
+      width="340"
+      height="280"
+      style={{ marginLeft: -BORE.x, marginTop: -BORE.y }}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="floodStream" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor="#37c2ef" />
+          <stop offset="100%" stopColor="#1487c6" />
+        </linearGradient>
+        <linearGradient id="floodPool" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22a9e0" />
+          <stop offset="100%" stopColor="#0f7ab4" />
+        </linearGradient>
+      </defs>
+
+      {/* Pool first, so the stream lands on top of it. */}
+      <g className="flood-pool-group">
+        <path
+          d="M60 250C90 232 150 226 196 232c44 6 84 12 104 20-20 12-80 18-140 16-50-2-90-8-100-18Z"
+          fill="url(#floodPool)"
+        />
+        <path
+          d="M104 250c26-8 62-10 92-6M150 260c30-4 62-4 86 0"
+          stroke="#7fe0fb" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.7"
+        />
+      </g>
+
+      {/* The pipe: dark flange, light barrel, open end showing the bore. */}
+      <g className="flood-pipe-body">
+        <rect x="12" y="44" width="44" height="112" rx="10" fill="#6f6f90" />
+        <rect x="50" y="56" width="106" height="88" fill="#d9d9e2" />
+        <rect x="50" y="56" width="106" height="11" fill="#eeeef3" />
+        <ellipse cx="156" cy="100" rx="14" ry="44" fill="#c3c3ce" />
+        <ellipse cx="158" cy="100" rx="9" ry="36" fill="#a4a4b4" />
+      </g>
+
+      {/* Water leaving the bore. */}
+      <g className="flood-stream">
+        <path
+          d="M146 118c4 42 16 78 50 114l54-8c-36-34-54-72-74-112Z"
+          fill="url(#floodStream)"
+        />
+        <path
+          className="flood-flow"
+          d="M158 126c6 38 18 70 44 98"
+          stroke="#7fe0fb" strokeWidth="5" strokeLinecap="round" fill="none"
+        />
+        <path
+          className="flood-flow flood-flow-fast"
+          d="M174 122c10 36 24 64 46 92"
+          stroke="#a9edff" strokeWidth="3.5" strokeLinecap="round" fill="none"
+        />
+      </g>
+
+      {/* Spray thrown off the break. */}
+      <g className="flood-drops">
+        {[
+          { cx: 196, cy: 96, r: 5, d: 0 },
+          { cx: 214, cy: 128, r: 4, d: 0.35 },
+          { cx: 182, cy: 74, r: 3.5, d: 0.7 },
+          { cx: 232, cy: 106, r: 5.5, d: 1.05 },
+          { cx: 206, cy: 158, r: 3, d: 1.4 },
+          { cx: 168, cy: 92, r: 4, d: 1.75 },
+        ].map((drop) => (
+          <circle
+            key={`${drop.cx}-${drop.cy}`}
+            cx={drop.cx} cy={drop.cy} r={drop.r}
+            fill="#2fb6e8"
+            style={{ animationDelay: `${drop.d}s` }}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 // Ctrl+Shift+F on the GIS map. The thickest main on screen bursts, the water
 // pours out of it and fills the screen, and the tank then comes alive.
 // Runs until Escape — there is no timer, so it behaves like a screen saver.
@@ -104,34 +191,13 @@ export default function FloodOverlay({ onDone, map, origin }) {
     { top: "47%", color: "#aed581", size: 16, dur: 12, delay: 12, dir: "ltr" },
   ];
 
-  // Jets fan out across the upper half — a pressurised main sprays up and out,
-  // not down into the ground.
-  const jets = [-150, -125, -100, -75, -55, -30, -5];
-
   return (
     <div className="fixed inset-0 z-[11000] pointer-events-none overflow-hidden">
       {/* The break itself, pinned to the pipe on the map. */}
       {point && (
         <div className="flood-burst" style={{ left: point.x, top: point.y }}>
           <span className="flood-shock" />
-          <span className="flood-shock flood-shock-late" />
-          {jets.map((angle, i) => (
-            <span
-              key={angle}
-              className="flood-jet"
-              style={{
-                // Angle rides on a custom property: the keyframes need to
-                // rotate AND stretch the jet, and a `scale` property alongside
-                // an inline `transform` would scale in the parent's axes
-                // instead of the jet's own.
-                "--jet-angle": `${angle}deg`,
-                animationDelay: `${i * 0.09}s`,
-                height: 90 + (i % 3) * 55,
-              }}
-            />
-          ))}
-          {/* Spray that keeps coming while the water is still rising. */}
-          <span className="flood-plume" />
+          <BurstPipe />
         </div>
       )}
 
