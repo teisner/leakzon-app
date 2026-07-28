@@ -148,7 +148,12 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
               color: hl ? "#fbbf24" : isEstimated ? "#000000" : strokeColor,
               weight: hl ? 3 : isEstimated ? 2.5 : 1.5,
               fillColor: isOutline ? "transparent" : color,
-              fillOpacity: m.is_active === false ? 0.15 : (m.is_main ? 0.8 : 0.45),
+              // Filled means filled. Sub-meters were pinned to 0.45 opacity
+              // regardless of the layer's fill style, so choosing "filled" on a
+              // sub-meter layer still looked washed out — and a dark colour
+              // washed out most of all. Main vs sub is conveyed by the layer's
+              // own shape and colour; only inactive meters stay faded.
+              fillOpacity: isOutline ? 0 : (m.is_active === false ? 0.2 : 0.85),
             }}
           >
             {buildPopup(m)}

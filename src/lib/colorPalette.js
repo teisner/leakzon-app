@@ -10,7 +10,15 @@ export const PALETTE = [
   "#0ea5e9", "#38bdf8", "#3b82f6", "#60a5fa",
   "#6366f1", "#818cf8", "#8b5cf6", "#a78bfa",
   "#a855f7", "#c084fc", "#d946ef", "#e879f9",
-  "#ec4899", "#f472b6", "#6b7280", "#1f2937",
+  "#ec4899", "#f472b6",
+  // Dark tones. The palette was entirely mid-to-bright shades, so a layer
+  // couldn't be given a genuinely dark colour — dark green in particular had no
+  // option at all (the nearest was #10b981, an emerald mid-tone).
+  "#b91c1c", "#c2410c", "#a16207", "#4d7c0f",
+  "#15803d", "#047857", "#0f766e", "#0369a1",
+  "#1d4ed8", "#4338ca", "#6d28d9", "#a21caf",
+  "#be185d",
+  "#6b7280", "#1f2937",
   "#ffffff", "#000000",
 ];
 

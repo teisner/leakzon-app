@@ -11,6 +11,21 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.091 — 2026-07-28 · *Bug fix + Updated feature*
+**Sub-meters can now be properly filled, and dark colours are available**
+- Choosing **filled** on a sub-meter layer still looked washed out. Sub-meters
+  were locked to 45% fill whatever the layer's setting, so they never looked
+  filled — worst of all with a dark colour. Filled now means filled, for main
+  and sub alike.
+- Meters marked **inactive** are still shown faded, so they stay easy to pick
+  out.
+- **Added 13 dark colours** to the palette — dark green, red, orange, olive,
+  emerald, teal, blue, indigo, violet, magenta and pink. Every colour was
+  previously a mid or bright tone, so a genuinely dark shade could not be
+  chosen at all.
+- The new colours appear everywhere the palette is used: layer settings, DMA
+  settings and the dashboard component defaults.
+
 ## 1.090 — 2026-07-28 · *Bug fix*
 **Fixed the black screen when opening a project**
 - Opening a project showed a black screen. The meter editor rewritten in 1.089
