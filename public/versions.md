@@ -11,6 +11,19 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.101 — 2026-07-28 · *New feature*
+**Product Overview added to Version Updates**
+- A new **Product Overview — How the platform works** section sits above the
+  changelog in Version Updates.
+- It describes the dashboard and every working view, then each component —
+  layers, meters, DMAs, isolation points, consumption, annotations and the
+  customer view — and finally walks the nine onboarding steps in order, stage by
+  stage.
+- Headings are colour-coded: **blue** for sections, **green** for components,
+  **amber** for the wizard stages.
+- Kept as a file in the project (`Product_overview.md`), so it can be edited
+  like the changelog and is published with each release.
+
 ## 1.100 — 2026-07-28 · *Updated feature*
 **Version number moved to the left of the bottom strip**
 - The version now sits on the **left** of the strip instead of the centre.

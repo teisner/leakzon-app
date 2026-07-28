@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight, Check } from "lucide-react";
+import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight, Check, BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import changelogMd from "../../../versions.md?raw";
+import overviewMd from "../../../Product_overview.md?raw";
 import { APP_VERSION } from "@/lib/version";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import UpdateAvailableDialog from "@/components/UpdateAvailableDialog";
@@ -47,6 +48,7 @@ export default function VersionUpdates({ project, currentUser, projects }) {
   const [refreshingLog, setRefreshingLog] = useState(false);
   const [logUpToDate, setLogUpToDate] = useState(false);
   const [showUpdate, setShowUpdate] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
   const { latestVersion, checkNow } = useVersionCheck();
 
   const handleRefreshChangelog = async () => {
@@ -197,6 +199,27 @@ export default function VersionUpdates({ project, currentUser, projects }) {
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showForm ? "Cancel" : "New Request"}
           </Button>
+        </div>
+
+        {/* Product overview — renders Product_overview.md */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowOverview((v) => !v)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-muted/50 transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <BookOpen className="w-4 h-4 text-primary" />
+              Product Overview — How the platform works
+            </span>
+            {showOverview ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showOverview && (
+            <div className="border-t border-border px-5 py-4 max-h-[520px] overflow-y-auto changelog-markdown product-overview">
+              {/* Headings are coloured by level in CSS (.product-overview), so
+                  the markdown stays plain and needs no HTML plugin. */}
+              <ReactMarkdown>{overviewMd}</ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {/* Changelog / What's New — renders versions.md */}

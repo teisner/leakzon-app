@@ -393,3 +393,19 @@
    the click, so Leaflet reports the right coordinates. */
 .ruler-measuring .leaflet-map-pane > .leaflet-pane { pointer-events: none; }
 .ruler-measuring .leaflet-popup-pane { pointer-events: auto; }
+
+/* Product overview — reuses the changelog's markdown styling, with headings
+   coloured by level: sections blue, components green, wizard stages amber. */
+.product-overview h1 { font-size: 1.15rem; color: hsl(var(--foreground)); margin-bottom: 0.75rem; }
+.product-overview h2 { color: #3fbee5; font-size: 0.95rem; margin-top: 1.25rem; }
+.product-overview h3 { color: #92c141; font-size: 0.85rem; font-weight: 700; margin: 0.9rem 0 0.35rem; border-top: none; padding-top: 0; }
+.product-overview h4 { color: #f59e0b; font-size: 0.82rem; font-weight: 700; margin: 0.9rem 0 0.35rem; }
+.product-overview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.78rem; }
+.product-overview th, .product-overview td {
+  border: 1px solid hsl(var(--border)); padding: 0.3rem 0.5rem; text-align: start;
+}
+.product-overview th { background: hsl(var(--muted)); font-weight: 600; }
+.product-overview blockquote {
+  border-inline-start: 3px solid hsl(var(--border)); padding-inline-start: 0.75rem;
+  margin: 0.5rem 0; color: hsl(var(--muted-foreground)); font-size: 0.78rem;
+}

@@ -24,5 +24,6 @@ writeFileSync(out, JSON.stringify({ version: match[1] }) + "\n");
 // build time for instant render, but the "refresh changelog" button needs to
 // read what the *current* deployment has, which a bundled copy can never show.
 copyFileSync(resolve(root, "versions.md"), resolve(root, "public/versions.md"));
+copyFileSync(resolve(root, "Product_overview.md"), resolve(root, "public/Product_overview.md"));
 
-console.log(`gen-version-json: wrote ${match[1]} -> public/version.json + public/versions.md`);
+console.log(`gen-version-json: wrote ${match[1]} -> public/version.json + public/versions.md + public/Product_overview.md`);
