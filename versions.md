@@ -11,6 +11,12 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.108 — 2026-07-28 · *New feature*
+**Coffee break**
+- **Ctrl + Shift + C** on the GIS map brews a coffee. It fills for ten seconds
+  with a countdown, then clears itself. Escape or "skip" ends it early.
+- Only on the map — nowhere else in the app responds to it.
+
 ## 1.107 — 2026-07-28 · *New feature*
 **Edit DMA can reduce the number of points in a boundary**
 - When you open **Edit DMA**, the outline is checked to see whether it can be

@@ -27,6 +27,7 @@ import PinpointPanel from "@/components/project/PinpointPanel";
 import MapImageOverlay from "@/components/project/MapImageOverlay";
 
 import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
+import CoffeeBreak from "@/components/project/CoffeeBreak";
 import { diameterUnit } from "@/lib/pipeStyling";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
 import NumberStyleControls from "@/components/project/NumberStyleControls";
@@ -323,6 +324,19 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   }, [layers]);
 
   const [editPoints, setEditPoints] = useState([]);
+  const [coffeeBreak, setCoffeeBreak] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!e.ctrlKey || !e.shiftKey) return;
+      if ((e.key || "").toLowerCase() !== "c") return;
+      e.preventDefault();
+      setCoffeeBreak(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("#3b82f6");
   const [editTransparency, setEditTransparency] = useState(30);
@@ -1825,6 +1839,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         projectId={project.id}
         onSaved={onDmaCreated}
       />
+
+      {coffeeBreak && <CoffeeBreak onDone={() => setCoffeeBreak(false)} />}
     </div>
   );
 }
