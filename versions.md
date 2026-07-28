@@ -11,6 +11,12 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.097 — 2026-07-28 · *Updated feature*
+**Bottom strip now matches the other panels**
+- The strip added in 1.096 was solid black. It now uses the same background as
+  the header and the panels — **white in light mode**, the same dark tone in
+  dark mode — with the standard divider line above it.
+
 ## 1.096 — 2026-07-28 · *Updated feature*
 **Black strip along the bottom of the project page**
 - A black band now runs across the bottom of the project page, the same height
