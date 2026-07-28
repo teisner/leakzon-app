@@ -9,7 +9,7 @@ import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { meterLayerKind } from "@/lib/meterLayerDetection";
 import { createMetersFromGeoJSONUrl } from "@/lib/geojsonMeters";
-import { SHAPE_OPTIONS } from "@/lib/shapeIcons";
+import { SHAPE_OPTIONS, SHAPE_PATHS } from "@/lib/shapeIcons";
 import { useLanguage } from "@/lib/i18n";
 import LayerColorPicker from "./LayerColorPicker";
 import { COMPONENTS, matchComponentKey, componentPointConfig, componentColor } from "@/lib/componentDefaults";
@@ -29,12 +29,6 @@ const CATEGORY_OPTIONS = [
   "Other",
 ];
 
-const SHAPE_SVG_PATHS = {
-  star: "M12 2 L14.9 8.6 L22 9.3 L16.5 14.1 L18.2 21 L12 17.3 L5.8 21 L7.5 14.1 L2 9.3 L9.1 8.6 Z",
-  square: "M4 4 H20 V20 H4 Z",
-  triangle: "M12 3 L21 20 H3 Z",
-};
-
 function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
   const isOutline = fillStyle === "outline";
   const stroke = strokeColor || color;
@@ -51,7 +45,7 @@ function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
       />
     );
   }
-  const path = SHAPE_SVG_PATHS[shape];
+  const path = SHAPE_PATHS[shape];
   return (
     <svg width={size * 2} height={size * 2} viewBox="0 0 24 24" className="inline-block">
       <path d={path} fill={isOutline ? "transparent" : color} stroke={stroke} strokeWidth="2" strokeLinejoin="round" />

@@ -7,7 +7,7 @@ import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { Loader2, Upload, Trash2, Layers } from "lucide-react";
-import { SHAPE_OPTIONS } from "@/lib/shapeIcons";
+import { SHAPE_OPTIONS, SHAPE_PATHS } from "@/lib/shapeIcons";
 
 const COLOR_PRESETS = [
   "#ef4444", "#f97316", "#f59e0b", "#eab308", "#facc15",
@@ -16,12 +16,6 @@ const COLOR_PRESETS = [
   "#8b5cf6", "#a855f7", "#d946ef", "#ec4899",
   "#6b7280", "#1f2937",
 ];
-
-const SHAPE_SVG_PATHS = {
-  star: "M12 2 L14.9 8.6 L22 9.3 L16.5 14.1 L18.2 21 L12 17.3 L5.8 21 L7.5 14.1 L2 9.3 L9.1 8.6 Z",
-  square: "M4 4 H20 V20 H4 Z",
-  triangle: "M12 3 L21 20 H3 Z",
-};
 
 function ShapePreview({ shape, color, size, fillStyle }) {
   const isOutline = fillStyle === "outline";
@@ -38,7 +32,7 @@ function ShapePreview({ shape, color, size, fillStyle }) {
       />
     );
   }
-  const path = SHAPE_SVG_PATHS[shape];
+  const path = SHAPE_PATHS[shape];
   return (
     <svg width={size * 2} height={size * 2} viewBox="0 0 24 24" className="inline-block">
       <path d={path} fill={isOutline ? "transparent" : color} stroke={color} strokeWidth="2" strokeLinejoin="round" />

@@ -11,6 +11,14 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.093 — 2026-07-28 · *New feature*
+**Octagon added to the layer shapes**
+- **Octagon** joins circle, star, square and triangle in the shape picker, for
+  layers and for the dashboard component defaults.
+- The shapes were defined separately in four places, so a new one would have
+  appeared on the map but not in the picker used to choose it — they now all
+  come from one definition.
+
 ## 1.092 — 2026-07-28 · *Bug fix*
 **The ruler can now be placed anywhere, including on top of components**
 - Measuring points could not be placed on a meter, valve, pipe or any other

@@ -1,9 +1,13 @@
 import L from "leaflet";
 
-const SHAPE_PATHS = {
+// The single definition of every non-circle shape. Previews import this rather
+// than keeping their own copy — three components had duplicated it, so a new
+// shape appeared on the map but not in the picker that chose it.
+export const SHAPE_PATHS = {
   star: "M12 2 L14.9 8.6 L22 9.3 L16.5 14.1 L18.2 21 L12 17.3 L5.8 21 L7.5 14.1 L2 9.3 L9.1 8.6 Z",
   square: "M4 4 H20 V20 H4 Z",
   triangle: "M12 3 L21 20 H3 Z",
+  octagon: "M8 2 H16 L22 8 V16 L16 22 H8 L2 16 V8 Z",
 };
 
 // `strokeColor` is the optional separate outline color; it defaults to the
@@ -34,4 +38,5 @@ export const SHAPE_OPTIONS = [
   { value: "star", label: "Star" },
   { value: "square", label: "Square" },
   { value: "triangle", label: "Triangle" },
+  { value: "octagon", label: "Octagon" },
 ];

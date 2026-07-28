@@ -1,11 +1,6 @@
 import React from "react";
+import { SHAPE_PATHS } from "@/lib/shapeIcons";
 import { resolvePointColors } from "@/lib/colorPalette";
-
-const SHAPE_PATHS = {
-  star: "M12 2 L14.9 8.6 L22 9.3 L16.5 14.1 L18.2 21 L12 17.3 L5.8 21 L7.5 14.1 L2 9.3 L9.1 8.6 Z",
-  square: "M4 4 H20 V20 H4 Z",
-  triangle: "M12 3 L21 20 H3 Z",
-};
 
 export default function LayerShapeIcon({ layer, size = 16 }) {
   const config = layer.point_config || {};
