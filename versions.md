@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.089 — 2026-07-28 · *Updated feature*
+**Meter editor is now a floating panel, and every meter has a status**
+- The meter editor is a **floating, draggable panel** instead of a centred
+  dialog — drag it by its header and keep working on the map underneath. It
+  widens when you open the location picker, and scrolls rather than growing off
+  screen.
+- **16,371 meters that had no status are now Active.** They showed as "N/A"
+  because the file they came from carried no status column. The 1,203 meters
+  explicitly marked inactive were left exactly as they were.
+- The screen flicker over the map is confirmed fixed. It was caused by Vercel's
+  performance tracking, which stays switched off.
+
 ## 1.088 — 2026-07-28 · *New feature*
 **Edit a meter straight from the map**
 - Clicking a meter on the map — main, insertion, ultrasonic or sub — now offers

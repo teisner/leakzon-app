@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/api/supabaseClient";
-import { Loader2, Link2, Unlink, MapPin, ChevronUp, ChevronDown, Gauge } from "lucide-react";
+import { Loader2, Link2, Unlink, MapPin, ChevronUp, ChevronDown, Gauge, GripVertical, X } from "lucide-react";
 import MeterLocationPicker from "@/components/project/MeterLocationPicker";
 import { useLanguage } from "@/lib/i18n";
 import { recommendLinkedDmaId, recommendSubMeterDmaId } from "@/lib/dmaRecommendation";
@@ -31,6 +30,45 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showMap, setShowMap] = useState(false);
+  // Floating/draggable panel so the map stays visible and usable while editing
+  // a meter — the same interaction as the layer editor.
+  const [pos, setPos] = useState(() => ({
+    x: Math.max(16, Math.round((window.innerWidth - 460) / 2)),
+    y: 72,
+  }));
+  const dragRef = useRef(null);
+  const dragState = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleMove = (e) => {
+      if (!dragState.current) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      setPos({
+        x: Math.max(0, Math.min(clientX - dragState.current.offsetX, window.innerWidth - 100)),
+        y: Math.max(0, Math.min(clientY - dragState.current.offsetY, window.innerHeight - 60)),
+      });
+    };
+    const handleUp = () => { dragState.current = null; };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleMove);
+    window.addEventListener("touchend", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleUp);
+    };
+  }, [open]);
+
+  const handleDragStart = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragState.current = { offsetX: clientX - pos.x, offsetY: clientY - pos.y };
+  };
+
 
   useEffect(() => {
     if (meter) {
@@ -152,14 +190,42 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={showMap ? "max-w-2xl" : "max-w-md"}>
-        <DialogHeader>
-          <DialogTitle>{t('meterEdit.title', { uid: meter?.uid })}</DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="space-y-4 py-2">
+  return (
+    <div
+      ref={dragRef}
+      className="fixed z-[9999] bg-card border-2 border-primary rounded-xl shadow-2xl flex flex-col"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        // Widens when the location picker is open, and never exceeds the
+        // viewport — the body scrolls instead.
+        width: showMap ? "min(calc(100vw - 32px), 680px)" : "min(calc(100vw - 32px), 460px)",
+        maxHeight: "calc(100vh - 100px)",
+      }}
+    >
+      {/* Header — draggable */}
+      <div
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        className="flex items-center gap-2 px-4 py-2.5 border-b border-border cursor-grab active:cursor-grabbing select-none shrink-0"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+        <p className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
+          {t('meterEdit.title', { uid: meter?.uid })}
+        </p>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+          aria-label={t('meterEdit.cancel')}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="overflow-y-auto px-4 py-3">
+        <div className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="uid">{t('meterEdit.uid')}</Label>
             <Input
@@ -358,17 +424,17 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
             <p className="text-sm text-red-600">{error}</p>
           )}
         </div>
+      </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+      <div className="flex justify-end gap-2 px-4 py-3 border-t border-border shrink-0">
+        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
           {t('meterEdit.cancel')}
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
           {t('meterEdit.saveChanges')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </Button>
+      </div>
+    </div>
   );
 }

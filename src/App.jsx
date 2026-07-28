@@ -18,7 +18,12 @@ import AuthSync from './components/AuthSync';
 import PreviewAutoRefresh from './components/PreviewAutoRefresh';
 import { IS_PREVIEW } from './lib/deployEnv';
 
-// Temporarily off while investigating a production-only repaint flicker.
+// Off deliberately. It was the cause of a production-only screen flicker on
+// mouse movement over the map: it runs only on production (the preview URL sits
+// behind Vercel SSO, so its script 302s and never loads) and instruments every
+// pointer interaction to measure INP. Disabling it in v1.069 stopped the
+// flicker, confirmed in use over the following day. Re-enable only with a way
+// to avoid the interaction instrumentation.
 const SPEED_INSIGHTS_ENABLED = false;
 
 // Only runs inactivity logout on authenticated routes, not public-facing ones
@@ -56,8 +61,7 @@ function App() {
           PerformanceObserver. It is the one thing that runs on production but
           not on preview — the preview URL sits behind Vercel SSO, so its
           /_vercel/speed-insights/script.js returns 302 and never loads. That
-          matches a flicker seen only on production. Disabled while we confirm;
-          flip back to true to re-enable. */}
+          was confirmed as the cause of that flicker, so it stays off. */}
       {SPEED_INSIGHTS_ENABLED && <SpeedInsights />}
     </QueryClientProvider>
     </ThemeProvider>
