@@ -50,7 +50,7 @@ export default function DmaEditPanel({ name, color, transparency, pointCount, on
 
   return (
     <div
-      className="fixed z-[1000] bg-card/95 backdrop-blur rounded-lg shadow-lg border border-border px-4 py-3 w-[340px] space-y-3"
+      className="fixed z-[1000] bg-card/95 backdrop-blur rounded-lg shadow-lg border-2 border-primary px-4 py-3 w-[340px] space-y-3"
       style={{ left: pos.x, top: pos.y }}
     >
       <div

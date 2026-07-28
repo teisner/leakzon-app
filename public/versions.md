@@ -11,6 +11,12 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.106 — 2026-07-28 · *Updated feature*
+**Green border on the Edit DMA panel**
+- The Edit DMA panel now has a green border, the same as the layer and meter
+  editors, so all three floating editors look alike and stand out against the
+  map.
+
 ## 1.105 — 2026-07-28 · *Bug fix*
 **Deleting a main meter now works instead of silently doing nothing**
 - Selecting a main meter in the Meter Data table and confirming the delete
