@@ -560,17 +560,18 @@
   border: 1px solid rgba(255, 255, 255, 0.45);
   opacity: 0; animation: floodBubble linear infinite;
 }
-/* Swimmers cross the full width plus their own size, so they enter and leave
-   entirely off screen rather than appearing at the edge.
-   animation-fill-mode: backwards matters — without it an element with a delay
-   renders at its untransformed position (left: 0) until the delay elapses,
-   which parked a pile of fish against the left edge of the screen. */
+/* Swimmers are positioned by the animation loop in src/lib/aquarium.js — they
+   roam, chase and flee, so there are no keyframes to give them. */
 .flood-swimmer {
-  position: absolute; left: 0; will-change: transform;
-  animation-fill-mode: backwards;
+  position: absolute; left: 0; top: 0;
+  will-change: transform; transition: opacity 0.4s ease;
 }
-.flood-swim-rtl { animation: floodSwimRtl linear infinite; }
-.flood-swim-ltr { animation: floodSwimLtr linear infinite; }
+/* Where a fish just was. */
+.flood-chomp {
+  position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  border-radius: 999px; border: 3px solid rgba(255, 255, 255, 0.8);
+  animation: floodChomp 0.7s ease-out forwards;
+}
 
 .flood-hint {
   position: absolute; left: 50%; transform: translateX(-50%);
@@ -598,14 +599,9 @@
   12%  { opacity: 0.75; }
   100% { opacity: 0; transform: translateY(-102vh) translateX(14px) scale(1.15); }
 }
-/* scaleX(-1) faces the swimmer the way it is travelling. */
-@keyframes floodSwimRtl {
-  from { transform: translateX(100vw) scaleX(1); }
-  to   { transform: translateX(-220px) scaleX(1); }
-}
-@keyframes floodSwimLtr {
-  from { transform: translateX(-220px) scaleX(-1); }
-  to   { transform: translateX(100vw) scaleX(-1); }
+@keyframes floodChomp {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to   { transform: scale(3.4); opacity: 0; }
 }
 @keyframes floodHint { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.9; } }
 
@@ -614,5 +610,5 @@
   .flood-wave, .flood-bubble, .flood-hint, .flood-caustics,
   .flood-current { animation: none; }
 
-  .flood-swimmer { animation-duration: 60s; }
+  .flood-chomp { animation: none; opacity: 0; }
 }

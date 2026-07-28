@@ -11,6 +11,18 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.122 — 2026-07-28 · *Updated feature*
+**The tank is a real aquarium now: everything roams, and sharks hunt**
+- Three turtles and two sharks, and nothing is stuck crossing left to right any
+  more — every swimmer roams the whole screen, turning and changing direction on
+  its own.
+- Sharks hunt: they lock onto the nearest fish, aim ahead of it, and eat it if
+  they catch it. The fish sees the shark coming, bolts, and out-turns it — the
+  shark only wins by cutting the corner. An eaten fish leaves a splash and comes
+  back a few seconds later from the side.
+- Ten fish, with varied sizes and colours, and every swimmer now points the way
+  it is actually going.
+
 ## 1.121 — 2026-07-28 · *Bug fix*
 **Fish no longer pile up at the edge, and the tank is alive the moment it fills**
 - Fish and bubbles used to wait their turn — up to half a minute before the last

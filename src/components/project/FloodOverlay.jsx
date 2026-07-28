@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createTank, stepTank, spriteTransform } from "@/lib/aquarium";
 
 // Seconds of rising water before the tank is full and the fish arrive.
 const FILL_SECONDS = 8;
@@ -64,18 +65,48 @@ export default function FloodOverlay({ onDone }) {
     };
   }, [onDone]);
 
-  // `at` is how far into its crossing each fish already is when the water
-  // finishes filling — it becomes a NEGATIVE animation-delay, so the tank is
-  // populated the instant it is full instead of filling up over the next
-  // half-minute as each fish waits its turn.
-  const fish = [
-    { top: "22%", color: "#f9a825", size: 22, dur: 17, at: 0.18, dir: "rtl" },
-    { top: "38%", color: "#ef6c54", size: 30, dur: 23, at: 0.62, dir: "ltr" },
-    { top: "55%", color: "#ffd166", size: 18, dur: 14, at: 0.40, dir: "rtl" },
-    { top: "68%", color: "#4dd0e1", size: 26, dur: 20, at: 0.05, dir: "ltr" },
-    { top: "80%", color: "#f48fb1", size: 20, dur: 26, at: 0.78, dir: "rtl" },
-    { top: "47%", color: "#aed581", size: 16, dur: 12, at: 0.30, dir: "ltr" },
-  ];
+  // The tank. Everything roams freely, fish bolt from sharks and sharks eat
+  // them, so positions come from a real update loop rather than keyframes.
+  const bounds = useRef({ width: window.innerWidth, height: window.innerHeight });
+  const entities = useMemo(() => createTank(bounds.current), []);
+  const nodes = useRef({});
+  const [chomps, setChomps] = useState([]);
+
+  useEffect(() => {
+    if (!full) return undefined;
+    const onResize = () => {
+      bounds.current = { width: window.innerWidth, height: window.innerHeight };
+    };
+    window.addEventListener("resize", onResize);
+
+    let frame = 0;
+    let last = performance.now();
+    const started = last;
+    const tick = (now) => {
+      // Clamped, so a backgrounded tab doesn't teleport everything on return.
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const eaten = stepTank(entities, dt, bounds.current, now - started);
+      for (const e of entities) {
+        const node = nodes.current[e.id];
+        if (!node) continue;
+        node.style.transform = spriteTransform(e, e.kind === "turtle");
+        node.style.opacity = e.hiddenUntil ? "0" : "1";
+      }
+      if (eaten.length) {
+        setChomps((prev) => [
+          ...prev.slice(-4),
+          ...eaten.map((hit) => ({ key: `${hit.id}-${now}`, x: hit.x, y: hit.y })),
+        ]);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [full, entities]);
 
   return (
     <div className="fixed inset-0 z-[11000] pointer-events-none overflow-hidden">
@@ -108,35 +139,22 @@ export default function FloodOverlay({ onDone }) {
         />
       ))}
 
-      {full && (
-        <>
-          {fish.map((f, i) => (
-            <span
-              key={i}
-              className={`flood-swimmer ${f.dir === "ltr" ? "flood-swim-ltr" : "flood-swim-rtl"}`}
-              style={{
-                top: f.top,
-                animationDuration: `${f.dur}s`,
-                animationDelay: `-${(f.dur * f.at).toFixed(1)}s`,
-              }}
-            >
-              <Fish color={f.color} size={f.size} />
-            </span>
-          ))}
+      {full && entities.map((e) => (
+        <span
+          key={e.id}
+          ref={(node) => { nodes.current[e.id] = node; }}
+          className="flood-swimmer"
+        >
+          {e.kind === "fish" && <Fish color={e.color} size={e.size} />}
+          {e.kind === "shark" && <Shark size={e.size} />}
+          {e.kind === "turtle" && <Turtle size={e.size} />}
+        </span>
+      ))}
 
-          {/* Occasional visitors — long crossings, and they wait a little
-              before the first one, so they turn up now and then rather than
-              circling constantly. The delay is safe because .flood-swimmer
-              fills backwards: they sit off screen until their turn, not parked
-              at the edge. */}
-          <span className="flood-swimmer flood-swim-rtl" style={{ top: "30%", animationDuration: "30s", animationDelay: "5s" }}>
-            <Shark />
-          </span>
-          <span className="flood-swimmer flood-swim-ltr" style={{ top: "72%", animationDuration: "40s", animationDelay: "14s" }}>
-            <Turtle />
-          </span>
-        </>
-      )}
+      {/* Where a fish just went. */}
+      {chomps.map((c) => (
+        <span key={c.key} className="flood-chomp" style={{ left: c.x, top: c.y }} />
+      ))}
 
       <p className="flood-hint">Press Esc</p>
     </div>
