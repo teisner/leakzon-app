@@ -11,6 +11,20 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.102 — 2026-07-28 · *New feature*
+**Network blocks show their main meter, and linked DMAs arrive together**
+- A DMA block now shows its **main meter** — the meter measuring water into that
+  area — with a blue inward arrow.
+- Where that same meter is also billed as a **sub-meter of a neighbouring DMA**,
+  both blocks say so: the supplying DMA notes "also sub in …", and the
+  neighbouring DMA shows the meter with an amber outward arrow and the area it
+  feeds. The two roles are never shown the same way, so it is always clear which
+  is which.
+- **Dragging one of a linked pair now brings the other with it**, already
+  connected — placed to its right, with the arrow running from the DMA that
+  bills the meter to the DMA it supplies. Works from either end.
+- The DMA list marks these with **"+ linked DMA"** so you know before dragging.
+
 ## 1.101 — 2026-07-28 · *New feature*
 **Product Overview added to Version Updates**
 - A new **Product Overview — How the platform works** section sits above the

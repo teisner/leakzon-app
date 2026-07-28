@@ -4,6 +4,7 @@ import { supabase } from "@/api/supabaseClient";
 import FlowChartCanvas from "./FlowChartCanvas";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
+import { linkedDmaPairs } from "@/lib/dmaMainMeters";
 import NetworkMapPanel from "./NetworkMapPanel";
 import NetworkStory from "./NetworkStory";
 
@@ -72,8 +73,7 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
       .then(({ data }) => setIsolatedPoints(data || []));
   }, [project.id]);
 
-  const handleAddNode = async (type, dma, x, y) => {
-    const maxX = Math.max(0, ...nodes.map((n) => n.pos_x));
+  const insertNode = async (type, dma, x, y) => {
     const { data: node } = await supabase
       .from('network_node')
       .insert({
@@ -81,12 +81,61 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
         node_type: type,
         dma_id: dma?.id || null,
         name: type === "source" ? "Source" : dma.name,
-        pos_x: x ?? maxX + 260,
-        pos_y: y ?? 150 + Math.random() * 120,
+        pos_x: x,
+        pos_y: y,
       })
       .select()
       .single();
-    setNodes((prev) => [...prev, node]);
+    return node;
+  };
+
+  const handleAddNode = async (type, dma, x, y) => {
+    const maxX = Math.max(0, ...nodes.map((n) => n.pos_x));
+    const baseX = x ?? maxX + 260;
+    const baseY = y ?? 150 + Math.random() * 120;
+
+    const node = await insertNode(type, dma, baseX, baseY);
+    if (!node) return;
+
+    // A meter that is one DMA's main while being billed as a sub-meter of
+    // another ties those two areas together physically. Placing one without the
+    // other leaves the diagram unable to show that, so bring the partner in and
+    // draw the connection rather than making it be rediscovered by hand.
+    const added = [node];
+    const newLinks = [];
+    if (type === "dma") {
+      const placed = new Map(nodes.filter((n) => n.dma_id).map((n) => [n.dma_id, n]));
+      placed.set(dma.id, node);
+
+      const pairs = linkedDmaPairs(dma, meters, dmas);
+      let offset = 0;
+      for (const pair of pairs) {
+        for (const side of [pair.from, pair.to]) {
+          if (placed.has(side.id)) continue;
+          offset += 1;
+          const partner = await insertNode("dma", side, baseX + 260 * offset, baseY);
+          if (partner) {
+            placed.set(side.id, partner);
+            added.push(partner);
+          }
+        }
+        const fromNode = placed.get(pair.from.id);
+        const toNode = placed.get(pair.to.id);
+        if (!fromNode || !toNode) continue;
+        const already = links.some((l) => l.from_node_id === fromNode.id && l.to_node_id === toNode.id)
+          || newLinks.some((l) => l.from_node_id === fromNode.id && l.to_node_id === toNode.id);
+        if (already) continue;
+        const { data: link } = await supabase
+          .from('network_link')
+          .insert({ project_id: project.id, from_node_id: fromNode.id, to_node_id: toNode.id })
+          .select()
+          .single();
+        if (link) newLinks.push(link);
+      }
+    }
+
+    setNodes((prev) => [...prev, ...added]);
+    if (newLinks.length > 0) setLinks((prev) => [...prev, ...newLinks]);
     onModified?.();
   };
 
@@ -252,6 +301,7 @@ export default function NetworkDesign({ project, dmas, layers, meters, onNodeCli
       nodes={nodes}
       links={links}
       dmas={dmas}
+      meters={meters}
       meterCounts={meterCounts}
       simulationData={simulationData}
       optimizedPorts={optimizedPorts}

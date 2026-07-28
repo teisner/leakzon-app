@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Droplets, Plus, Minus, Maximize2, X, Sparkles } from "lucide-react";
+import { Droplets, Plus, Minus, Maximize2, X, Sparkles, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { calculatePolygonAreaSqm } from "@/lib/polygonUtils";
+import { dmaMeterRoles, linkedDmaPairs } from "@/lib/dmaMainMeters";
 
 const SOURCE_W = 200;
 const SOURCE_H = 70;
@@ -293,7 +294,7 @@ function getOrthogonalPath(x1, y1, x2, y2, d1, d2, obstacles = []) {
   return path;
 }
 
-export default function FlowChartCanvas({ nodes, links, dmas, meterCounts, simulationData, optimizedPorts, onOptimize, onAddNode, onNodeDragEnd, onDeleteNode, onAddLink, onDeleteLink, onNodeClick, locked }) {
+export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCounts, simulationData, optimizedPorts, onOptimize, onAddNode, onNodeDragEnd, onDeleteNode, onAddLink, onDeleteLink, onNodeClick, locked }) {
   const canvasRef = useRef(null);
   const dragDataRef = useRef(null);
   const dragPosRef = useRef(null);
@@ -648,7 +649,14 @@ export default function FlowChartCanvas({ nodes, links, dmas, meterCounts, simul
                 className={`w-full flex items-center gap-2 p-2 rounded-md border border-border bg-background transition-colors text-xs text-left ${locked ? "opacity-40 cursor-not-allowed" : "hover:border-primary hover:bg-primary/5 cursor-grab active:cursor-grabbing"}`}
               >
                 <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: dma.color || "#3b82f6" }} />
-                <span className="truncate flex-1">{dma.name}</span>
+                <span className="truncate flex-1">
+                  {dma.name}
+                  {linkedDmaPairs(dma, meters, dmas).length > 0 && (
+                    <span className="block text-[9px] text-primary/80 leading-tight">
+                      + linked DMA
+                    </span>
+                  )}
+                </span>
                 <Plus className="w-3 h-3 shrink-0 text-muted-foreground" />
               </div>
             ))
@@ -860,6 +868,39 @@ export default function FlowChartCanvas({ nodes, links, dmas, meterCounts, simul
                       <div className="flex-1 min-w-0">
                         <p className={`${isDma ? "text-sm font-bold" : "text-xs font-semibold"} truncate text-foreground`}>{node.name}</p>
                         <p className="text-[10px] text-muted-foreground">{count} meters</p>
+                        {isDma && (() => {
+                          const roles = dmaMeterRoles(dma, meters, dmas);
+                          if (!roles.main && roles.incoming.length === 0) return null;
+                          return (
+                            <div className="mt-1 space-y-0.5">
+                              {/* The meter measuring water INTO this DMA. */}
+                              {roles.main && (
+                                <p className="flex items-center gap-1 text-[10px] leading-tight truncate" title={`Main meter: ${roles.main.uid}`}>
+                                  <ArrowDownToLine className="w-2.5 h-2.5 shrink-0 text-blue-500" />
+                                  <span className="font-semibold text-blue-600 dark:text-blue-400">Main</span>
+                                  <span className="text-muted-foreground truncate">{roles.main.uid}</span>
+                                </p>
+                              )}
+                              {/* The same meter, billed as a consumer elsewhere. */}
+                              {roles.main && roles.mainAlsoSubIn && (
+                                <p className="text-[9px] leading-tight text-muted-foreground/80 truncate ps-3.5" title={`Also a sub-meter of ${roles.mainAlsoSubIn.name}`}>
+                                  also sub in {roles.mainAlsoSubIn.name}
+                                </p>
+                              )}
+                              {/* Another DMA's main that THIS DMA bills. */}
+                              {roles.incoming.map(({ meter, suppliesDmas }) => (
+                                <p key={meter.id} className="flex items-center gap-1 text-[10px] leading-tight truncate"
+                                   title={`${meter.uid} is metered here as a sub-meter, and is the main for ${suppliesDmas.map((d) => d.name).join(", ")}`}>
+                                  <ArrowUpFromLine className="w-2.5 h-2.5 shrink-0 text-amber-500" />
+                                  <span className="font-semibold text-amber-600 dark:text-amber-400">Sub</span>
+                                  <span className="text-muted-foreground truncate">
+                                    {meter.uid} → {suppliesDmas.map((d) => d.name).join(", ")}
+                                  </span>
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     {isDma && !locked && (
