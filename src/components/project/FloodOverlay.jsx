@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 
-// The pipe cracks, then water pours out of it, then the screen fills.
-const BURST_MS = 1400;   // crack and first spray, before the water gets going
-const FILL_SECONDS = 9;  // rising water, from the burst until the tank is full
+// Zoom onto the pipe, break it, then let the water out.
+const ZOOM_MS = 1400;    // matches the map fly-to, so the break lands once still
+const BURST_MS = 900;    // the crack itself, before the water gets going
+const FILL_SECONDS = 9;  // water spreading out of the break until the screen is full
 
 function Fish({ color = "#f9a825", size = 26 }) {
   return (
@@ -45,93 +46,6 @@ function Turtle({ size = 40 }) {
   );
 }
 
-// The broken main itself: a cut pipe end with water pouring out of it into a
-// spreading pool. Drawn so that the bore sits exactly on the burst point, which
-// is why the wrapper offsets by the bore's coordinates in the viewBox.
-const BORE = { x: 157, y: 100 };
-
-function BurstPipe() {
-  return (
-    <svg
-      className="flood-pipe"
-      viewBox="0 0 340 280"
-      width="340"
-      height="280"
-      style={{ marginLeft: -BORE.x, marginTop: -BORE.y }}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="floodStream" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#37c2ef" />
-          <stop offset="100%" stopColor="#1487c6" />
-        </linearGradient>
-        <linearGradient id="floodPool" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#22a9e0" />
-          <stop offset="100%" stopColor="#0f7ab4" />
-        </linearGradient>
-      </defs>
-
-      {/* Pool first, so the stream lands on top of it. */}
-      <g className="flood-pool-group">
-        <path
-          d="M60 250C90 232 150 226 196 232c44 6 84 12 104 20-20 12-80 18-140 16-50-2-90-8-100-18Z"
-          fill="url(#floodPool)"
-        />
-        <path
-          d="M104 250c26-8 62-10 92-6M150 260c30-4 62-4 86 0"
-          stroke="#7fe0fb" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.7"
-        />
-      </g>
-
-      {/* The pipe: dark flange, light barrel, open end showing the bore. */}
-      <g className="flood-pipe-body">
-        <rect x="12" y="44" width="44" height="112" rx="10" fill="#6f6f90" />
-        <rect x="50" y="56" width="106" height="88" fill="#d9d9e2" />
-        <rect x="50" y="56" width="106" height="11" fill="#eeeef3" />
-        <ellipse cx="156" cy="100" rx="14" ry="44" fill="#c3c3ce" />
-        <ellipse cx="158" cy="100" rx="9" ry="36" fill="#a4a4b4" />
-      </g>
-
-      {/* Water leaving the bore. */}
-      <g className="flood-stream">
-        <path
-          d="M146 118c4 42 16 78 50 114l54-8c-36-34-54-72-74-112Z"
-          fill="url(#floodStream)"
-        />
-        <path
-          className="flood-flow"
-          d="M158 126c6 38 18 70 44 98"
-          stroke="#7fe0fb" strokeWidth="5" strokeLinecap="round" fill="none"
-        />
-        <path
-          className="flood-flow flood-flow-fast"
-          d="M174 122c10 36 24 64 46 92"
-          stroke="#a9edff" strokeWidth="3.5" strokeLinecap="round" fill="none"
-        />
-      </g>
-
-      {/* Spray thrown off the break. */}
-      <g className="flood-drops">
-        {[
-          { cx: 196, cy: 96, r: 5, d: 0 },
-          { cx: 214, cy: 128, r: 4, d: 0.35 },
-          { cx: 182, cy: 74, r: 3.5, d: 0.7 },
-          { cx: 232, cy: 106, r: 5.5, d: 1.05 },
-          { cx: 206, cy: 158, r: 3, d: 1.4 },
-          { cx: 168, cy: 92, r: 4, d: 1.75 },
-        ].map((drop) => (
-          <circle
-            key={`${drop.cx}-${drop.cy}`}
-            cx={drop.cx} cy={drop.cy} r={drop.r}
-            fill="#2fb6e8"
-            style={{ animationDelay: `${drop.d}s` }}
-          />
-        ))}
-      </g>
-    </svg>
-  );
-}
-
 // Ctrl+Shift+F on the GIS map. The thickest main on screen bursts, the water
 // pours out of it and fills the screen, and the tank then comes alive.
 // Runs until Escape — there is no timer, so it behaves like a screen saver.
@@ -155,11 +69,25 @@ export default function FloodOverlay({ onDone, map, origin }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onDone]);
 
+  // zooming -> burst -> rising. Without a pipe to break there is nothing to
+  // zoom to, so the water just rises from the bottom.
   useEffect(() => {
     if (!origin) return undefined;
-    const gush = setTimeout(() => setPhase("rising"), BURST_MS);
-    return () => clearTimeout(gush);
+    const crack = setTimeout(() => setPhase("burst"), ZOOM_MS);
+    const gush = setTimeout(() => setPhase("rising"), ZOOM_MS + BURST_MS);
+    return () => { clearTimeout(crack); clearTimeout(gush); };
   }, [origin]);
+
+  // Shake the map itself when the main goes — the burst reads as something
+  // happening to the map, not as an overlay drawn on top of it.
+  useEffect(() => {
+    if (phase !== "burst" || !map) return undefined;
+    const container = map.getContainer();
+    if (!container) return undefined;
+    container.classList.add("flood-quake");
+    const stop = setTimeout(() => container.classList.remove("flood-quake"), 900);
+    return () => { clearTimeout(stop); container.classList.remove("flood-quake"); };
+  }, [phase, map]);
 
   useEffect(() => {
     if (phase !== "rising") return undefined;
@@ -193,27 +121,64 @@ export default function FloodOverlay({ onDone, map, origin }) {
 
   return (
     <div className="fixed inset-0 z-[11000] pointer-events-none overflow-hidden">
-      {/* The break itself, pinned to the pipe on the map. */}
+      {/* The break, pinned to the real pipe on the map. */}
       {point && (
         <div className="flood-burst" style={{ left: point.x, top: point.y }}>
-          <span className="flood-shock" />
-          <BurstPipe />
+          {/* While the map flies in, mark which line is about to go. */}
+          {phase === "zooming" && <span className="flood-target" />}
+          {phase !== "zooming" && (
+            <>
+              <span className="flood-shock" />
+              <span className="flood-shock flood-shock-late" />
+              {/* Plume off a pressurised main: straight up, then falling back. */}
+              <span className="flood-spout" />
+              {[-38, -20, -6, 8, 22, 40, 54].map((drift, i) => (
+                <span
+                  key={drift}
+                  className="flood-droplet"
+                  style={{
+                    "--drift": `${drift}px`,
+                    animationDelay: `${i * 0.13}s`,
+                    animationDuration: `${1.3 + (i % 3) * 0.3}s`,
+                    width: 5 + (i % 3) * 3,
+                    height: 5 + (i % 3) * 3,
+                  }}
+                />
+              ))}
+            </>
+          )}
         </div>
       )}
 
-      {/* Water body — rises, then stays. */}
-      {phase === "rising" && (
-        <div className="flood-body">
-          <div className="flood-wave flood-wave-back" />
-          <div className="flood-wave flood-wave-front" />
+      {/* The water. With a burst pipe it floods outwards from the break; with
+          no pipe layer loaded there is nothing to flood out of, so it rises
+          from the bottom with a wave front instead. */}
+      {phase === "rising" && (point && origin ? (
+        <div
+          className="flood-spill"
+          style={{ "--fx": `${point.x}px`, "--fy": `${point.y}px` }}
+        >
           <div className="flood-water">
-            {/* Two drifting caustic layers, so the water itself keeps moving
-                once the surface has stopped climbing. */}
             <span className="flood-caustics" />
             <span className="flood-caustics flood-caustics-slow" />
             <span className="flood-current" />
           </div>
         </div>
+      ) : (
+        <div className="flood-body">
+          <div className="flood-wave flood-wave-back" />
+          <div className="flood-wave flood-wave-front" />
+          <div className="flood-water">
+            <span className="flood-caustics" />
+            <span className="flood-caustics flood-caustics-slow" />
+            <span className="flood-current" />
+          </div>
+        </div>
+      ))}
+
+      {/* Foam at the leading edge of the spill. */}
+      {phase === "rising" && point && origin && (
+        <span className="flood-front" style={{ left: point.x, top: point.y }} />
       )}
 
       {/* Bubbles, once there is water to rise through. */}

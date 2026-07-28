@@ -11,6 +11,17 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.119 — 2026-07-28 · *Updated feature*
+**The flood now starts on the real pipe: zoom in, break, flood out**
+- The drawn pipe illustration is gone. The egg zooms onto the thickest water
+  line on the map, marks it, and then that line breaks — the map itself lurches,
+  shock rings go out, and a plume stands off the break throwing droplets.
+- The water floods outwards from the break rather than rising from the bottom:
+  it spreads from the burst point across the screen behind a bright foam front,
+  then the fish, bubbles, shark and turtle arrive as before.
+- Projects with no pipe layer loaded still get the old rise-from-the-bottom
+  flood, since there is nothing there to break.
+
 ## 1.118 — 2026-07-28 · *Updated feature*
 **The burst now looks like a broken main, not a firework**
 - The break is drawn as a cut pipe end — flange, barrel and open bore — with
