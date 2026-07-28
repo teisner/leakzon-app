@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Check, X, Link2, Unlink, GripVertical } from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Check, X, Link2, Unlink, GripVertical, Shrink, Undo2 } from "lucide-react";
+import { suggestSimplification } from "@/lib/polygonSimplify";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -11,7 +12,7 @@ import DmaColorPicker from "@/components/project/DmaColorPicker";
 // alongside shape editing on the map. Draggable rather than pinned to the top
 // centre: the DMA being edited is often under that exact spot, and the same
 // interaction is used by the layer and meter editors.
-export default function DmaEditPanel({ name, color, transparency, pointCount, onNameChange, onColorChange, onTransparencyChange, onSave, onCancel, mainMeters, mainMeterId, onMainMeterChange }) {
+export default function DmaEditPanel({ name, color, transparency, pointCount, points, onPointsChange, onNameChange, onColorChange, onTransparencyChange, onSave, onCancel, mainMeters, mainMeterId, onMainMeterChange }) {
   const { t } = useLanguage();
   const [pos, setPos] = useState(() => ({
     x: Math.max(16, Math.round((window.innerWidth - 340) / 2)),
@@ -41,6 +42,25 @@ export default function DmaEditPanel({ name, color, transparency, pointCount, on
       window.removeEventListener("touchend", handleUp);
     };
   }, []);
+
+  // Points kept aside so a simplification can be reversed without saving first.
+  const [beforeSimplify, setBeforeSimplify] = useState(null);
+
+  // Recomputed as the shape is edited, so the offer always reflects the current
+  // outline rather than whatever it looked like when the panel opened.
+  const suggestion = useMemo(() => suggestSimplification(points || []), [points]);
+
+  const applySimplify = () => {
+    if (!suggestion.canReduce) return;
+    setBeforeSimplify(points);
+    onPointsChange?.(suggestion.points);
+  };
+
+  const undoSimplify = () => {
+    if (!beforeSimplify) return;
+    onPointsChange?.(beforeSimplify);
+    setBeforeSimplify(null);
+  };
 
   const handleDragStart = (e) => {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -77,6 +97,34 @@ export default function DmaEditPanel({ name, color, transparency, pointCount, on
           </button>
         </div>
       </div>
+
+      {/* Point reduction — offered only when it would actually help, and always
+          reversible until the DMA is saved. */}
+      {beforeSimplify ? (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-2">
+          <p className="text-[11px] leading-snug text-emerald-700 dark:text-emerald-300">
+            {t('dmaEdit.simplifyDone', { from: beforeSimplify.length, to: pointCount })}
+          </p>
+          <button
+            onClick={undoSimplify}
+            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-border bg-card hover:bg-muted"
+          >
+            <Undo2 className="w-3 h-3" /> {t('dmaEdit.simplifyUndo')}
+          </button>
+        </div>
+      ) : suggestion.canReduce ? (
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-2">
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            {t('dmaEdit.simplifyOffer', { from: suggestion.original, to: suggestion.simplified })}
+          </p>
+          <button
+            onClick={applySimplify}
+            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border border-primary/40 text-primary hover:bg-primary/10"
+          >
+            <Shrink className="w-3 h-3" /> {t('dmaEdit.simplifyApply')}
+          </button>
+        </div>
+      ) : null}
 
       <div>
         <Label className="text-xs">{t('dmaEdit.dmaName')}</Label>

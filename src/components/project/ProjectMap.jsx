@@ -1526,6 +1526,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           color={editColor}
           transparency={editTransparency}
           pointCount={editPoints.length}
+          points={editPoints}
+          onPointsChange={setEditPoints}
           onNameChange={setEditName}
           onColorChange={setEditColor}
           onTransparencyChange={setEditTransparency}

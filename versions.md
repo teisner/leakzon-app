@@ -11,6 +11,21 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.107 — 2026-07-28 · *New feature*
+**Edit DMA can reduce the number of points in a boundary**
+- When you open **Edit DMA**, the outline is checked to see whether it can be
+  drawn with fewer points. If it can, the panel says how many there are now and
+  how many there would be — for example *"50 → 34"* — and waits for you to
+  choose.
+- Nothing happens automatically, and nothing is offered when the shape is
+  already as simple as it can be, so the prompt only appears when it is worth
+  acting on.
+- After reducing, an **Undo** restores the original outline. The change is not
+  saved until you save the DMA, so leaving without saving also discards it.
+- The area is preserved: only points that sit on a straight line between their
+  neighbours are removed. Across the existing 91 DMAs the largest area change
+  would be under 1%.
+
 ## 1.106 — 2026-07-28 · *Updated feature*
 **Green border on the Edit DMA panel**
 - The Edit DMA panel now has a green border, the same as the layer and meter
