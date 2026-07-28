@@ -11,6 +11,15 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.120 — 2026-07-28 · *Updated feature*
+**The flood goes back to just filling the screen**
+- The bursting-pipe build is gone: no zoom, no shaking map, no plume, no drawn
+  pipe. Ctrl + Shift + F simply floods the screen again.
+- Back to waves rolling in as the water rises, then bubbles, fish, and the
+  occasional shark and turtle once it is full. Escape is still the only exit.
+- The moving water stays — drifting caustics and a slow swell inside the body,
+  so it keeps flowing after the surface settles.
+
 ## 1.119 — 2026-07-28 · *Updated feature*
 **The flood now starts on the real pipe: zoom in, break, flood out**
 - The drawn pipe illustration is gone. The egg zooms onto the thickest water

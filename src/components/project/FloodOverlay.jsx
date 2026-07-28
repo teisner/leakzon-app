@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-// Zoom onto the pipe, break it, then let the water out.
-const ZOOM_MS = 1400;    // matches the map fly-to, so the break lands once still
-const BURST_MS = 900;    // the crack itself, before the water gets going
-const FILL_SECONDS = 9;  // water spreading out of the break until the screen is full
+// Seconds of rising water before the tank is full and the fish arrive.
+const FILL_SECONDS = 9;
 
 function Fish({ color = "#f9a825", size = 26 }) {
   return (
@@ -46,68 +44,25 @@ function Turtle({ size = 40 }) {
   );
 }
 
-// Ctrl+Shift+F on the GIS map. The thickest main on screen bursts, the water
-// pours out of it and fills the screen, and the tank then comes alive.
-// Runs until Escape — there is no timer, so it behaves like a screen saver.
+// Ctrl+Shift+F on the GIS map. Waves roll in, the screen fills, and the tank
+// then comes alive. Runs until Escape — there is no timer, so it behaves like
+// a screen saver.
 //
 // The overlay is pointer-events: none throughout. A screen saver that swallowed
 // clicks could strand someone on a map they were mid-edit on if the key never
 // registered; Escape is the way out, but the app is never actually blocked.
-//
-// `map` and `origin` are optional: a project with no pipe layer loaded has
-// nothing to burst, so the water simply rises from the bottom instead.
-export default function FloodOverlay({ onDone, map, origin }) {
-  const [phase, setPhase] = useState(origin ? "burst" : "rising");
+export default function FloodOverlay({ onDone }) {
   const [full, setFull] = useState(false);
-  // Where on screen the pipe is. Recomputed as the map moves, so the jet stays
-  // on the pipe while the fly-to zoom is still settling.
-  const [point, setPoint] = useState(null);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onDone(); };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onDone]);
-
-  // zooming -> burst -> rising. Without a pipe to break there is nothing to
-  // zoom to, so the water just rises from the bottom.
-  useEffect(() => {
-    if (!origin) return undefined;
-    const crack = setTimeout(() => setPhase("burst"), ZOOM_MS);
-    const gush = setTimeout(() => setPhase("rising"), ZOOM_MS + BURST_MS);
-    return () => { clearTimeout(crack); clearTimeout(gush); };
-  }, [origin]);
-
-  // Shake the map itself when the main goes — the burst reads as something
-  // happening to the map, not as an overlay drawn on top of it.
-  useEffect(() => {
-    if (phase !== "burst" || !map) return undefined;
-    const container = map.getContainer();
-    if (!container) return undefined;
-    container.classList.add("flood-quake");
-    const stop = setTimeout(() => container.classList.remove("flood-quake"), 900);
-    return () => { clearTimeout(stop); container.classList.remove("flood-quake"); };
-  }, [phase, map]);
-
-  useEffect(() => {
-    if (phase !== "rising") return undefined;
     const filled = setTimeout(() => setFull(true), FILL_SECONDS * 1000);
-    return () => clearTimeout(filled);
-  }, [phase]);
-
-  useEffect(() => {
-    if (!map || !origin) return undefined;
-    const update = () => {
-      const container = map.getContainer();
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const p = map.latLngToContainerPoint([origin.lat, origin.lng]);
-      setPoint({ x: rect.left + p.x, y: rect.top + p.y });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      clearTimeout(filled);
     };
-    update();
-    map.on("move zoom viewreset", update);
-    return () => map.off("move zoom viewreset", update);
-  }, [map, origin]);
+  }, [onDone]);
 
   // Spread out so they don't swim in formation.
   const fish = [
@@ -121,65 +76,18 @@ export default function FloodOverlay({ onDone, map, origin }) {
 
   return (
     <div className="fixed inset-0 z-[11000] pointer-events-none overflow-hidden">
-      {/* The break, pinned to the real pipe on the map. */}
-      {point && (
-        <div className="flood-burst" style={{ left: point.x, top: point.y }}>
-          {/* While the map flies in, mark which line is about to go. */}
-          {phase === "zooming" && <span className="flood-target" />}
-          {phase !== "zooming" && (
-            <>
-              <span className="flood-shock" />
-              <span className="flood-shock flood-shock-late" />
-              {/* Plume off a pressurised main: straight up, then falling back. */}
-              <span className="flood-spout" />
-              {[-38, -20, -6, 8, 22, 40, 54].map((drift, i) => (
-                <span
-                  key={drift}
-                  className="flood-droplet"
-                  style={{
-                    "--drift": `${drift}px`,
-                    animationDelay: `${i * 0.13}s`,
-                    animationDuration: `${1.3 + (i % 3) * 0.3}s`,
-                    width: 5 + (i % 3) * 3,
-                    height: 5 + (i % 3) * 3,
-                  }}
-                />
-              ))}
-            </>
-          )}
+      {/* Water body — rises, then stays. */}
+      <div className="flood-body">
+        <div className="flood-wave flood-wave-back" />
+        <div className="flood-wave flood-wave-front" />
+        <div className="flood-water">
+          {/* Drifting caustics and a slow swell, so the water itself keeps
+              moving once the surface has stopped climbing. */}
+          <span className="flood-caustics" />
+          <span className="flood-caustics flood-caustics-slow" />
+          <span className="flood-current" />
         </div>
-      )}
-
-      {/* The water. With a burst pipe it floods outwards from the break; with
-          no pipe layer loaded there is nothing to flood out of, so it rises
-          from the bottom with a wave front instead. */}
-      {phase === "rising" && (point && origin ? (
-        <div
-          className="flood-spill"
-          style={{ "--fx": `${point.x}px`, "--fy": `${point.y}px` }}
-        >
-          <div className="flood-water">
-            <span className="flood-caustics" />
-            <span className="flood-caustics flood-caustics-slow" />
-            <span className="flood-current" />
-          </div>
-        </div>
-      ) : (
-        <div className="flood-body">
-          <div className="flood-wave flood-wave-back" />
-          <div className="flood-wave flood-wave-front" />
-          <div className="flood-water">
-            <span className="flood-caustics" />
-            <span className="flood-caustics flood-caustics-slow" />
-            <span className="flood-current" />
-          </div>
-        </div>
-      ))}
-
-      {/* Foam at the leading edge of the spill. */}
-      {phase === "rising" && point && origin && (
-        <span className="flood-front" style={{ left: point.x, top: point.y }} />
-      )}
+      </div>
 
       {/* Bubbles, once there is water to rise through. */}
       {full && [8, 19, 31, 44, 57, 68, 79, 91].map((left, i) => (
@@ -219,12 +127,6 @@ export default function FloodOverlay({ onDone, map, origin }) {
         </>
       )}
 
-      {origin && (
-        <p className="flood-label">
-          Burst main — {origin.label}
-          {origin.layerName ? ` · ${origin.layerName}` : ""}
-        </p>
-      )}
       <p className="flood-hint">Press Esc</p>
     </div>
   );

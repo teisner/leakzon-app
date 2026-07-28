@@ -507,59 +507,9 @@
   .coffee-steam, .coffee-drip { animation: none; opacity: 0.5; }
 }
 
-/* Flood (Ctrl+Shift+F on the GIS map). The thickest main on screen bursts, the
-   water pours out and fills the screen, and the tank stays until Escape.
-   Everything is pointer-events: none so the map is never actually blocked. */
-
-/* --- The break, pinned to the pipe ------------------------------------- */
-.flood-burst { position: absolute; width: 0; height: 0; }
-/* Marker on the doomed pipe while the map is still flying in. */
-.flood-target {
-  position: absolute; left: -18px; top: -18px; width: 36px; height: 36px;
-  border-radius: 999px; border: 3px solid rgba(255, 90, 90, 0.9);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-  animation: floodTarget 0.7s ease-in-out infinite;
-}
-/* Pressure shocks off the break. */
-.flood-shock {
-  position: absolute; left: -13px; top: -13px; width: 26px; height: 26px;
-  border-radius: 999px; border: 3px solid rgba(190, 235, 255, 0.95);
-  animation: floodShock 1.1s ease-out forwards;
-}
-.flood-shock-late { animation-delay: 0.28s; }
-/* The plume: a column of water standing off the break, wobbling under
-   pressure. Blurred, because a jet at this scale has no clean edge. */
-.flood-spout {
-  position: absolute; left: -26px; bottom: -6px; width: 52px; height: 160px;
-  border-radius: 999px 999px 40% 40%;
-  background: linear-gradient(0deg, rgba(200, 240, 255, 0.95) 0%, rgba(140, 215, 250, 0.6) 55%, rgba(200, 240, 255, 0) 100%);
-  filter: blur(2px);
-  transform-origin: 50% 100%;
-  animation: floodSpout 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards,
-             floodSpoutWobble 1.3s ease-in-out 0.9s infinite;
-}
-/* Droplets thrown clear of the plume and falling back. */
-.flood-droplet {
-  position: absolute; left: 0; top: 0; border-radius: 999px;
-  background: rgba(215, 245, 255, 0.9);
-  opacity: 0; animation: floodDroplet ease-out infinite;
-}
-/* The spill: water clipped to a circle growing out of the break, so it floods
-   the screen from the pipe outwards rather than rising from nowhere. */
-.flood-spill {
-  position: absolute; inset: 0;
-  clip-path: circle(0px at var(--fx) var(--fy));
-  animation: floodSpill 9s cubic-bezier(0.28, 0.72, 0.35, 1) forwards;
-}
-/* Bright edge riding the front of the spill. */
-.flood-front {
-  position: absolute; width: 0; height: 0; border-radius: 999px;
-  box-shadow: 0 0 22px 10px rgba(190, 240, 255, 0.55);
-  border: 4px solid rgba(215, 248, 255, 0.55);
-  animation: floodFront 9s cubic-bezier(0.28, 0.72, 0.35, 1) forwards;
-}
-/* The map itself lurches when the main lets go. */
-.flood-quake { animation: floodQuake 0.9s ease-out; }
+/* Flood (Ctrl+Shift+F on the GIS map). Waves roll in, the screen fills, and the
+   tank stays until Escape. Everything is pointer-events: none so the map is
+   never actually blocked. */
 
 /* --- Rising water ------------------------------------------------------- */
 .flood-body {
@@ -616,52 +566,13 @@
 .flood-swim-rtl { animation: floodSwimRtl linear infinite; }
 .flood-swim-ltr { animation: floodSwimLtr linear infinite; }
 
-.flood-label, .flood-hint {
+.flood-hint {
   position: absolute; left: 50%; transform: translateX(-50%);
   font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
   color: rgba(255, 255, 255, 0.8); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
-.flood-label { top: 18px; }
 .flood-hint { bottom: 18px; animation: floodHint 3.5s ease-in-out infinite; }
 
-@keyframes floodTarget {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50%      { transform: scale(1.35); opacity: 0.55; }
-}
-@keyframes floodShock {
-  from { transform: scale(0.2); opacity: 0.95; }
-  to   { transform: scale(11); opacity: 0; }
-}
-@keyframes floodSpout {
-  from { transform: scaleY(0.05) scaleX(0.6); opacity: 0.4; }
-  to   { transform: scaleY(1) scaleX(1); opacity: 1; }
-}
-@keyframes floodSpoutWobble {
-  0%, 100% { transform: scaleY(1) scaleX(1) skewX(0deg); }
-  50%      { transform: scaleY(1.12) scaleX(0.92) skewX(3deg); }
-}
-@keyframes floodDroplet {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-  15%  { opacity: 1; }
-  55%  { transform: translate(calc(var(--drift) * 0.6), -130px) scale(1); }
-  100% { opacity: 0; transform: translate(var(--drift), 40px) scale(0.6); }
-}
-@keyframes floodQuake {
-  0%, 100% { transform: translate(0, 0); }
-  12%      { transform: translate(-7px, 4px); }
-  28%      { transform: translate(6px, -4px); }
-  46%      { transform: translate(-4px, -3px); }
-  68%      { transform: translate(3px, 3px); }
-  86%      { transform: translate(-2px, 0); }
-}
-@keyframes floodSpill {
-  from { clip-path: circle(0px at var(--fx) var(--fy)); }
-  to   { clip-path: circle(165vmax at var(--fx) var(--fy)); }
-}
-@keyframes floodFront {
-  from { width: 0; height: 0; margin: 0; opacity: 0.9; }
-  to   { width: 330vmax; height: 330vmax; margin: -165vmax 0 0 -165vmax; opacity: 0; }
-}
 @keyframes floodRise { from { height: 0; } to { height: 100%; } }
 @keyframes floodDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes floodCaustics {
@@ -694,9 +605,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .flood-body { animation: none; height: 100%; }
-  .flood-wave, .flood-bubble, .flood-hint, .flood-caustics, .flood-current,
-  .flood-shock, .flood-target, .flood-spout, .flood-droplet,
-  .flood-front, .flood-quake { animation: none; }
-  .flood-spill { animation: none; clip-path: none; }
+  .flood-wave, .flood-bubble, .flood-hint, .flood-caustics,
+  .flood-current { animation: none; }
+
   .flood-swimmer { animation-duration: 60s; }
 }
