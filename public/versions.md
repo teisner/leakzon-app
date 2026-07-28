@@ -11,6 +11,14 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.096 — 2026-07-28 · *Updated feature*
+**Black strip along the bottom of the project page**
+- A black band now runs across the bottom of the project page, the same height
+  as the version block in the side menu — measured from its divider down to the
+  bottom edge (40px).
+- The map gives up the space rather than the strip being squeezed, so it stays
+  the same height at any window size.
+
 ## 1.095 — 2026-07-28 · *Updated feature*
 **Custom layer icons removed**
 - The **Custom icon** option has been removed from Edit Layer. Layers are styled

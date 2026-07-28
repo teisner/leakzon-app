@@ -1823,6 +1823,12 @@ export default function ProjectDetail() {
         )}
       </div>
 
+      {/* Footer strip. Height matches the version block in the side menu,
+          measured from its divider to the bottom of the nav: pt-2 (8px) + the
+          16px row + the nav's pb-4 (16px) = 40px, i.e. h-10. shrink-0 so the
+          map gives up the space rather than this bar collapsing. */}
+      <div className="h-10 shrink-0 bg-black border-t border-black" />
+
       <ImportLogsView
         open={showImportLogs}
         onOpenChange={setShowImportLogs}
