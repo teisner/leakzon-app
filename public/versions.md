@@ -11,6 +11,13 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.099 — 2026-07-28 · *Updated feature*
+**Bottom strip is thinner and matches the side menu**
+- The strip is now **28px** instead of 40px.
+- It was a lighter shade than the side menu in dark mode. Both now use the same
+  background, so the strip and the menu read as one surface. Light mode is
+  unchanged — both were already white, which is why it only showed in dark mode.
+
 ## 1.098 — 2026-07-28 · *Updated feature*
 **Version number moved into the bottom strip**
 - "Ver 1.098" now sits **in** the bottom strip, centred, instead of above it at

@@ -6,16 +6,15 @@ import UpdateAvailableDialog from "@/components/UpdateAvailableDialog";
 
 // The strip along the bottom of a project page, carrying the running version.
 //
-// Height matches what the version block used to occupy at the foot of the side
-// menu — from its divider to the bottom edge: pt-2 (8px) + the 16px row + the
-// nav's pb-4 (16px) = 40px. Same background as the header (bg-card), so the
-// page is bracketed by matching bars.
+// bg-background, not bg-card: the side menu uses bg-background, and in dark mode
+// those differ (7% vs 11% lightness), so bg-card made the strip visibly lighter
+// than the menu sitting directly above it. In light mode both are white.
 export default function ProjectFooterBar() {
   const { latestVersion } = useVersionCheck();
   const [showUpdate, setShowUpdate] = useState(false);
 
   return (
-    <div className="h-10 shrink-0 bg-card border-t border-border flex items-center justify-center gap-1.5">
+    <div className="h-7 shrink-0 bg-background border-t border-border flex items-center justify-center gap-1.5">
       <p className="text-[10px] text-green-600 dark:text-green-400 tabular-nums">
         Ver {APP_VERSION}
       </p>
