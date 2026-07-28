@@ -375,6 +375,142 @@ const METER_HEADERS = [
   'Diameter (mm)', 'Status', 'Latitude', 'Longitude', 'Location Source', 'Additional IDs',
 ];
 
+// ── LeakZon Main import format ───────────────────────────────────────────────
+// Column names, order and constant values are dictated by the receiving system,
+// so they are literals here and never translated.
+
+function additionalId(m: any, patterns: RegExp[]) {
+  for (const id of m?.additional_ids || []) {
+    if (patterns.some((re) => re.test(String(id?.label || "")))) return String(id?.value ?? "");
+  }
+  return "";
+}
+
+// Any value the operator can nominate for the Identifier / Meter Number columns.
+export function meterFieldValue(m: any, field: string) {
+  switch (field) {
+    case "uid": return m.uid ?? "";
+    case "meter_id": return additionalId(m, [/^meter.?id$/i, /^meter$/i, /meter/i]);
+    case "account_id": return additionalId(m, [/account.?id/i, /^account$/i, /account/i]);
+    case "endpoint_id": return m.endpoint_id ?? "";
+    case "address": return m.address ?? "";
+    case "payer_name": return m.payer_name ?? "";
+    case "city": return m.city ?? "";
+    case "provider": return m.provider ?? "";
+    default: return "";
+  }
+}
+
+// The operator picks which fields make up the Identifier; they are joined with
+// commas, e.g. address + meter id -> "12 Main St,854796".
+function buildIdentifier(m: any, fields: string[]) {
+  return (fields || [])
+    .map((f) => String(meterFieldValue(m, f) ?? "").trim())
+    .filter(Boolean)
+    .join(",");
+}
+
+function unitLabel(waterUnit: string | undefined) {
+  return waterUnit === "Gallons" ? "US gallons" : "m3";
+}
+
+function communicationFor(meter: any, project: any) {
+  // Mains of every type report over AMI; sub-meters vary by utility and are
+  // configured per project (Project Settings → Sub-meter communication).
+  return meter.__is_main ? "AMI" : (project?.sub_meter_communication || "");
+}
+
+// Fields the operator can choose from for Identifier and Meter Number.
+export const SELECTABLE_FIELDS = [
+  'uid', 'meter_id', 'account_id', 'endpoint_id', 'address', 'payer_name', 'city', 'provider',
+];
+
+// How many meters actually carry each field. Without this the dialog would
+// happily recommend "Meter ID" on a project whose meters have none — Obion's
+// were imported before ID columns were retained, so that column would export
+// empty for every row.
+export function fieldCoverage(meters: any[]) {
+  const out: Record<string, number> = {};
+  for (const f of SELECTABLE_FIELDS) {
+    out[f] = meters.reduce((n, m) => n + (String(meterFieldValue(m, f) ?? '').trim() ? 1 : 0), 0);
+  }
+  return out;
+}
+
+const METER_DATA_COLUMNS = [
+  "Identifier", "Meter Number", "Address", "Usage type", "Diameter", "Location",
+  "Status", "Zone", "transmitterid", "User", "Users Number", "Installation Date",
+  "Unit", "multiplier", "Provider", "Description", "Isactive", "ufr",
+  "Communication", "METER TYPE", "new identifier", "new meter number",
+];
+
+export function buildMeterDataRows(meters: any[], project: any, opts: any) {
+  const installed = new Date().toISOString().slice(0, 10);
+  const unit = unitLabel(project?.water_unit);
+  return meters.map((m) => ({
+    "Identifier": buildIdentifier(m, opts.identifierFields),
+    "Meter Number": String(meterFieldValue(m, opts.meterNumberField) ?? ""),
+    "Address": m.address ?? "",
+    "Usage type": "",
+    "Diameter": m.diameter ?? "",
+    // Single field, comma separated, as the receiving system expects.
+    "Location": m.latitude != null && m.longitude != null ? `${m.latitude},${m.longitude}` : "",
+    "Status": "",
+    "Zone": "",
+    "transmitterid": m.endpoint_id ?? "",
+    "User": m.payer_name ?? "",
+    "Users Number": meterFieldValue(m, "account_id"),
+    "Installation Date": installed,
+    "Unit": unit,
+    "multiplier": "1",
+    "Provider": m.provider ?? "",
+    "Description": "",
+    "Isactive": "TRUE",
+    "ufr": "FALSE",
+    "Communication": communicationFor(m, project),
+    "METER TYPE": "water",
+    "new identifier": "",
+    "new meter number": "",
+  }));
+}
+
+const GROUPS_COLUMNS = [
+  "Identifier", "Is Main?", "Group name", "Is Root?", "Type", "Communication type",
+];
+
+export function buildGroupsRows(meters: any[], project: any, opts: any) {
+  return meters.map((m) => ({
+    "Identifier": buildIdentifier(m, opts.identifierFields),
+    "Is Main?": m.__is_main ? "True" : "False",
+    "Group name": m.__dma_name || "",
+    // Blank unless the meter is actually flagged as a root.
+    "Is Root?": m.is_root ? "True" : "",
+    "Type": "REGULAR",
+    "Communication type": communicationFor(m, project),
+  }));
+}
+
+// Generic SpreadsheetML writer for a fixed column list.
+function buildSheetXls(sheetName: string, columns: string[], rows: any[]) {
+  const esc = (v: any) => String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const header = columns.map((c) => `<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join('');
+  const body = rows.map((r) =>
+    `<Row>${columns.map((c) => `<Cell><Data ss:Type="String">${esc(r[c])}</Data></Cell>`).join('')}</Row>`
+  ).join('');
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="${esc(sheetName)}">
+  <Table>
+   <Row>${header}</Row>
+   ${body}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+}
+
 function buildMeterXls(meters: any[]) {
   const headers = METER_HEADERS;
   function escapeXML(val: any) {
@@ -544,7 +680,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
   try {
-    const { project_id, analyze_only } = await req.json();
+    const { project_id, analyze_only, preview_only, identifier_fields, meter_number_field } = await req.json();
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
     const user = await getCallerUser(req);
@@ -571,6 +707,25 @@ Deno.serve(async (req) => {
           meters: preview.insights.metersTotal,
           dmas: (dmas || []).length,
         },
+      });
+    }
+
+    // Preview: return the rows that would be written, without building any
+    // shapefiles — those take the bulk of the time and none of it is needed to
+    // show the operator what the workbooks will contain.
+    if (preview_only) {
+      const a = analyzeMeters(meters, dmas || [], layers || []);
+      const opts = {
+        identifierFields: identifier_fields?.length ? identifier_fields : ['address', 'meter_id'],
+        meterNumberField: meter_number_field || 'meter_id',
+      };
+      return json({
+        insights: a.insights,
+        meterData: buildMeterDataRows(a.assigned, project, opts),
+        groups: buildGroupsRows(a.assigned, project, opts),
+        noDmaCount: a.unassigned.length,
+        fieldCoverage: fieldCoverage(a.assigned),
+        totalRows: a.assigned.length,
       });
     }
 
@@ -658,11 +813,24 @@ Deno.serve(async (req) => {
 
     const analysis = analyzeMeters(meters, dmas || [], layers || []);
 
-    outerZip.file('meters.xls', new TextEncoder().encode(buildMeterXls(analysis.assigned)));
-    // Meters with no DMA go to their own file rather than being dropped, so
-    // nothing is silently lost and they can be reviewed separately.
+    const exportOpts = {
+      identifierFields: identifier_fields?.length ? identifier_fields : ['address', 'meter_id'],
+      meterNumberField: meter_number_field || 'meter_id',
+    };
+    const enc = new TextEncoder();
+
+    // Meter Data — the LeakZon Main import format.
+    outerZip.file('meter_data.xls', enc.encode(
+      buildSheetXls('Meter Data', METER_DATA_COLUMNS, buildMeterDataRows(analysis.assigned, project, exportOpts))
+    ));
+    // Groups — which DMA each meter belongs to, and how it participates.
+    outerZip.file('groups.xls', enc.encode(
+      buildSheetXls('Groups', GROUPS_COLUMNS, buildGroupsRows(analysis.assigned, project, exportOpts))
+    ));
+    // Meters with no DMA keep their existing separate file, unchanged, so
+    // nothing is silently lost and they can be reviewed apart from the rest.
     if (analysis.unassigned.length > 0) {
-      outerZip.file('meters_no_dma.xls', new TextEncoder().encode(buildMeterXls(analysis.unassigned)));
+      outerZip.file('meters_no_dma.xls', enc.encode(buildMeterXls(analysis.unassigned)));
     }
 
     const zipBuffer = await outerZip.generateAsync({ type: 'base64' });

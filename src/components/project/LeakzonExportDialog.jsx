@@ -7,6 +7,48 @@ import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
 
+// The meter fields offered for the two operator-chosen columns.
+const FIELD_OPTIONS = [
+  { key: "address", label: "Address" },
+  { key: "meter_id", label: "Meter ID" },
+  { key: "uid", label: "UID" },
+  { key: "account_id", label: "Account ID" },
+  { key: "endpoint_id", label: "Endpoint ID" },
+  { key: "payer_name", label: "Account Name" },
+  { key: "city", label: "City" },
+  { key: "provider", label: "Provider" },
+];
+
+// First rows of a generated file, exactly as they will be written.
+function PreviewTable({ rows }) {
+  if (!rows || rows.length === 0) {
+    return <p className="px-3 py-4 text-xs text-muted-foreground">No rows.</p>;
+  }
+  const columns = Object.keys(rows[0]);
+  return (
+    <div className="overflow-x-auto max-h-56 overflow-y-auto">
+      <table className="text-[11px] whitespace-nowrap">
+        <thead className="sticky top-0 bg-card">
+          <tr>
+            {columns.map((c) => (
+              <th key={c} className="px-2 py-1.5 text-start font-semibold text-foreground border-b border-border">{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 8).map((r, i) => (
+            <tr key={i} className="border-b border-border/50">
+              {columns.map((c) => (
+                <td key={c} className="px-2 py-1 text-muted-foreground">{String(r[c] ?? "")}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function Insight({ label, value, tone, note }) {
   const toneClass =
     tone === "warn" ? "text-amber-600 dark:text-amber-400"
@@ -65,6 +107,11 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
   const [stats, setStats] = useState(null);
   const [insights, setInsights] = useState(null);
   const [showPortalPrompt, setShowPortalPrompt] = useState(false);
+  // Which meter fields make up the two operator-chosen columns.
+  const [identifierFields, setIdentifierFields] = useState(["address", "meter_id"]);
+  const [meterNumberField, setMeterNumberField] = useState("meter_id");
+  const [preview, setPreview] = useState(null);
+  const [previewTab, setPreviewTab] = useState("meter");
 
   const fireConfetti = () => {
     const colors = ["#92c141", "#3fbee5", "#f59e0b", "#ffffff"];
@@ -97,16 +144,50 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
     try {
       const response = await invokeFunction("exportToLeakZon", {
         project_id: project.id,
-        analyze_only: true,
+        preview_only: true,
+        identifier_fields: identifierFields,
+        meter_number_field: meterNumberField,
       });
       if (!response.data?.insights) throw new Error("Analysis failed");
       setInsights(response.data.insights);
-      setStats(response.data.stats || null);
+      setPreview(response.data);
+      // Recommend a field that actually holds data — "Meter ID" is empty on
+      // any project imported before ID columns were retained.
+      const cov = response.data.fieldCoverage || {};
+      if (!cov[meterNumberField]) {
+        const better = ["meter_id", "uid", "endpoint_id", "account_id"].find((f) => cov[f] > 0);
+        if (better) setMeterNumberField(better);
+      }
       setPhase("review");
     } catch (e) {
       setError(e.message || "Analysis failed");
       setPhase("error");
     }
+  };
+
+  const refreshPreview = async (fields, numberField) => {
+    try {
+      const res = await invokeFunction("exportToLeakZon", {
+        project_id: project.id,
+        preview_only: true,
+        identifier_fields: fields,
+        meter_number_field: numberField,
+      });
+      if (res.data?.meterData) setPreview(res.data);
+    } catch { /* keep the previous preview rather than blanking the screen */ }
+  };
+
+  const toggleIdentifierField = (f) => {
+    const next = identifierFields.includes(f)
+      ? identifierFields.filter((x) => x !== f)
+      : [...identifierFields, f];
+    setIdentifierFields(next);
+    refreshPreview(next, meterNumberField);
+  };
+
+  const chooseMeterNumber = (f) => {
+    setMeterNumberField(f);
+    refreshPreview(identifierFields, f);
   };
 
   const handleExport = async () => {
@@ -115,6 +196,8 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
     try {
       const response = await invokeFunction("exportToLeakZon", {
         project_id: project.id,
+        identifier_fields: identifierFields,
+        meter_number_field: meterNumberField,
       });
       const base64Zip = response.data?.zip;
       if (!base64Zip) throw new Error("Failed to generate export");
@@ -182,7 +265,7 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleReset(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={phase === "review" ? "sm:max-w-3xl" : "sm:max-w-md"}>
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 shrink-0">
@@ -223,9 +306,93 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
         )}
 
         {phase === "review" && (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[65vh] overflow-y-auto pe-1">
             <p className="text-sm text-muted-foreground">{t("leakzonExport.reviewDesc")}</p>
             <InsightsPanel insights={insights} t={t} />
+
+            {/* Identifier — any combination of fields, joined with commas. */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <div>
+                <p className="text-xs font-semibold text-foreground">{t("leakzonExport.identifierTitle")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("leakzonExport.identifierHint")}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {FIELD_OPTIONS.map((f) => {
+                  const on = identifierFields.includes(f.key);
+                  const count = preview?.fieldCoverage?.[f.key] ?? null;
+                  const empty = count === 0;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => toggleIdentifierField(f.key)}
+                      title={empty ? t("leakzonExport.fieldEmpty") : undefined}
+                      className={`px-2 py-1 rounded-md border text-[11px] transition-colors ${
+                        on ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:bg-muted"
+                      } ${empty ? "opacity-50" : ""}`}
+                    >
+                      {f.label}
+                      {count !== null && <span className="ms-1 opacity-60">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              {identifierFields.length === 0 && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400">{t("leakzonExport.identifierEmpty")}</p>
+              )}
+            </div>
+
+            {/* Meter Number — exactly one field. */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <div>
+                <p className="text-xs font-semibold text-foreground">{t("leakzonExport.meterNumberTitle")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("leakzonExport.meterNumberHint")}</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {FIELD_OPTIONS.map((f) => {
+                  const count = preview?.fieldCoverage?.[f.key] ?? null;
+                  const empty = count === 0;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => chooseMeterNumber(f.key)}
+                      title={empty ? t("leakzonExport.fieldEmpty") : undefined}
+                      className={`px-2 py-1 rounded-md border text-[11px] transition-colors ${
+                        meterNumberField === f.key ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:bg-muted"
+                      } ${empty ? "opacity-50" : ""}`}
+                    >
+                      {f.label}
+                      {count !== null && <span className="ms-1 opacity-60">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preview of exactly what each file will contain. */}
+            {preview && (
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="flex items-center gap-1 border-b border-border bg-muted/40 px-2 py-1.5">
+                  {[
+                    { key: "meter", label: t("leakzonExport.tabMeterData"), n: preview.meterData?.length || 0 },
+                    { key: "groups", label: t("leakzonExport.tabGroups"), n: preview.groups?.length || 0 },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setPreviewTab(tab.key)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                        previewTab === tab.key ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {tab.label} <span className="opacity-60">{tab.n}</span>
+                    </button>
+                  ))}
+                  <span className="ms-auto text-[10px] text-muted-foreground">
+                    {t("leakzonExport.previewNote")}
+                  </span>
+                </div>
+                <PreviewTable rows={(previewTab === "meter" ? preview.meterData : preview.groups) || []} />
+              </div>
+            )}
           </div>
         )}
 

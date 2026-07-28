@@ -11,6 +11,25 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.111 — 2026-07-28 · *Updated feature*
+**Export to LeakZon rewritten to the Main platform's import format**
+- The export now produces **three files** plus the shapefiles: **Meter Data**,
+  the new **Groups** file, and the existing separate file for meters with no DMA.
+- **Meter Data** carries the exact columns and order the Main platform expects,
+  with constants filled in — Installation Date is today, Unit follows the
+  project's water unit ("US gallons" or "m3"), multiplier 1, Isactive TRUE, ufr
+  FALSE, meter type water — and Location as latitude and longitude in one
+  comma-separated field.
+- **Groups** lists each meter's identifier, whether it is a main, its DMA name,
+  whether it is a root, type REGULAR, and its communication.
+- You now **choose which fields make up the Identifier** (joined with commas)
+  and **which field is the Meter Number**, and each option shows how many meters
+  actually have a value — so a column can't be exported empty by accident.
+- **Both files can be previewed before exporting**, with the choices applied
+  live.
+- Communication is **AMI** for every main; sub-meters use the new **Sub-meter
+  communication** setting in Project Settings.
+
 ## 1.110 — 2026-07-28 · *New feature*
 **Project type — AMI or Hybrid**
 - New projects now choose a **Project type**: **AMI** (all meters read remotely)

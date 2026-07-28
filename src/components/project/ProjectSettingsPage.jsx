@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
@@ -126,6 +126,25 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                 { value: "Gallons", label: "Gallons" },
               ]}
               onChange={(v) => handleUpdate("water_unit", v)}
+            />
+          </SettingRow>
+
+          {/* Sub-meter communication — written into the LeakZon export. Mains are
+              always AMI; this covers everything else, which varies by utility. */}
+          <SettingRow
+            icon={Radio}
+            title="Sub-meter communication"
+            description="Written as the Communication value for sub-meters in the LeakZon export. Main meters always export as AMI."
+          >
+            <input
+              type="text"
+              defaultValue={project.sub_meter_communication || ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== (project.sub_meter_communication || "")) handleUpdate("sub_meter_communication", v || null);
+              }}
+              placeholder="e.g. AMR"
+              className="w-40 h-9 px-2.5 rounded-md border border-border bg-background text-sm text-foreground"
             />
           </SettingRow>
 
