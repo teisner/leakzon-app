@@ -238,7 +238,11 @@ export async function extractMeterRecords(analysis, fileUrl, fileName, mappings,
         country: mappings.country ? String(row[mappings.country] || "").trim() : "",
         provider: mappings.provider ? String(row[mappings.provider] || "").trim() : "",
         communication_type: mappings.communication_type ? String(row[mappings.communication_type] || "").trim() : "",
-        is_active: mappings.is_active ? parseActive(row[mappings.is_active]) : null,
+        // Active unless the file explicitly says otherwise. parseActive returns
+        // null for a blank or unrecognised value, and no mapped status column
+        // means the file simply doesn't carry the information — in both cases a
+        // meter is assumed to be in service rather than left as "N/A".
+        is_active: mappings.is_active ? (parseActive(row[mappings.is_active]) ?? true) : true,
         dma_name: mappings.dma_name ? String(row[mappings.dma_name] || "").trim() : "",
         latitude: coords.latitude,
         longitude: coords.longitude,

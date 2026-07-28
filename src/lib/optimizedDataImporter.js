@@ -41,7 +41,8 @@ export function convertMeterRowsToRecords(rows, projectId, layerId, fileUrl) {
       ].filter((id) => id.value);
 
       const activeStatus = String(row[14] || "").trim().toLowerCase();
-      const isActive = activeStatus === "yes" ? true : activeStatus === "no" ? false : null;
+      // Default to active — only an explicit "no" marks a meter out of service.
+      const isActive = activeStatus === "no" ? false : true;
 
       return {
         project_id: projectId,

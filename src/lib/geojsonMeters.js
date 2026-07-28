@@ -66,6 +66,9 @@ export function buildMetersFromGeoJSON(geojson, { projectId, layerId, fileUrl, i
         project_id: projectId,
         uid,
         is_main: isMainKey ? parseIsMain(props[isMainKey]) : isMain,
+        // A layer's points carry no service status, so treat them as in service
+        // rather than leaving every meter showing "N/A".
+        is_active: true,
         latitude: lat,
         longitude: lng,
         layer_id: layerId,

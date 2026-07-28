@@ -11,6 +11,19 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.086 — 2026-07-28 · *Updated feature*
+**Imported meters default to Active**
+- Meters now come in as **Active** unless the file explicitly says they are not.
+- Previously a meter was left as **N/A** whenever the file had no status column,
+  or had one that was blank or held something unrecognised — so most imports
+  produced meters with no status at all.
+- Only a clear inactive value marks a meter out of service: *inactive, no,
+  false, 0, not active, disabled, off, dead*. Anything else counts as Active.
+- Applies to all three ways meters are created: meter data files, the carbon
+  copy import, and meters created from a map layer.
+- **Meters already imported keep their current status.** There are 16,371 with
+  no status; ask and they can be set to Active in one go.
+
 ## 1.085 — 2026-07-28 · *Updated feature + Bug fix*
 **Meter table shows Meter ID, Account ID and Endpoint ID**
 - The meter table now has **Meter ID**, **Account ID** and **Endpoint ID**
