@@ -11,6 +11,15 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.114 — 2026-07-28 · *New feature*
+**Choose whether the DMA boundaries ship as a shapefile**
+- The export now asks whether to include the **DMA shapefile**. It is **off by
+  default**: LeakZon reads the areas from the Groups file, so the shapefile is
+  redundant for it.
+- Tick it when the boundaries are going into a different GIS platform, where the
+  shapefile is the only way to carry them.
+- Every other layer's shapefile is unaffected — only the DMA one is optional.
+
 ## 1.113 — 2026-07-28 · *Bug fix + Updated feature*
 **No duplicate meters in the export, and files named after the project**
 - A main meter serving more than one DMA appeared **once per DMA** in the Meter

@@ -112,6 +112,9 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
   const [meterNumberField, setMeterNumberField] = useState("meter_id");
   const [preview, setPreview] = useState(null);
   const [previewTab, setPreviewTab] = useState("meter");
+  // LeakZon Main doesn't need the DMA shapefile — it reads the areas from the
+  // Groups file — so it is off unless the boundaries are wanted elsewhere.
+  const [includeDmaShp, setIncludeDmaShp] = useState(false);
 
   const fireConfetti = () => {
     const colors = ["#92c141", "#3fbee5", "#f59e0b", "#ffffff"];
@@ -198,6 +201,7 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
         project_id: project.id,
         identifier_fields: identifierFields,
         meter_number_field: meterNumberField,
+        include_dma_shp: includeDmaShp,
       });
       const base64Zip = response.data?.zip;
       if (!base64Zip) throw new Error("Failed to generate export");
@@ -367,6 +371,20 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
                 })}
               </div>
             </div>
+
+            {/* Whether the DMA boundaries ship as a shapefile. */}
+            <label className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeDmaShp}
+                onChange={(e) => setIncludeDmaShp(e.target.checked)}
+                className="mt-0.5 accent-primary w-3.5 h-3.5 shrink-0"
+              />
+              <span>
+                <span className="block text-xs font-semibold text-foreground">{t("leakzonExport.dmaShpTitle")}</span>
+                <span className="block text-[11px] text-muted-foreground">{t("leakzonExport.dmaShpHint")}</span>
+              </span>
+            </label>
 
             {/* Preview of exactly what each file will contain. */}
             {preview && (

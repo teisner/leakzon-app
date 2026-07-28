@@ -669,7 +669,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
   try {
-    const { project_id, analyze_only, preview_only, identifier_fields, meter_number_field } = await req.json();
+    const { project_id, analyze_only, preview_only, identifier_fields, meter_number_field, include_dma_shp } = await req.json();
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
     const user = await getCallerUser(req);
@@ -786,7 +786,13 @@ Deno.serve(async (req) => {
         'solid',
       ));
     }
-    if (dmaFeatures.length > 0) {
+    // LeakZon Main reads DMA boundaries from the Groups file, so the DMA
+    // shapefile is redundant for it. It is still worth having when the
+    // boundaries are going into another GIS package, so the operator chooses.
+    // Defaults to included, so an older caller that sends nothing keeps the
+    // previous behaviour rather than silently dropping a file.
+    const wantDmaShp = include_dma_shp !== false;
+    if (wantDmaShp && dmaFeatures.length > 0) {
       const shpSet = buildShapefileSet(dmaFeatures);
       innerZip.file('DMA.shp', shpSet.shp);
       innerZip.file('DMA.shx', shpSet.shx);
@@ -834,6 +840,7 @@ Deno.serve(async (req) => {
       stats: {
         layers: exportedLayers,
         features: totalFeatures,
+        dmaShapefile: wantDmaShp && dmaFeatures.length > 0,
         meters: analysis.insights.metersTotal,
         dmas: (dmas || []).length,
       },
