@@ -23,6 +23,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
     altitude: "",
     diameter: "",
     is_main: false,
+    is_root: false,
   });
   const [linkedDmaId, setLinkedDmaId] = useState("");
   const [originalDmaId, setOriginalDmaId] = useState("");
@@ -83,6 +84,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
         altitude: meter.altitude ?? "",
         diameter: meter.diameter ?? "",
         is_main: !!meter.is_main,
+        is_root: !!meter.is_root,
         });
       // Find DMA currently linked to this meter
       const linkedDma = (dmas || []).find((d) => d.main_meter_id === meter.id);
@@ -132,6 +134,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
     try {
       const updates = {
         sub_meter_dma_id: form.is_main ? (subMeterDmaId || null) : null,
+        is_root: !!form.is_root,
         uid: form.uid || null,
         endpoint_id: form.endpoint_id || null,
         payer_name: form.payer_name || null,
@@ -347,6 +350,30 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
               onChange={(e) => handleChange("diameter", e.target.value)}
               placeholder="e.g. 25"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{t('meterEdit.root')}</Label>
+            <div className="flex gap-4 pt-0.5">
+              {[
+                { value: true, label: t('meterEdit.rootYes') },
+                { value: false, label: t('meterEdit.rootNo') },
+              ].map((opt) => (
+                <label key={String(opt.value)} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="meter-root"
+                    checked={!!form.is_root === opt.value}
+                    onChange={() => handleChange("is_root", opt.value)}
+                    className="accent-primary w-3.5 h-3.5"
+                  />
+                  <span className={!!form.is_root === opt.value ? "text-foreground font-medium" : "text-muted-foreground"}>
+                    {opt.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{t('meterEdit.rootHint')}</p>
           </div>
 
           <div className="space-y-1.5">
