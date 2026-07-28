@@ -17,6 +17,7 @@ import MeterEditDialog from "@/components/project/MeterEditDialog";
 import ImportLogsView from "@/components/project/ImportLogsView";
 import LayerEditDialog from "@/components/project/LayerEditDialog";
 import ProjectNav from "@/components/project/ProjectNav";
+import ProjectFooterBar from "@/components/project/ProjectFooterBar";
 import OnboardingWizard from "@/components/project/OnboardingWizard";
 import NetworkDesign from "@/components/network/NetworkDesign";
 import WetworkInventory from "@/components/wetwork/WetworkInventory";
@@ -1823,13 +1824,7 @@ export default function ProjectDetail() {
         )}
       </div>
 
-      {/* Footer strip. Height matches the version block in the side menu,
-          measured from its divider to the bottom of the nav: pt-2 (8px) + the
-          16px row + the nav's pb-4 (16px) = 40px, i.e. h-10. shrink-0 so the
-          map gives up the space rather than this bar collapsing.
-          Uses the shared panel background (bg-card): white in light mode, the
-          same dark tone as the header and side menu in dark mode. */}
-      <div className="h-10 shrink-0 bg-card border-t border-border" />
+      <ProjectFooterBar />
 
       <ImportLogsView
         open={showImportLogs}

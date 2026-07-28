@@ -1,10 +1,7 @@
 import React, { useState } from "react";
-import { Map as MapIcon, Database, ArrowUpDown, Network, Rocket, Boxes, Eye, Settings, GitPullRequest, ArrowUpCircle } from "lucide-react";
+import { Map as MapIcon, Database, ArrowUpDown, Network, Rocket, Boxes, Eye, Settings, GitPullRequest } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import SidebarLockControl from "@/components/SidebarLockControl";
-import { APP_VERSION } from "@/lib/version";
-import { useVersionCheck } from "@/hooks/useVersionCheck";
-import UpdateAvailableDialog from "@/components/UpdateAvailableDialog";
 
 export default function ProjectNav({ viewMode, onChange, onImportData, locked, onOpenWizard, onOpenCustomerView, customerAnnotationCount = 0, currentUser }) {
   const canViewVersionUpdates = currentUser?.user_type === "LeakZon" || currentUser?.user_type === "Admin";
@@ -20,9 +17,6 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
   };
 
   const expanded = mode === "open";
-  // Hourly poll of the deployed version — badge appears when this tab is behind.
-  const { latestVersion } = useVersionCheck();
-  const [showUpdate, setShowUpdate] = useState(false);
 
   const views = [
     { key: "gis", label: t('view.gisMap'), Icon: MapIcon },
@@ -137,28 +131,7 @@ export default function ProjectNav({ viewMode, onChange, onImportData, locked, o
             closed: t('sidebar.closed'),
           }}
         />
-        <div className="mt-2 pt-2 border-t border-border">
-          <div className="flex items-center justify-center gap-1.5">
-            <p className="text-[10px] text-green-600 dark:text-green-400 tabular-nums">Ver {APP_VERSION}</p>
-            {latestVersion && (
-              <button
-                onClick={() => setShowUpdate(true)}
-                title={`Version ${latestVersion} is available`}
-                className="relative flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white shrink-0 hover:bg-amber-600 transition-colors"
-              >
-                <ArrowUpCircle className="w-3 h-3" />
-                <span className="absolute inset-0 rounded-full bg-amber-500 animate-ping opacity-60" />
-              </button>
-            )}
-          </div>
-        </div>
       </div>
-
-      <UpdateAvailableDialog
-        open={showUpdate}
-        onOpenChange={setShowUpdate}
-        latestVersion={latestVersion}
-      />
     </nav>
   );
 }

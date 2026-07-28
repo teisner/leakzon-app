@@ -11,6 +11,15 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.098 — 2026-07-28 · *Updated feature*
+**Version number moved into the bottom strip**
+- "Ver 1.098" now sits **in** the bottom strip, centred, instead of above it at
+  the foot of the side menu.
+- The update badge moved with it, so a newer version is still flagged in the
+  same place and clicking it still offers to refresh.
+- The Import / Export page has the same strip now, so the version is in the
+  same place throughout a project.
+
 ## 1.097 — 2026-07-28 · *Updated feature*
 **Bottom strip now matches the other panels**
 - The strip added in 1.096 was solid black. It now uses the same background as

@@ -26,6 +26,7 @@ import ConsumptionUploadStep from "@/components/project/ConsumptionUploadStep";
 import ExportPanel from "@/components/project/ExportPanel";
 import UndoImportDialog from "@/components/project/UndoImportDialog";
 import ProjectNav from "@/components/project/ProjectNav";
+import ProjectFooterBar from "@/components/project/ProjectFooterBar";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import OnboardingWizard from "@/components/project/OnboardingWizard";
 import OptimizeDataFilesDialog from "@/components/project/OptimizeDataFilesDialog";
@@ -1081,6 +1082,8 @@ export default function UploadData() {
         </div>
         </div>
       </div>
+
+      <ProjectFooterBar />
 
       <UndoImportDialog
         open={showUndoImport}
