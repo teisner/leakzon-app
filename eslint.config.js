@@ -36,6 +36,11 @@ export default [
     },
     rules: {
       "no-unused-vars": "off",
+      // Catches a used-but-not-imported identifier. The build does not: Vite
+      // only transpiles, so a missing import fails at render time as a blank
+      // screen. This has now caused two of those (the point-numbering crash in
+      // v1.028 and the meter editor in v1.089).
+      "no-undef": "error",
       "react/jsx-uses-vars": "error",
       "react/jsx-uses-react": "error",
       "unused-imports/no-unused-imports": "error",

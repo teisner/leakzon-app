@@ -11,6 +11,16 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.090 — 2026-07-28 · *Bug fix*
+**Fixed the black screen when opening a project**
+- Opening a project showed a black screen. The meter editor rewritten in 1.089
+  used something that was never imported, which crashes the whole page the
+  moment it renders.
+- Only affected the preview site — the live site was never on that version.
+- The project checks now catch this kind of mistake before it can ship. It had
+  slipped through twice, because building the app doesn't reveal it; only
+  running the page does.
+
 ## 1.089 — 2026-07-28 · *Updated feature*
 **Meter editor is now a floating panel, and every meter has a status**
 - The meter editor is a **floating, draggable panel** instead of a centred
