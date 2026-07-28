@@ -11,6 +11,21 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.094 — 2026-07-28 · *Updated feature*
+**Edit Layer redesigned into clear sections that fit on screen**
+- The panel is now grouped into **Details**, **Colour**, **Shape & size**,
+  **Custom icon** and **Pipe widths**, instead of one long list of fields.
+- **One colour palette instead of two.** Shape colour and outline colour now
+  share a palette with a small Shape / Outline switch. Two stacked palettes made
+  the panel taller than the screen, which is what pushed the buttons out of
+  view.
+- Shapes are compact icon buttons that wrap, so the new octagon fits without
+  crowding, and fill style and size sit on single labelled rows.
+- The **Save** and **Cancel** buttons are pinned to the bottom and always
+  visible; only the middle scrolls.
+- The "Apply defaults" prompt is now a small button in the Shape & size header
+  rather than a banner taking a full row.
+
 ## 1.093 — 2026-07-28 · *New feature*
 **Octagon added to the layer shapes**
 - **Octagon** joins circle, star, square and triangle in the shape picker, for

@@ -29,6 +29,18 @@ const CATEGORY_OPTIONS = [
   "Other",
 ];
 
+function Section({ title, children, right }) {
+  return (
+    <section className="rounded-lg border border-border bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        {right}
+      </div>
+      <div className="space-y-3">{children}</div>
+    </section>
+  );
+}
+
 function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
   const isOutline = fillStyle === "outline";
   const stroke = strokeColor || color;
@@ -71,6 +83,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
     x: Math.max(16, Math.round((window.innerWidth - 460) / 2)),
     y: 80,
   }));
+  const [colorTarget, setColorTarget] = useState("shape");
   const dragRef = useRef(null);
   const dragState = useRef(null);
 
@@ -227,7 +240,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
         top: pos.y,
         // Sized to the content (the colour palette is the widest element) and
         // never wider/taller than the viewport — the body scrolls instead.
-        width: "min(calc(100vw - 32px), 460px)",
+        width: "min(calc(100vw - 32px), 500px)",
         maxHeight: "calc(100vh - 100px)",
       }}
     >
@@ -250,141 +263,158 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-          {/* Altitude info */}
-          {effectiveLayer.altitude_field && (
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-              <Mountain className="w-4 h-4 text-emerald-600 shrink-0" />
-              <div className="text-sm">
-                <span className="text-emerald-800 font-medium">{t('layerEdit.altitudeData')}</span>
-                <span className="text-emerald-700">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
+          {/* ── Details ─────────────────────────────────────────── */}
+          <Section title={t('layerEdit.sectionDetails')}>
+            <div>
+              <Label className="text-xs">{t('layerEdit.layerName')}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('layerEdit.layerName')} className="mt-1 h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="mt-1 h-9">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                {/* Portals to <body> at z-50 by default, which is below this
+                    floating panel (z-[9999]) — without this the menu opens
+                    behind the panel and looks like it never opened. */}
+                <SelectContent className="z-[10000]">
+                  {CATEGORY_OPTIONS.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {effectiveLayer.altitude_field && (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-2">
+                <Mountain className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-snug">
+                  <span className="font-medium">{t('layerEdit.altitudeData')}</span>{" "}
                   {effectiveLayer.altitude_field === "z" ? t('layerEdit.altitudeZ') : t('layerEdit.altitudeField', { field: effectiveLayer.altitude_field })}
                   {effectiveLayer.altitude_unit ? ` (${effectiveLayer.altitude_unit})` : ""}
-                </span>
+                </p>
               </div>
-            </div>
-          )}
+            )}
+          </Section>
 
-          {/* Layer name */}
-          <div>
-            <Label>{t('layerEdit.layerName')}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('layerEdit.layerName')} className="mt-1.5" />
-          </div>
-
-          {/* Layer category */}
-          <div>
-            <Label>Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              {/* Portals to <body> at z-50 by default, which is below this
-                  floating panel (z-[9999]) — without this the menu opens
-                  behind the panel and looks like it never opened. */}
-              <SelectContent className="z-[10000]">
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Color picker (non-pipe layers) */}
+          {/* ── Colour ──────────────────────────────────────────── */}
           {!isPipe && (
-            <div>
-              <Label>{t('layerEdit.color')}</Label>
-              <div className="mt-2">
+            <Section
+              title={t('layerEdit.sectionColour')}
+              right={isPoint && !iconUrl ? (
+                // One palette, switched between the two things it can paint.
+                // Stacking two full palettes made the panel taller than the
+                // screen on smaller displays.
+                <div className="flex rounded-md border border-border overflow-hidden text-[11px]">
+                  {[
+                    { key: "shape", label: t('layerEdit.colourShape') },
+                    { key: "outline", label: t('layerEdit.colourOutline') },
+                  ].map((o) => (
+                    <button
+                      key={o.key}
+                      onClick={() => setColorTarget(o.key)}
+                      className={`px-2 py-1 transition-colors ${colorTarget === o.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            >
+              {colorTarget === "outline" && isPoint && !iconUrl ? (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-muted-foreground leading-snug">
+                      {t('layerEdit.outlineHint')}
+                    </p>
+                    {pointConfig?.stroke_color && (
+                      <button
+                        onClick={() => setPointConfig((p) => { const { stroke_color, ...rest } = p || {}; return rest; })}
+                        className="shrink-0 text-[11px] text-blue-600 hover:underline"
+                      >
+                        {t('layerEdit.sameAsShape')}
+                      </button>
+                    )}
+                  </div>
+                  <LayerColorPicker
+                    value={pointConfig?.stroke_color || color}
+                    onChange={(c) => setPointConfig((p) => ({ ...p, stroke_color: c }))}
+                  />
+                </>
+              ) : (
                 <LayerColorPicker value={color} onChange={setColor} />
-              </div>
-            </div>
+              )}
+            </Section>
           )}
 
-          {/* Dot style (point layers, no custom icon) */}
+          {/* ── Shape & size ────────────────────────────────────── */}
           {isPoint && !iconUrl && (
-            <div>
-              {defaultsKey && (
-                <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                  <p className="text-[11px] text-muted-foreground leading-snug">
-                    Defaults exist for <span className="font-medium text-foreground">{defaultsLabel}</span> in dashboard Settings.
-                  </p>
-                  <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={applyComponentDefaults}>
-                    Apply
-                  </Button>
-                </div>
-              )}
-              <Label>{t('layerEdit.shape')}</Label>
-              <div className="flex gap-2 mt-2">
+            <Section
+              title={t('layerEdit.sectionShape')}
+              right={defaultsKey ? (
+                <Button size="sm" variant="outline" className="h-6 shrink-0 text-[11px] px-2" onClick={applyComponentDefaults}>
+                  {t('layerEdit.useDefaults', { name: defaultsLabel })}
+                </Button>
+              ) : null}
+            >
+              <div className="flex flex-wrap gap-1.5">
                 {SHAPE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setPointConfig((p) => ({ ...p, shape: opt.value }))}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm transition-colors ${(pointConfig?.shape || "circle") === opt.value ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
+                    title={opt.label}
+                    className={`flex items-center justify-center w-11 h-9 rounded-md border-2 transition-colors ${(pointConfig?.shape || "circle") === opt.value ? "border-primary bg-primary/10" : "border-border hover:bg-muted"}`}
                   >
-                    <ShapePreview shape={opt.value} color={color} size={10} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
-                    {opt.label}
+                    <ShapePreview shape={opt.value} color={color} size={9} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
                   </button>
                 ))}
               </div>
 
-              <Label className="mt-3 block">{t('layerEdit.fillStyle')}</Label>
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => setPointConfig((p) => ({ ...p, fill_style: "filled" }))}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-sm transition-colors ${pointConfig?.fill_style !== "outline" ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
-                >
-                  <span className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
-                  {t('layerEdit.filled')}
-                </button>
-                <button
-                  onClick={() => setPointConfig((p) => ({ ...p, fill_style: "outline" }))}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-sm transition-colors ${pointConfig?.fill_style === "outline" ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
-                >
-                  <span className="w-4 h-4 rounded-full border-2" style={{ borderColor: color, backgroundColor: "transparent" }} />
-                  {t('layerEdit.outline')}
-                </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-10 shrink-0">{t('layerEdit.fillStyle')}</span>
+                <div className="flex gap-1.5">
+                  {[
+                    { key: "filled", label: t('layerEdit.filled') },
+                    { key: "outline", label: t('layerEdit.outline') },
+                  ].map((o) => (
+                    <button
+                      key={o.key}
+                      onClick={() => setPointConfig((p) => ({ ...p, fill_style: o.key }))}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border-2 text-xs transition-colors ${(pointConfig?.fill_style === "outline" ? "outline" : "filled") === o.key ? "border-primary bg-primary/10" : "border-border hover:bg-muted"}`}
+                    >
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border-2"
+                        style={{ borderColor: color, backgroundColor: o.key === "filled" ? color : "transparent" }}
+                      />
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-3 flex items-center justify-between">
-                <Label>Outline color</Label>
-                {pointConfig?.stroke_color && (
-                  <button
-                    onClick={() => setPointConfig((p) => { const { stroke_color, ...rest } = p || {}; return rest; })}
-                    className="text-[11px] text-blue-600 hover:underline"
-                  >
-                    Same as shape
-                  </button>
-                )}
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-10 shrink-0">{t('layerEdit.size')}</span>
+                <div className="flex items-center gap-1.5">
+                  {[4, 6, 8, 10, 12].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setPointConfig((p) => ({ ...p, radius: r }))}
+                      className={`flex items-center justify-center w-9 h-9 rounded-md border-2 transition-colors ${pointConfig?.radius === r ? "border-primary bg-primary/10" : "border-border hover:bg-muted"}`}
+                    >
+                      <ShapePreview shape={pointConfig?.shape || "circle"} color={color} size={Math.min(r, 9)} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
+                    </button>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Optional — give the outline a different color than the shape (e.g. a white shape with a dark outline).
-              </p>
-              <div className="mt-2">
-                <LayerColorPicker
-                  value={pointConfig?.stroke_color || color}
-                  onChange={(c) => setPointConfig((p) => ({ ...p, stroke_color: c }))}
-                />
-              </div>
-
-              <Label className="mt-3 block">{t('layerEdit.size')}</Label>
-              <div className="flex items-center gap-2 mt-2">
-                {[4, 6, 8, 10, 12].map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setPointConfig((p) => ({ ...p, radius: r }))}
-                    className={`flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-colors ${pointConfig?.radius === r ? "border-slate-900 bg-slate-50" : "border-slate-200"}`}
-                  >
-                    <ShapePreview shape={pointConfig?.shape || "circle"} color={color} size={r} fillStyle={pointConfig?.fill_style} strokeColor={pointConfig?.stroke_color} />
-                  </button>
-                ))}
-              </div>
-            </div>
+            </Section>
           )}
 
-          {/* Icon upload (point layers only) */}
+          {/* ── Custom icon ─────────────────────────────────────── */}
           {isPoint && (
+            <Section title={t('layerEdit.sectionIcon')}>
             <div>
-              <Label>{t('layerEdit.customIcon')}</Label>
-              <p className="text-xs text-slate-400 mt-0.5">{t('layerEdit.iconDesc')}</p>
+              <p className="text-xs text-muted-foreground -mt-1">{t('layerEdit.iconDesc')}</p>
               <div className="flex items-center gap-3 mt-2">
                 {iconUrl ? (
                   <img src={iconUrl} alt="icon" className="w-10 h-10 object-contain border rounded-lg p-1" />
@@ -431,10 +461,12 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                 </>
               )}
             </div>
+            </Section>
           )}
 
-          {/* Pipe diameter configuration */}
+          {/* ── Pipe widths ─────────────────────────────────────── */}
           {isPipe && (
+            <Section title={t('layerEdit.sectionPipes')}>
             <div>
               <div className="flex items-center justify-between">
                 <div>
@@ -512,6 +544,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                 ))}
               </div>
             </div>
+            </Section>
           )}
         </div>
 
