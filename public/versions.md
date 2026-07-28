@@ -11,6 +11,15 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.095 — 2026-07-28 · *Updated feature*
+**Custom layer icons removed**
+- The **Custom icon** option has been removed from Edit Layer. Layers are styled
+  with shape, size, colour and outline colour.
+- Two layers in "Woodlawn - Internal" were still using an icon and now show
+  their shape instead. Keeping the option hidden while leaving their icon in
+  place would have left them stuck — an icon hides the shape controls, so there
+  would have been no way to restyle them.
+
 ## 1.094 — 2026-07-28 · *Updated feature*
 **Edit Layer redesigned into clear sections that fit on screen**
 - The panel is now grouped into **Details**, **Colour**, **Shape & size**,

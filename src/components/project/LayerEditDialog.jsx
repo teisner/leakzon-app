@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Upload, Trash2, Loader2, Plus, Minus, Mountain, GripVertical, X } from "lucide-react";
+import { Loader2, Plus, Minus, Mountain, GripVertical, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { uploadFile } from "@/api/storageClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { meterLayerKind } from "@/lib/meterLayerDetection";
@@ -68,14 +67,12 @@ function ShapePreview({ shape, color, size, fillStyle, strokeColor }) {
 export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) {
   const { t } = useLanguage();
   const [color, setColor] = useState("#3b82f6");
-  const [iconUrl, setIconUrl] = useState("");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [pipeConfig, setPipeConfig] = useState(null);
   const [pointConfig, setPointConfig] = useState(null);
   const [saving, setSaving] = useState(false);
   const [progressLabel, setProgressLabel] = useState("");
-  const [uploading, setUploading] = useState(false);
   const [lastLayer, setLastLayer] = useState(null);
   // Floating/draggable panel (same interaction as the onboarding wizard) so the
   // map stays visible and usable while restyling a layer.
@@ -123,7 +120,6 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
     if (layer) {
       setLastLayer(layer);
       setColor(layer.color || "#3b82f6");
-      setIconUrl(layer.icon_url || "");
       setName(layer.name || "");
       // layer.category (free text in Base44) is now flattened onto each
       // layer object by ProjectDetail.jsx's loader (from a layer_type_id FK
@@ -142,19 +138,6 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
     (t) => t === "Point" || t === "MultiPoint"
   );
 
-  const handleIconUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const { file_url } = await uploadFile({ file });
-      setIconUrl(file_url);
-    } catch (err) {
-      console.error("Icon upload failed:", err);
-    }
-    setUploading(false);
-  };
-
   const handleDiameterChange = (idx, key, value) => {
     setPipeConfig((prev) => {
       if (!prev) return prev;
@@ -170,7 +153,9 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
       const layer_type_id = await resolveLayerTypeId(category);
       const updates = { color, name, layer_type_id };
       if (isPoint) {
-        updates.icon_url = iconUrl;
+        // Custom icons were removed; clear any left over so the layer renders
+        // with its shape settings, which are now the only styling available.
+        updates.icon_url = null;
         updates.point_config = pointConfig;
       }
       if (isPipe) updates.pipe_config = pipeConfig;
@@ -302,7 +287,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
           {!isPipe && (
             <Section
               title={t('layerEdit.sectionColour')}
-              right={isPoint && !iconUrl ? (
+              right={isPoint ? (
                 // One palette, switched between the two things it can paint.
                 // Stacking two full palettes made the panel taller than the
                 // screen on smaller displays.
@@ -322,7 +307,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                 </div>
               ) : null}
             >
-              {colorTarget === "outline" && isPoint && !iconUrl ? (
+              {colorTarget === "outline" && isPoint ? (
                 <>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[11px] text-muted-foreground leading-snug">
@@ -349,7 +334,7 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
           )}
 
           {/* ── Shape & size ────────────────────────────────────── */}
-          {isPoint && !iconUrl && (
+          {isPoint && (
             <Section
               title={t('layerEdit.sectionShape')}
               right={defaultsKey ? (
@@ -407,60 +392,6 @@ export default function LayerEditDialog({ open, onOpenChange, layer, onSaved }) 
                   ))}
                 </div>
               </div>
-            </Section>
-          )}
-
-          {/* ── Custom icon ─────────────────────────────────────── */}
-          {isPoint && (
-            <Section title={t('layerEdit.sectionIcon')}>
-            <div>
-              <p className="text-xs text-muted-foreground -mt-1">{t('layerEdit.iconDesc')}</p>
-              <div className="flex items-center gap-3 mt-2">
-                {iconUrl ? (
-                  <img src={iconUrl} alt="icon" className="w-10 h-10 object-contain border rounded-lg p-1" />
-                ) : (
-                  <span className="w-8 h-8 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                )}
-                <Button variant="outline" size="sm" className="gap-1.5" disabled={uploading} onClick={() => document.getElementById("icon-upload")?.click()}>
-                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  {iconUrl ? t('layerEdit.replace') : t('layerEdit.upload')}
-                </Button>
-                {iconUrl && (
-                  <Button variant="ghost" size="sm" className="gap-1.5 text-red-500" onClick={() => setIconUrl("")}>
-                    <Trash2 className="w-3.5 h-3.5" /> {t('layerEdit.remove')}
-                  </Button>
-                )}
-                <input id="icon-upload" type="file" accept="image/*" className="hidden" onChange={handleIconUpload} />
-              </div>
-
-              {iconUrl && (
-                <>
-                  <Label className="mt-3 block">Icon Size</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => setPointConfig((p) => ({ ...p, icon_size: Math.max(12, (p?.icon_size || 28) - 4) }))}
-                      className="w-8 h-8 flex items-center justify-center rounded-md border border-border bg-card hover:bg-muted text-foreground cursor-pointer transition-colors"
-                      title="Decrease icon size"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <div className="flex-1 flex items-center justify-center">
-                      <img src={iconUrl} alt="icon preview" className="object-contain" style={{ width: pointConfig?.icon_size || 28, height: pointConfig?.icon_size || 28 }} />
-                    </div>
-                    <span className="text-xs text-muted-foreground w-10 text-center">{pointConfig?.icon_size || 28}px</span>
-                    <button
-                      type="button"
-                      onClick={() => setPointConfig((p) => ({ ...p, icon_size: Math.min(64, (p?.icon_size || 28) + 4) }))}
-                      className="w-8 h-8 flex items-center justify-center rounded-md border border-border bg-card hover:bg-muted text-foreground cursor-pointer transition-colors"
-                      title="Increase icon size"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
             </Section>
           )}
 
