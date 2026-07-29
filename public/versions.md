@@ -16,6 +16,23 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.127 — 2026-07-29 · *New feature* · **Important**
+**A project with no boundary now asks you to draw one, as the first step**
+- The boundary is looked up automatically from the city when a project is
+  created. Where no official outline exists the project was simply left without
+  one, silently — and every layer is clipped to the boundary, so that matters.
+- Opening such a project now asks straight away, naming the city, and offers
+  **Draw it on the map**, **Search again**, **Upload a boundary file**, or
+  **Later**. It asks once per project, not on every visit, and never on a locked
+  project.
+- **Define the Project Boundary is now the first step of the onboarding wizard**,
+  ahead of importing shapefiles. Clicking it takes you to the map in drawing
+  mode. It counts as done as soon as the project has a boundary — including
+  projects that already had one before this, or that were given one by import,
+  so nothing shows as outstanding that isn't.
+- An existing project without a boundary can still add one at any time from the
+  Layers panel, which is unchanged.
+
 ## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125, 1.126 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Export to LeakZon: analyse first, then export in the Main platform's own format**
 - The export **starts with an analysis**. Before anything downloads you see the

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, FileUp, Database, BarChart3, Crosshair, Hexagon, Network, Download, ArrowRight, X, HelpCircle, GripVertical, Minus, AlertTriangle, Upload, Search, GitBranch, Rocket, Waypoints } from "lucide-react";
+import { Check, FileUp, Database, BarChart3, Crosshair, Hexagon, Network, Download, ArrowRight, X, HelpCircle, GripVertical, Minus, AlertTriangle, Upload, Search, GitBranch, Rocket, Waypoints, ShieldCheck } from "lucide-react";
 import { supabase } from "@/api/supabaseClient";
 import { useLanguage } from "@/lib/i18n";
 import LeakzonExportDialog from "./LeakzonExportDialog";
@@ -13,6 +13,10 @@ const WIZARD_SECTIONS = [
 ];
 
 const WIZARD_STEPS = [
+  // First, because every other layer is clipped to it. Normally already done —
+  // the boundary is looked up from the city at project creation — but where no
+  // official outline exists this is where it gets drawn.
+  { activity_type: "boundary_set", section: "import", titleKey: "wizard.stepBoundary", descKey: "wizard.stepBoundaryDesc", helpKey: "wizard.stepBoundaryHelp", view: "gis", action: "drawBoundary", Icon: ShieldCheck },
   { activity_type: "gis_layers_uploaded", section: "import", titleKey: "wizard.step1", descKey: "wizard.step1Desc", helpKey: "wizard.step1Help", view: "import", Icon: FileUp },
   { activity_type: "meters_imported", section: "import", titleKey: "wizard.step2", descKey: "wizard.step2Desc", helpKey: "wizard.step2Help", view: "import", Icon: Database },
   { activity_type: "consumption_imported", section: "import", titleKey: "wizard.step3", descKey: "wizard.step3Desc", helpKey: "wizard.step3Help", view: "import", Icon: BarChart3 },
@@ -32,7 +36,7 @@ function getCurrentUserId() {
   return null;
 }
 
-export default function OnboardingWizard({ open, onOpenChange, projectId, onChange, onImportData }) {
+export default function OnboardingWizard({ open, onOpenChange, projectId, onChange, onImportData, onDrawBoundary, hasBoundary }) {
   const { t } = useLanguage();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -98,7 +102,13 @@ export default function OnboardingWizard({ open, onOpenChange, projectId, onChan
     if (!doneMap.has(e.activity_type)) doneMap.set(e.activity_type, e);
   }
 
-  const completedCount = WIZARD_STEPS.filter((s) => doneMap.has(s.activity_type)).length;
+  // The boundary step is done when the boundary exists, whether or not a
+  // progress row was ever written for it — a project can be given a boundary by
+  // import, or predate the milestone.
+  const isDone = (step) => doneMap.has(step.activity_type)
+    || (step.activity_type === "boundary_set" && hasBoundary);
+
+  const completedCount = WIZARD_STEPS.filter(isDone).length;
   const pct = Math.round((completedCount / WIZARD_STEPS.length) * 100);
 
   const handleMarkDone = async (step) => {
@@ -126,6 +136,10 @@ export default function OnboardingWizard({ open, onOpenChange, projectId, onChan
       return;
     }
     onOpenChange(false);
+    if (step.action === "drawBoundary") {
+      onDrawBoundary?.();
+      return;
+    }
     if (step.view === "import") {
       onImportData?.();
     } else {
@@ -183,7 +197,7 @@ export default function OnboardingWizard({ open, onOpenChange, projectId, onChan
           {/* Progress stepper */}
           <div className="flex items-center">
             {WIZARD_STEPS.map((step, idx) => {
-              const done = doneMap.has(step.activity_type);
+              const done = isDone(step);
               return (
                 <React.Fragment key={step.activity_type}>
                   <div
@@ -215,7 +229,7 @@ export default function OnboardingWizard({ open, onOpenChange, projectId, onChan
                   </div>
                   <div className="space-y-1.5">
                     {sectionSteps.map((step) => {
-                      const done = doneMap.has(step.activity_type);
+                      const done = isDone(step);
                       const entry = doneMap.get(step.activity_type);
                       return (
                         <div

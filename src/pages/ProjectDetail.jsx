@@ -50,9 +50,12 @@ import {
 
 const BOUNDARY_COLOR = "#6b7280";
 
+// Returns "exists" | "created" | "missing" — the caller needs to know when the
+// automatic lookup came back with nothing, so it can offer to draw one instead
+// of leaving the project silently boundary-less.
 const ensureBoundaryLayer = async (project, existingLayers, onCreated) => {
   const hasBoundary = existingLayers.some((l) => /boundary/i.test(l.name));
-  if (hasBoundary) return;
+  if (hasBoundary) return "exists";
 
   try {
     const res = await invokeFunction("getCityBoundary", {
@@ -61,7 +64,7 @@ const ensureBoundaryLayer = async (project, existingLayers, onCreated) => {
       country: project.country,
     });
     const geojson = res.data?.geojson;
-    if (!geojson) return;
+    if (!geojson) return "missing";
 
     const analysis = analyzeGeoJSON(geojson);
     const file = new File(
@@ -85,8 +88,11 @@ const ensureBoundaryLayer = async (project, existingLayers, onCreated) => {
     });
     recordProgress(project.id, "boundary_set");
     onCreated?.();
+    return "created";
   } catch {
-    // Best-effort — don't block project view
+    // The lookup failing and the city having no published outline are the same
+    // thing as far as the operator is concerned: there is no boundary yet.
+    return "missing";
   }
 };
 
@@ -828,7 +834,12 @@ export default function ProjectDetail() {
         setLayers(l);
         setMeters(m);
         supabase.from('project').select('*').order('created_at', { ascending: false }).then(({ data }) => setAllProjects(data || []));
-        ensureBoundaryLayer(p, l, loadLayers);
+        ensureBoundaryLayer(p, l, loadLayers).then((result) => {
+          // Only prompt once per project — it is a nudge, not a blocker.
+          if (result === "missing" && !localStorage.getItem(`boundaryPromptSeen:${p.id}`)) {
+            setBoundaryMissing(true);
+          }
+        });
         loadImportLogCount();
         loadDmas();
         loadImageOverlays();
@@ -1277,6 +1288,32 @@ export default function ProjectDetail() {
   };
 
   const [refetchingBoundary, setRefetchingBoundary] = useState(false);
+  // Set when the automatic lookup found nothing for this project's city.
+  const [boundaryMissing, setBoundaryMissing] = useState(false);
+
+  // Whether the project has a boundary layer at all — drives the wizard's first
+  // step and closes the prompt as soon as one is drawn or uploaded.
+  const projectHasBoundary = layers.some((l) => /boundary/i.test(l.name));
+
+  const dismissBoundaryPrompt = () => {
+    try { localStorage.setItem(`boundaryPromptSeen:${id}`, "1"); } catch { /* private mode */ }
+    setBoundaryMissing(false);
+  };
+
+  const handleDrawBoundaryFromPrompt = () => {
+    dismissBoundaryPrompt();
+    handleStartRedrawBoundary();
+  };
+
+  const handleSearchBoundaryAgain = async () => {
+    await handleRefetchBoundary();
+    setBoundaryMissing(false);
+  };
+
+  const handleUploadBoundary = () => {
+    dismissBoundaryPrompt();
+    navigate(`/project/${id}/upload`);
+  };
 
   const handleRefetchBoundary = async () => {
     setRefetchingBoundary(true);
@@ -1858,10 +1895,34 @@ export default function ProjectDetail() {
         show={showOnboardingBanner}
         onClose={() => setShowOnboardingBanner(false)}
       />
+      {/* No boundary could be found for this city — offer the ways to add one
+          rather than leaving the project without the layer everything else is
+          clipped to. */}
+      <AlertDialog open={boundaryMissing && !projectHasBoundary && !project?.locked} onOpenChange={(v) => { if (!v) dismissBoundaryPrompt(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('boundary.missingTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('boundary.missingBody', { city: project?.city || '' })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={dismissBoundaryPrompt}>{t('boundary.later')}</AlertDialogCancel>
+            <Button variant="outline" onClick={handleUploadBoundary}>{t('boundary.upload')}</Button>
+            <Button variant="outline" onClick={handleSearchBoundaryAgain} disabled={refetchingBoundary}>
+              {refetchingBoundary ? <Loader2 className="w-4 h-4 animate-spin" /> : t('boundary.search')}
+            </Button>
+            <AlertDialogAction onClick={handleDrawBoundaryFromPrompt}>{t('boundary.draw')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <OnboardingWizard
         open={showWizard}
         onOpenChange={setShowWizard}
         projectId={id}
+        hasBoundary={projectHasBoundary}
+        onDrawBoundary={() => { setShowWizard(false); handleStartRedrawBoundary(); }}
         onChange={handleViewModeChange}
         onImportData={() => navigate(`/project/${id}/upload`)}
       />
