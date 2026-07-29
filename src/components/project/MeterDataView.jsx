@@ -413,7 +413,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by UID, name, address, provider…"
+            placeholder="Search by UID, Meter ID, Account ID, endpoint, name, address, provider…"
             className="pl-9 h-9"
           />
           {search !== debouncedSearch && (

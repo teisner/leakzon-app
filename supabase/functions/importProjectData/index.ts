@@ -22,7 +22,9 @@ const PAGE_SIZE = 5000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function strip(row: any) {
-  const { id, created_at, updated_at, ...rest } = row;
+  // ids_text is a generated column on meter — Postgres rejects any attempt to
+  // write one, so an export taken after it was added would fail the import.
+  const { id, created_at, updated_at, ids_text, ...rest } = row;
   return rest;
 }
 

@@ -55,7 +55,13 @@ async function addReadingCounts(meters: any[]) {
 
 function applySearch(query: any, search: string) {
   const esc = escapeLike(search);
-  return query.or(`uid.ilike.%${esc}%,payer_name.ilike.%${esc}%,address.ilike.%${esc}%,provider.ilike.%${esc}%`);
+  // ids_text is a generated column holding the values from additional_ids —
+  // Meter ID, Account ID and anything else the import carried. Without it the
+  // search can only see real columns, so an account number matched nothing.
+  return query.or(
+    `uid.ilike.%${esc}%,payer_name.ilike.%${esc}%,address.ilike.%${esc}%,`
+    + `provider.ilike.%${esc}%,endpoint_id.ilike.%${esc}%,ids_text.ilike.%${esc}%`
+  );
 }
 
 function applyMeterType(query: any, meterType: string | undefined, insertionLayerIds: string[] | undefined) {
@@ -119,12 +125,13 @@ Deno.serve(async (req) => {
 
       if (search) {
         const lower = search.toLowerCase();
+        // Same fields as applySearch, so the counts agree with the rows.
+        const hit = (v: unknown) => !!v && String(v).toLowerCase().includes(lower);
         filtered = filtered.filter(
           (m) =>
-            (m.uid && m.uid.toLowerCase().includes(lower)) ||
-            (m.payer_name && m.payer_name.toLowerCase().includes(lower)) ||
-            (m.address && m.address.toLowerCase().includes(lower)) ||
-            (m.provider && m.provider.toLowerCase().includes(lower))
+            hit(m.uid) || hit(m.payer_name) || hit(m.address) || hit(m.provider)
+            || hit(m.endpoint_id)
+            || (m.additional_ids || []).some((id: any) => hit(id?.value))
         );
       }
 

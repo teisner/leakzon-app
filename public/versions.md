@@ -183,7 +183,7 @@ The running version is shown at the bottom of the side menu.
   instead of blocking modals pinned over the polygon being edited, and Edit DMA
   has a green border matching the layer and meter editors.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133, 1.134 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
@@ -192,6 +192,12 @@ The running version is shown at the bottom of the side menu.
   removes the value rather than storing a blank.
 - Any other IDs the import carried are listed under them, read-only, so nothing
   attached to the meter is hidden.
+- **The meter table's search now finds a meter by its Account ID or Meter ID**,
+  and by its Endpoint ID, on top of UID, name, address and provider. Searching
+  an account number previously returned nothing at all: the search runs in the
+  database over real columns, and those IDs are not stored as columns.
+- It matches the ID *values* only, so searching a word like "account" doesn't
+  return every meter that happens to have an account number.
 - The panel was one column of eleven inputs, which put unrelated fields
   side by side. It is now grouped into **Identification**, **Customer**,
   **Location**, **Role in the network** and **DMA links** — and the DMA section
