@@ -133,16 +133,22 @@ function buildDbfFile(features: any[]) {
   v.setUint8(2, now.getMonth() + 1);
   v.setUint8(3, now.getDate());
   setInt32(v, 4, features.length);
-  setInt32(v, 8, headerSize);
-  setInt32(v, 12, recordSize);
+  // Header length and record length are 16-bit and adjacent (bytes 8-9 and
+  // 10-11). Writing the header length as 32 bits overwrote the record length
+  // with zero, and a reader that trusts the header then repeats the first row
+  // for every record — which is what made an exported layer look like it held
+  // one value for every feature. Bytes 12-31 are reserved and stay zero.
+  v.setUint16(8, headerSize, true);
+  v.setUint16(10, recordSize, true);
 
   let off = 32;
   for (const field of fields) {
     const nameBytes = enc.encode(field.name.slice(0, 10));
-    for (let i = 0; i < 10; i++) v.setUint8(off + i, nameBytes[i] || 0);
+    for (let i = 0; i < 11; i++) v.setUint8(off + i, nameBytes[i] || 0);
     v.setUint8(off + 11, field.type.charCodeAt(0));
-    setInt32(v, off + 16, field.size);
-    v.setUint8(off + 20, field.decimals || 0);
+    // Field length is one byte at 16, decimal count one byte at 17.
+    v.setUint8(off + 16, field.size);
+    v.setUint8(off + 17, field.decimals || 0);
     off += 32;
   }
   v.setUint8(off, 0x0d);

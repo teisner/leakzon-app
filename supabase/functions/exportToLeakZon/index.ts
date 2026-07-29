@@ -238,16 +238,91 @@ function buildShxFile(features: any[]) {
   return new Uint8Array(buf);
 }
 
-function buildDbfFile(features: any[]) {
-  const fields = [
-    { name: 'name', type: 'C', size: 50 },
-    { name: 'type', type: 'C', size: 15 },
-    { name: 'color', type: 'C', size: 10 },
-    { name: 'diameter', type: 'C', size: 20 },
-    // A shapefile carries no styling of its own, so the intended line style
-    // travels as an attribute for the consumer to apply.
-    { name: 'style', type: 'C', size: 10 },
+// The attribute table for a shapefile set.
+//
+// Two things were wrong here and both showed up as "every water line has the
+// same diameter":
+//
+//  1. The dBASE header was malformed. Bytes 8-9 hold the header length and
+//     10-11 the record length, both 16-bit. Writing the header length as a
+//     32-bit value overwrote the record length with zero, so a reader that
+//     trusts the header — which most GIS software does — walked every record
+//     from the same offset and repeated the first row 402 times. The bytes
+//     were right; the map to them was not.
+//  2. Only five attributes were carried. Everything the utility actually
+//     surveyed — installation date, material, condition, notes, the source
+//     feature id — was dropped at export.
+//
+// So: correct header, and every source attribute carried through.
+
+const DBF_MAX_FIELDS = 128;      // dBASE III limit
+const DBF_MAX_RECORD = 3900;     // and its practical record-length ceiling
+const DBF_MAX_FIELD_SIZE = 254;
+
+// dBASE field names: at most 10 bytes, and unique. Anything else a GIS reader
+// will either reject or silently rename.
+function dbfFieldName(raw: string, taken: Set<string>) {
+  let base = String(raw || 'field')
+    .replace(/[^A-Za-z0-9_]/g, '_')
+    .replace(/^_+/, '')
+    .slice(0, 10) || 'field';
+  let name = base;
+  let n = 1;
+  while (taken.has(name.toUpperCase())) {
+    const suffix = String(n++);
+    name = base.slice(0, 10 - suffix.length) + suffix;
+  }
+  taken.add(name.toUpperCase());
+  return name;
+}
+
+// Truncates to a byte budget without splitting a multi-byte character — the
+// meter addresses are Hebrew, and half a character is a corrupt field.
+function encodeFixed(enc: TextEncoder, value: string, size: number) {
+  const bytes = enc.encode(value);
+  if (bytes.length <= size) return bytes;
+  let cut = size;
+  while (cut > 0 && (bytes[cut] & 0xc0) === 0x80) cut--;
+  return bytes.subarray(0, cut);
+}
+
+function dbfFields(features: any[]) {
+  // The platform's own attributes first, in a fixed order, so a consumer can
+  // rely on them being there whatever the source file carried.
+  const taken = new Set<string>();
+  const fields: { name: string; key: string; size: number }[] = [
+    { name: dbfFieldName('name', taken), key: 'name', size: 50 },
+    { name: dbfFieldName('type', taken), key: 'type', size: 15 },
+    { name: dbfFieldName('color', taken), key: 'color', size: 10 },
+    { name: dbfFieldName('diameter', taken), key: 'diameter', size: 20 },
+    { name: dbfFieldName('style', taken), key: 'style', size: 10 },
   ];
+  const platform = new Set(fields.map((f) => f.key));
+
+  // Then every attribute present on any feature, sized to the widest value
+  // actually in the data.
+  const widths = new Map<string, number>();
+  const enc = new TextEncoder();
+  for (const f of features) {
+    for (const [key, value] of Object.entries(f.properties || {})) {
+      if (platform.has(key)) continue;
+      if (value === null || value === undefined) continue;
+      const len = enc.encode(String(value)).length;
+      widths.set(key, Math.max(widths.get(key) ?? 1, Math.min(len, DBF_MAX_FIELD_SIZE)));
+    }
+  }
+
+  let record = 1 + fields.reduce((sum, f) => sum + f.size, 0);
+  for (const [key, width] of widths) {
+    if (fields.length >= DBF_MAX_FIELDS || record + width > DBF_MAX_RECORD) break;
+    fields.push({ name: dbfFieldName(key, taken), key, size: width });
+    record += width;
+  }
+  return fields;
+}
+
+function buildDbfFile(features: any[]) {
+  const fields = dbfFields(features);
   const headerSize = 32 + fields.length * 32 + 1;
   const recordSize = 1 + fields.reduce((s, f) => s + f.size, 0);
   const totalBytes = headerSize + features.length * recordSize + 1;
@@ -262,36 +337,34 @@ function buildDbfFile(features: any[]) {
   v.setUint8(2, now.getMonth() + 1);
   v.setUint8(3, now.getDate());
   setInt32(v, 4, features.length);
-  setInt32(v, 8, headerSize);
-  setInt32(v, 12, recordSize);
+  // 16-bit, and adjacent — see the note above.
+  v.setUint16(8, headerSize, true);
+  v.setUint16(10, recordSize, true);
+  // Bytes 12-31 are reserved and must stay zero.
 
   let off = 32;
   for (const field of fields) {
-    const nameBytes = enc.encode(field.name.slice(0, 10));
-    for (let i = 0; i < 10; i++) v.setUint8(off + i, nameBytes[i] || 0);
-    v.setUint8(off + 11, field.type.charCodeAt(0));
-    setInt32(v, off + 16, field.size);
-    v.setUint8(off + 20, 0);
+    const nameBytes = enc.encode(field.name);
+    for (let i = 0; i < 11; i++) v.setUint8(off + i, nameBytes[i] || 0);
+    v.setUint8(off + 11, 0x43); // 'C' — every field is text
+    setInt32(v, off + 12, 0);   // field data address, unused
+    v.setUint8(off + 16, field.size);
+    v.setUint8(off + 17, 0);    // decimal count
     off += 32;
   }
   v.setUint8(off, 0x0d);
 
   off = headerSize;
   for (const f of features) {
-    v.setUint8(off, 0x20);
+    v.setUint8(off, 0x20); // not deleted
     off += 1;
     const p = f.properties || {};
-    const values = [
-      String(p.name || '').slice(0, 50).padEnd(50),
-      String(p.type || '').slice(0, 15).padEnd(15),
-      String(p.color || '').slice(0, 10).padEnd(10),
-      String(p.diameter || '').slice(0, 20).padEnd(20),
-      String(p.style || 'solid').slice(0, 10).padEnd(10),
-    ];
-    for (let i = 0; i < fields.length; i++) {
-      const valBytes = enc.encode(values[i]);
-      for (let j = 0; j < fields[i].size; j++) v.setUint8(off + j, valBytes[j] || 0x20);
-      off += fields[i].size;
+    for (const field of fields) {
+      const raw = p[field.key];
+      const text = raw === null || raw === undefined ? '' : String(raw);
+      const bytes = encodeFixed(enc, field.key === 'style' && !text ? 'solid' : text, field.size);
+      for (let j = 0; j < field.size; j++) v.setUint8(off + j, bytes[j] ?? 0x20);
+      off += field.size;
     }
   }
   v.setUint8(off, 0x1a);
@@ -336,7 +409,16 @@ const DMA_OUTLINE_COLOR = '#000000';
 const BOUNDARY_OUTLINE_COLOR = '#FF0000';
 
 function buildShapefileSet(features: any[]) {
-  return { shp: buildShpFile(features), shx: buildShxFile(features), dbf: buildDbfFile(features), prj: new TextEncoder().encode(PRJ_WKT) };
+  const enc = new TextEncoder();
+  return {
+    shp: buildShpFile(features),
+    shx: buildShxFile(features),
+    dbf: buildDbfFile(features),
+    prj: enc.encode(PRJ_WKT),
+    // Declares the .dbf encoding. Without it a reader assumes a legacy code
+    // page and the Hebrew addresses come out as mojibake.
+    cpg: enc.encode('UTF-8'),
+  };
 }
 
 function groupByGeometryType(features: any[]) {
@@ -756,13 +838,19 @@ Deno.serve(async (req) => {
         // apply the boundary outline styling in the same step. The previous
         // three chained maps kept three full copies of every feature alive.
         features = (geojson.features || []).map((f: any) => {
+          const src = f.properties || {};
           const feature = {
             geometry: f.geometry,
             properties: {
-              name: f.properties?.name || f.properties?.Name || '',
+              name: src.name || src.Name || '',
               type: f.geometry?.type || '',
               color: layer.color || '',
-              diameter: diameterField ? String(f.properties?.[diameterField] ?? '') : '',
+              diameter: diameterField ? String(src[diameterField] ?? '') : '',
+              // Everything the source file carried — material, install date,
+              // condition, the utility's own feature id — travels with the
+              // feature instead of being dropped at export. The platform's own
+              // five attributes above keep their names; see dbfFields.
+              ...src,
             },
           };
           return outline ? toOutline(feature, BOUNDARY_OUTLINE_COLOR, 'dashed') : feature;
@@ -785,6 +873,7 @@ Deno.serve(async (req) => {
         innerZip.file(`${fileBase}.shx`, shpSet.shx);
         innerZip.file(`${fileBase}.dbf`, shpSet.dbf);
         innerZip.file(`${fileBase}.prj`, shpSet.prj);
+        innerZip.file(`${fileBase}.cpg`, shpSet.cpg);
         totalFeatures += feats.length;
         groups[category] = []; // written; let the features go
       }
@@ -826,6 +915,7 @@ Deno.serve(async (req) => {
       innerZip.file('DMA.shx', shpSet.shx);
       innerZip.file('DMA.dbf', shpSet.dbf);
       innerZip.file('DMA.prj', shpSet.prj);
+      innerZip.file('DMA.cpg', shpSet.cpg);
       totalFeatures += dmaFeatures.length;
     }
     dmaFeatures.length = 0;

@@ -16,7 +16,7 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
-## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125, 1.126 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Export to LeakZon: analyse first, then export in the Main platform's own format**
 - The export **starts with an analysis**. Before anything downloads you see the
   DMA count, meters assigned vs not, mains vs subs, which DMAs have no main
@@ -82,6 +82,20 @@ The running version is shown at the bottom of the side menu.
 - Verified on all three Woodlawn projects: each now packages in about 10 seconds
   and produces the full set — Meter Data, Groups, meters without a DMA, and the
   shapefiles.
+- **Fixed: every water line in the shapefile appeared to have the same
+  diameter.** The attribute table's header declared a record length of zero, so
+  GIS software reading it stepped nowhere between rows and showed the first
+  line's values repeated for all 402. The diameters were in the file all along —
+  the index to them was wrong. Woodlawn's lines now read correctly: 195 at 6",
+  113 at 4", 44 at 8", 30 at 2", 6 at 12", 5 at 16", and so on, exactly matching
+  the source.
+- **Every attribute from the source file is now exported**, not just five.
+  Water lines carry their feature id, material, location, installation and
+  inspection dates, condition, notes and length; valves keep all 26 of their
+  columns. Previously all of it was dropped.
+- Each shapefile now ships a `.cpg` declaring UTF-8, so non-English attributes
+  (Hebrew street names) open as written rather than as mojibake.
+- The same header fault is fixed in the standalone DMA shapefile export.
 
 ## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
 **The changelog is grouped by subject, and the Product Overview's tables render properly**
