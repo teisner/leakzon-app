@@ -23,9 +23,20 @@ function Shark({ size = 54 }) {
       {/* dorsal fin */}
       <path d="M44 12 52 0l8 13Z" fill="#4a6675" />
       <path d="M30 38 24 48l14-6Z" fill="#4a6675" />
-      <circle cx="20" cy="23" r="2.8" fill="#0b2b3f" />
-      {/* gill slits */}
+      {/* gill slits, behind the jaw so an open mouth isn't drawn over */}
       <path d="M32 20v10M37 19v12M42 20v10" stroke="#42606f" strokeWidth="1.6" />
+      {/* Jaw. The group is flat against the mouth line at rest and is opened by
+          scaling it down from that line, so nothing shows when it is shut —
+          --gape is written by the animation loop, 0 to 1. */}
+      <g className="flood-jaw">
+        <path d="M46 26 6 26 38 45Z" fill="#2b1420" />
+        <path d="M6 26 38 45" stroke="#4a6675" strokeWidth="5" strokeLinecap="round" fill="none" />
+      </g>
+      {/* Upper teeth stay put; they just appear as the mouth opens. */}
+      <g className="flood-teeth">
+        <path d="M13 26l3 6 3-6ZM22 26l3 6 3-6ZM31 26l3 6 3-6ZM40 26l2.5 5 2.5-5Z" fill="#f4f8fa" />
+      </g>
+      <circle cx="20" cy="23" r="2.8" fill="#0b2b3f" />
     </svg>
   );
 }
@@ -92,6 +103,7 @@ export default function FloodOverlay({ onDone }) {
         if (!node) continue;
         node.style.transform = spriteTransform(e, e.kind === "turtle");
         node.style.opacity = e.hiddenUntil ? "0" : "1";
+        if (e.kind === "shark") node.style.setProperty("--gape", e.gape.toFixed(3));
       }
       if (eaten.length) {
         setChomps((prev) => [

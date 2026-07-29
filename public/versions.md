@@ -11,6 +11,15 @@ here, newest first. Each entry is tagged with what it contains:
 After the tag comes a one-line headline, then the details. The running version
 is shown at the bottom of the side menu.
 
+## 1.123 — 2026-07-29 · *Updated feature*
+**The shark opens its jaws on the final run and snaps them shut on the fish**
+- On the closing stretch of a chase the shark's mouth swings open — dark gullet,
+  teeth and all — and slams shut the moment it takes the fish.
+- Straight after a meal it loses interest and cruises for a few seconds before
+  hunting again, so a kill is an event rather than a constant.
+- The mouth is completely invisible while shut, so a shark that is only cruising
+  looks exactly as it did before.
+
 ## 1.122 — 2026-07-28 · *Updated feature*
 **The tank is a real aquarium now: everything roams, and sharks hunt**
 - Three turtles and two sharks, and nothing is stuck crossing left to right any

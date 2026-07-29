@@ -566,6 +566,15 @@
   position: absolute; left: 0; top: 0;
   will-change: transform; transition: opacity 0.4s ease;
 }
+/* A shark's jaw sits flat along its mouth line and opens by scaling back out
+   from it, so a shut mouth shows nothing at all. Both are driven by --gape,
+   which the loop writes on the shark element every frame. */
+.flood-jaw {
+  transform-box: fill-box; transform-origin: 100% 0;
+  transform: scaleY(var(--gape, 0));
+}
+.flood-teeth { opacity: var(--gape, 0); }
+
 /* Where a fish just was. */
 .flood-chomp {
   position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;

@@ -11,7 +11,7 @@ const TAU = Math.PI * 2;
 // Distances in pixels, speeds in pixels/second.
 const RULES = {
   fish:   { speed: 62,  turn: 2.6, size: 22 },
-  shark:  { speed: 74,  turn: 1.6, size: 54, chase: 260, chaseSpeed: 150, bite: 26 },
+  shark:  { speed: 74,  turn: 1.6, size: 54, chase: 260, chaseSpeed: 150, bite: 26, gape: 130 },
   turtle: { speed: 30,  turn: 1.1, size: 40 },
 };
 // A fish outruns a shark in a straight line and out-turns it easily; the shark
@@ -21,6 +21,8 @@ const FLEE_RANGE = 240;   // how far a fish notices a shark
 const FLEE_SPEED = 158;
 const EDGE = 70;          // margin where the soft wall starts pushing back
 const RESPAWN_MS = [4000, 9000];
+const SNAP_MS = 420;      // jaws shut on the bite
+const FED_MS = 3200;      // and it cruises off its meal before hunting again
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -48,6 +50,9 @@ export function createTank(bounds, { fish = 10, sharks = 2, turtles = 3 } = {}) 
       size: kind === "fish" ? rule.size * rand(0.7, 1.35) : rule.size * rand(0.9, 1.1),
       color: colors[i % colors.length],
       hiddenUntil: 0,
+      gape: 0,        // 0 shut, 1 wide open
+      snapUntil: 0,
+      fedUntil: 0,
     };
     retarget(e, bounds);
     entities.push(e);
@@ -93,17 +98,29 @@ export function stepTank(entities, dt, bounds, elapsedMs) {
     let ty = e.ty;
 
     if (e.kind === "shark") {
-      const prey = nearest(e, fish, rule.chase);
+      // Straight after a meal it loses interest, which is what makes the hunt
+      // an event rather than a constant.
+      const hunting = elapsedMs >= e.fedUntil;
+      const prey = hunting ? nearest(e, fish, rule.chase) : null;
+      let wantGape = 0;
       if (prey) {
         // Aim slightly ahead of the fish, or the shark forever trails it.
         tx = prey.target.x + prey.target.vx * 0.35;
         ty = prey.target.y + prey.target.vy * 0.35;
         speed = rule.chaseSpeed;
+        // Mouth opens on the closing run, not across the whole tank.
+        if (prey.dist < rule.gape) wantGape = 1;
         if (prey.dist < rule.bite) {
           prey.target.hiddenUntil = elapsedMs + rand(RESPAWN_MS[0], RESPAWN_MS[1]);
           eaten.push({ id: prey.target.id, x: prey.target.x, y: prey.target.y });
+          e.snapUntil = elapsedMs + SNAP_MS;
+          e.fedUntil = elapsedMs + FED_MS;
         }
       }
+      // The bite itself is the jaws slamming shut, so it overrides the gape.
+      const snapping = elapsedMs < e.snapUntil;
+      if (snapping) wantGape = 0;
+      e.gape += (wantGape - e.gape) * Math.min(1, dt * (snapping ? 26 : 7));
     } else if (e.kind === "fish") {
       const threat = nearest(e, sharks, FLEE_RANGE);
       if (threat) {
