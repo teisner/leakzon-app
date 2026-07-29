@@ -66,15 +66,22 @@ The running version is shown at the bottom of the side menu.
 - **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
   text "Main Meter", so its meters were exported as mains — in Woodlawn that was
   all 5,122 sub meters.
-- **Fixed: the export failed outright on a large project.** Woodlawn stopped
-  with *"Request failed (546)"* — the server ran out of memory while packaging
-  it. The finished zip was being sent back inside the response itself, which
-  meant the file, a text-encoded copy of it a third larger again, and the
-  response holding that copy all had to exist at the same moment. The export is
-  now saved and handed over as a download link, and the shapefiles are
-  compressed, so the same project packages in a fraction of the memory.
-- Layers are also processed one at a time and released as soon as they are
-  written, instead of three copies of every feature being kept alive at once.
+- **Fixed: the export failed outright on Woodlawn.** It stopped with *"Request
+  failed (546)"* — the server cut the job off for taking too much processing
+  time. Woodlawn is the largest project on the platform, and its export sat just
+  over the ceiling: the analysis and preview steps went through fine, only the
+  final packaging failed, which is why it looked like the export "sometimes"
+  worked.
+- Two things were being paid for on every export and are now not: the spreadsheet
+  and zip libraries were being loaded during the request rather than when the
+  server starts, and the finished zip was being text-encoded to travel back
+  inside the response, which cost as much again as building it.
+- **The export is now handed over as a download link** to the stored file
+  instead of being sent back inline, and the shapefiles are compressed. Together
+  that cut roughly half the work out of the request.
+- Verified on all three Woodlawn projects: each now packages in about 10 seconds
+  and produces the full set — Meter Data, Groups, meters without a DMA, and the
+  shapefiles.
 
 ## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
 **The changelog is grouped by subject, and the Product Overview's tables render properly**

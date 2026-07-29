@@ -1,3 +1,11 @@
+// Both of these are loaded at the top rather than inside the handler on
+// purpose. A dynamic `await import('npm:...')` runs during the request, so
+// compiling them (xlsx is close to a megabyte of JavaScript) is charged to that
+// request's CPU budget — and the export was already near the 2s ceiling, which
+// is what killed it on a large project with HTTP 546 (WORKER_LIMIT). At the top
+// they are compiled once while the worker boots, which is accounted separately.
+import * as XLSX from 'npm:xlsx@0.18.5';
+import JSZip from 'npm:jszip@3.10.1';
 function buildNoDmaRows(meters: any[]) {
   return meters.map((m) => ({
     'UID': m.uid || '',
@@ -530,8 +538,7 @@ export function buildGroupsRows(meters: any[], project: any, opts: any) {
 // the content, sees XML where the binary .xls format is claimed, and warns that
 // the file "could be corrupted or unsafe" before it will open — on every file
 // the platform produced. SheetJS emits the real format, so the warning goes.
-async function buildSheetXlsx(sheetName: string, columns: string[], rows: any[]) {
-  const XLSX = await import('npm:xlsx@0.18.5');
+function buildSheetXlsx(sheetName: string, columns: string[], rows: any[]) {
   // aoa keeps the column order exactly as given; json_to_sheet would take it
   // from the first object's key order.
   const aoa = [columns, ...rows.map((r) => columns.map((c) => r[c] ?? ''))];
@@ -731,7 +738,6 @@ Deno.serve(async (req) => {
     const peak = { mb: mem(), at: 'start' };
     const mark = (at: string) => { const m = mem(); if (m > peak.mb) { peak.mb = m; peak.at = at; } };
 
-    const JSZip = (await import('npm:jszip@3.10.1')).default;
     const innerZip = new JSZip();
     let totalFeatures = 0;
     let exportedLayers = 0;
@@ -845,18 +851,18 @@ Deno.serve(async (req) => {
     const filePrefix = sanitizeFileName(project.name);
 
     // Real .xlsx — see buildSheetXlsx for why these are no longer .xls.
-    outerZip.file(`${filePrefix}_meter_data.xlsx`, await buildSheetXlsx(
+    outerZip.file(`${filePrefix}_meter_data.xlsx`, buildSheetXlsx(
       'Meter Data', METER_DATA_COLUMNS, buildMeterDataRows(analysis.assigned, project, exportOpts)
     ));
     // Groups — which DMA each meter belongs to, and how it participates.
-    outerZip.file(`${filePrefix}_groups.xlsx`, await buildSheetXlsx(
+    outerZip.file(`${filePrefix}_groups.xlsx`, buildSheetXlsx(
       'Groups', GROUPS_COLUMNS, buildGroupsRows(analysis.assigned, project, exportOpts)
     ));
     // Meters with no DMA keep their own file so nothing is silently lost and
     // they can be reviewed apart from the rest.
     if (analysis.unassigned.length > 0) {
       const noDma = buildNoDmaRows(analysis.unassigned);
-      outerZip.file(`${filePrefix}_meters_no_dma.xlsx`, await buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
+      outerZip.file(`${filePrefix}_meters_no_dma.xlsx`, buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
     }
     mark('workbooks');
 
