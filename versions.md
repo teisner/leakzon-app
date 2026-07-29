@@ -16,7 +16,7 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
-## 1.127 — 2026-07-29 · *New feature* · **Important**
+## 1.127, 1.129 — 2026-07-29 · *New feature + Bug fix* · **Important**
 **A project with no boundary now asks you to draw one, as the first step**
 - The boundary is looked up automatically from the city when a project is
   created. Where no official outline exists the project was simply left without
@@ -32,6 +32,14 @@ The running version is shown at the bottom of the side menu.
   so nothing shows as outstanding that isn't.
 - An existing project without a boundary can still add one at any time from the
   Layers panel, which is unchanged.
+- **Fixed a blank page when re-fetching the boundary**, introduced by the prompt
+  above and caught before it ever reached the live site. The prompt's spinner
+  used an icon that was never imported, and the reference is evaluated the
+  moment a fetch starts — so pressing **Re-fetch** anywhere blanked the screen.
+- The project check that exists to catch exactly this kind of mistake had a gap:
+  it flagged an undefined *variable* but not an undefined *component*, which is
+  the more common way it happens. It now catches both, and a scan of the whole
+  codebase found no other case.
 
 ## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125, 1.126 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Export to LeakZon: analyse first, then export in the Main platform's own format**

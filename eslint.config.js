@@ -41,6 +41,11 @@ export default [
       // screen. This has now caused two of those (the point-numbering crash in
       // v1.028 and the meter editor in v1.089).
       "no-undef": "error",
+      // no-undef does NOT cover a JSX element name: <Loader2 /> with no import
+      // passes it cleanly and then throws at render as a blank screen. That is
+      // exactly the shape of the bug this guard was added for, so it needs both
+      // rules — this one caught the boundary re-fetch crash in v1.129.
+      "react/jsx-no-undef": "error",
       "react/jsx-uses-vars": "error",
       "react/jsx-uses-react": "error",
       "unused-imports/no-unused-imports": "error",

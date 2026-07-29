@@ -6,7 +6,7 @@ import { waitForSession, clearStaleLogin } from "@/lib/authReady";
 import { invokeFunction } from "@/api/functionsClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
-import { PanelLeftClose, PanelLeftOpen, MessageSquare, ShieldCheck } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, MessageSquare, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
