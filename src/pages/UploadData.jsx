@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,11 @@ export default function UploadData() {
   const [isMain, setIsMain] = useState(false);
   const [mainColumn, setMainColumn] = useState("");
   const [splitMainSub, setSplitMainSub] = useState(false);
+  // "new" creates a layer for the file; "append" adds only the meters that
+  // aren't in the project yet to a layer that already exists.
+  const [importMode, setImportMode] = useState("new");
+  const [targetLayerId, setTargetLayerId] = useState("");
+  const [skippedExisting, setSkippedExisting] = useState(0);
   const [extraIdColumns, setExtraIdColumns] = useState(null);
   const [error, setError] = useState(null);
   const [layerName, setLayerName] = useState("");
@@ -125,6 +130,20 @@ export default function UploadData() {
     };
   }, [id]);
 
+  // Layers that already hold meters — the only sensible targets for topping up,
+  // and the count tells the operator they are pointing at the right one.
+  const meterLayerOptions = useMemo(() => {
+    const counts = new Map();
+    for (const m of meters || []) {
+      if (!m.layer_id) continue;
+      counts.set(m.layer_id, (counts.get(m.layer_id) || 0) + 1);
+    }
+    return (layers || [])
+      .filter((l) => counts.has(l.id))
+      .map((l) => ({ id: l.id, name: l.name, meterCount: counts.get(l.id) }))
+      .sort((a, b) => b.meterCount - a.meterCount);
+  }, [layers, meters]);
+
   const refreshData = () => {
     supabase.from('project_layer').select('*').eq('project_id', id).order('created_at', { ascending: false }).then(({ data }) => setLayers(data || []));
     invokeFunction("getProjectMeters", { project_id: id })
@@ -144,6 +163,7 @@ export default function UploadData() {
 
   const resetToIdle = () => {
     setPhase("idle");
+    setSkippedExisting(0);
     setFile(null);
     setFileUrl(null);
     setAnalysis(null);
@@ -392,6 +412,87 @@ export default function UploadData() {
           return;
         }
 
+        // Adding to a layer that already exists: only the meters this project
+        // has never seen are inserted, and nothing already stored is touched.
+        if (importMode === "append") {
+          const target = layers.find((l) => l.id === targetLayerId);
+          if (!target) {
+            setError(t('upload.appendNoLayer'));
+            setPhase("meter_config");
+            return;
+          }
+
+          setProgressLabel(t('upload.checkingExisting'));
+          // Read the meters back through the Edge Function rather than the
+          // table: a direct select is capped at 1000 rows, which on a project
+          // this size would make almost every meter look new.
+          const currentRes = await invokeFunction("getProjectMeters", { project_id: id });
+          const existingUids = new Set(
+            (currentRes.data?.meters || [])
+              .map((m) => String(m.uid ?? "").trim().toLowerCase())
+              .filter(Boolean)
+          );
+
+          const fresh = [];
+          let skipped = 0;
+          const seenInFile = new Set();
+          for (const r of records) {
+            const key = String(r.uid ?? "").trim().toLowerCase();
+            // A blank UID can't be matched against anything, so it counts as
+            // new; a repeat within the file itself is only imported once.
+            if (key && (existingUids.has(key) || seenInFile.has(key))) { skipped++; continue; }
+            if (key) seenInFile.add(key);
+            fresh.push(r);
+          }
+          setSkippedExisting(skipped);
+
+          if (fresh.length === 0) {
+            setProgress(100);
+            setProgressLabel(t('upload.appendNothingNew', { skipped }));
+            setLocalMeterCount(0);
+            setPhase("done");
+            return;
+          }
+
+          setPhase("saving");
+          // The new batch is sub-meters regardless of what the file says — this
+          // mode exists for topping up a sub-meter layer.
+          const appendRows = toMeterInsertRows(fresh, dmas).map((r) => ({
+            ...r,
+            is_main: false,
+            project_id: id,
+            source_file_url: fileUrl,
+            layer_id: target.id,
+          }));
+
+          const appendResult = await runBatchesInParallel(
+            appendRows,
+            1000,
+            4,
+            (batch) => supabase.from('meter').insert(batch),
+            (completedBatches, totalBatches, processed) => {
+              setProgress(40 + Math.round((processed / appendRows.length) * 50));
+              setProgressLabel(t('upload.importingBatch', { name: target.name, current: completedBatches, total: totalBatches, processed, count: appendRows.length }));
+            }
+          );
+
+          // Keep the layer's own count honest — it is what the layers panel and
+          // the dashboard read.
+          const { error: countError } = await supabase
+            .from('project_layer')
+            .update({ feature_count: (target.feature_count || 0) + appendResult.processed })
+            .eq('id', target.id);
+          if (countError) console.error("Could not update the layer feature count:", countError);
+
+          recordProgress(id, "meters_imported");
+          setImportedWithDmaNames(!!meterMappings?.dma_name);
+          setLocalMeterCount(appendResult.processed);
+          setProgress(100);
+          setProgressLabel(t('upload.appendDone', { created: appendResult.processed, skipped }));
+          setPhase("done");
+          return;
+        }
+
         let layerSets;
         if (splitMainSub) {
           const mainRecs = records.filter((r) => r.is_main);
@@ -601,6 +702,9 @@ export default function UploadData() {
                 <span>
                   {layerType === "shp" && analysis ? `${analysis.featureCount} features` : ""}
                   {layerType === "data" && phase === "done" ? `${localMeterCount} meters created` : ""}
+                  {phase === "done" && skippedExisting > 0
+                    ? ` · ${t('upload.appendSkipped', { skipped: skippedExisting })}`
+                    : ""}
                 </span>
                 <span>{Math.round(progress)}%</span>
               </div>
@@ -1025,10 +1129,58 @@ export default function UploadData() {
                     </button>
                   </div>
 
-                  <div>
-                    <Label>{t('upload.layerName')}</Label>
-                    <Input value={layerName} onChange={(e) => setLayerName(e.target.value)} placeholder={t('upload.layerNamePlaceholder')} />
-                  </div>
+                  {/* Create a layer for this file, or top up one that exists.
+                      Only offered when the project already has a meter layer to
+                      add to. */}
+                  {meterLayerOptions.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="block">{t('upload.importMode')}</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={importMode === "new" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setImportMode("new")}
+                        >
+                          {t('upload.modeNewLayer')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={importMode === "append" ? "default" : "outline"}
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setImportMode("append")}
+                        >
+                          {t('upload.modeAppend')}
+                        </Button>
+                      </div>
+                      {importMode === "append" && (
+                        <div className="space-y-1.5">
+                          <select
+                            value={targetLayerId}
+                            onChange={(e) => setTargetLayerId(e.target.value)}
+                            className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                          >
+                            <option value="">{t('upload.appendSelectLayer')}</option>
+                            {meterLayerOptions.map((l) => (
+                              <option key={l.id} value={l.id}>
+                                {l.name} ({t('upload.appendLayerMeters', { count: l.meterCount })})
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-muted-foreground">{t('upload.appendHint')}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {importMode === "new" && (
+                    <div>
+                      <Label>{t('upload.layerName')}</Label>
+                      <Input value={layerName} onChange={(e) => setLayerName(e.target.value)} placeholder={t('upload.layerNamePlaceholder')} />
+                    </div>
+                  )}
 
                   <MeterConfigStep
                     analysis={meterAnalysis}
@@ -1058,8 +1210,20 @@ export default function UploadData() {
                   </Button>
                 )}
                 {file && phase === "meter_config" && (
-                  <Button onClick={handleConfirm} disabled={!layerName || !meterMappings?.uid} className="gap-1.5">
-                    {splitMainSub ? t('upload.createMetersTwoLayers', { count: meterAnalysis?.rowCount || "" }) : t('upload.createMeters', { count: meterAnalysis?.rowCount || "" })} <ChevronRight className="w-4 h-4" />
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={
+                      !meterMappings?.uid
+                      || (importMode === "new" ? !layerName : !targetLayerId)
+                    }
+                    className="gap-1.5"
+                  >
+                    {importMode === "append"
+                      ? t('upload.appendMeters', { count: meterAnalysis?.rowCount || "" })
+                      : splitMainSub
+                        ? t('upload.createMetersTwoLayers', { count: meterAnalysis?.rowCount || "" })
+                        : t('upload.createMeters', { count: meterAnalysis?.rowCount || "" })}
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 )}
                 {phase === "zip_review" && (

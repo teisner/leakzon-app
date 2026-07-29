@@ -330,8 +330,18 @@ The running version is shown at the bottom of the side menu.
 - Opening a project shows the LeakZon wordmark filling with water instead of a
   spinner, and the app has a new icon (favicon, tab, home screen).
 
-## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086 — 2026-07-28 · *Updated feature + Bug fix* · **Important**
+## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086, 1.130 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
 **Meter imports: nothing silently dropped, the file decides what is a main, and DMA names survive**
+- **New: top up an existing layer with only the meters it doesn't already have.**
+  The meter import now asks whether the file should **create a new layer** or be
+  **added to an existing one**. Choosing an existing layer imports only the
+  meters whose UID isn't already in the project — everything already stored is
+  left exactly as it is, not updated, not replaced.
+- The new batch comes in as **sub-meters** and joins the layer you picked, which
+  is offered with its current meter count so it is clear which one you are
+  adding to. A UID repeated inside the file itself is imported once.
+- The result says both numbers: how many were added, and how many were skipped
+  because they were already there.
 - **Imports were creating no meters at all.** A meter CSV/Excel import built the
   layer but not a single meter — nothing on the map, nothing in the table — and
   still reported success, because it sent a field that is no longer a column and
