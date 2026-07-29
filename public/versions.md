@@ -330,7 +330,7 @@ The running version is shown at the bottom of the side menu.
 - Opening a project shows the LeakZon wordmark filling with water instead of a
   spinner, and the app has a new icon (favicon, tab, home screen).
 
-## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086, 1.130, 1.131 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
+## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086, 1.130 – 1.132 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
 **Meter imports: nothing silently dropped, the file decides what is a main, and DMA names survive**
 - **Meter ID and Account ID can now be matched during the import**, alongside
   the UID and the Endpoint ID. All four are picked from your file's columns in
@@ -341,6 +341,10 @@ The running version is shown at the bottom of the side menu.
   Account ID columns in the meter table and in the LeakZon export. Previously
   only a column already named something like "Meter ID" was ever found.
 - Any other ID columns you tick are still kept alongside, unchanged.
+- **A matched field is now green in the mapping step**, with a tick beside its
+  name, and an unmatched one stays grey — so which fields will actually be
+  imported is visible at a glance instead of having to read down every dropdown.
+  A running **"7 of 17 fields matched"** count sits above the list.
 - **New: top up an existing layer with only the meters it doesn't already have.**
   The meter import now asks whether the file should **create a new layer** or be
   **added to an existing one**. Choosing an existing layer imports only the

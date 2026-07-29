@@ -29,6 +29,10 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
   const { columns, preview, rowCount, idColumns } = analysis;
   const [showAllIds, setShowAllIds] = useState(false);
 
+  // Everything except uid, which has its own section above.
+  const mappableFields = Object.entries(FIELD_LABELS).filter(([field]) => field !== "uid");
+  const mappedFieldCount = mappableFields.filter(([field]) => !!mappings?.[field]).length;
+
   const handleChange = (field, value) => {
     setMappings((prev) => {
       const next = { ...prev, [field]: value };
@@ -150,27 +154,48 @@ export default function MeterConfigStep({ analysis, mappings, setMappings, isMai
         </div>
       )}
 
-      {/* Field mappings (excluding uid since it's in the ID section) */}
+      {/* Field mappings (excluding uid since it's in the ID section).
+          A matched field is green and a plain one is muted, so which fields
+          will actually be imported is readable at a glance rather than by
+          reading every dropdown. */}
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Field Mapping</p>
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Field Mapping</p>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{mappedFieldCount}</span>
+            {` of ${mappableFields.length} fields matched`}
+          </p>
+        </div>
         <p className="text-xs text-muted-foreground">Match your file columns to the meter database fields</p>
-        {Object.entries(FIELD_LABELS)
-          .filter(([field]) => field !== "uid")
-          .map(([field, label]) => (
-          <div key={field} className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground w-44 shrink-0">{label}</Label>
-            <select
-              value={mappings?.[field] || ""}
-              onChange={(e) => handleChange(field, e.target.value)}
-              className="flex-1 h-8 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">— None —</option>
-              {columns.map((col) => (
-                <option key={col} value={col}>{col}</option>
-              ))}
-            </select>
-          </div>
-        ))}
+        {mappableFields.map(([field, label]) => {
+          const matched = !!mappings?.[field];
+          return (
+            <div key={field} className="flex items-center gap-2">
+              <Label
+                className={`text-xs w-44 shrink-0 flex items-center gap-1 ${
+                  matched ? "text-emerald-700 dark:text-emerald-400 font-medium" : "text-muted-foreground"
+                }`}
+              >
+                {matched && <Check className="w-3 h-3 shrink-0" />}
+                {label}
+              </Label>
+              <select
+                value={mappings?.[field] || ""}
+                onChange={(e) => handleChange(field, e.target.value)}
+                className={`flex-1 h-8 rounded-md border px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring ${
+                  matched
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 font-medium"
+                    : "border-input bg-background"
+                }`}
+              >
+                <option value="">— None —</option>
+                {columns.map((col) => (
+                  <option key={col} value={col}>{col}</option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
       </div>
 
       {/* Coordinates note */}
