@@ -16,40 +16,7 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
-## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
-**The changelog is grouped by subject, and the Product Overview's tables render properly**
-- **124 separate version entries are now 29.** Versions that were steps toward
-  the same thing — the whole LeakZon export, meter imports, the sign-in failures,
-  layer deletion, the screen saver — are merged into one entry each, so a run of
-  small fixes reads as the single change it was. Nothing was dropped: every
-  version from 1.000 to 1.123 is accounted for, and each entry lists which ones
-  it covers.
-- Entries that change **the way you work** are marked **Important** — data in and
-  out, what a screen lets you do, or a fault that was costing time. Cosmetic and
-  internal changes are not.
-- **Fixed: tables in the Product Overview came out as a wall of `|` characters.**
-  The panel was rendering the file without table support, so the two reference
-  tables — the working views and the meter types — appeared as raw text. They are
-  proper tables now, and scroll sideways rather than being crushed in a narrow
-  panel.
-
-## 1.108, 1.115 – 1.123 — 2026-07-29 · *New feature*
-**Easter eggs on the GIS map: a coffee break, and a flood that turns into an aquarium**
-- **Ctrl + Shift + C** brews a coffee: it fills for ten seconds with a countdown,
-  then clears itself. Escape or "skip" ends it early.
-- **Ctrl + Shift + F** floods the screen. Waves roll in as the water rises, and
-  once it is full the tank comes alive — bubbles, ten fish, two sharks and three
-  turtles, with drifting light and a slow swell in the water itself.
-- Nothing swims in a straight line: every creature roams the whole screen on its
-  own. Sharks hunt the nearest fish and open their jaws on the closing run; the
-  fish sees it coming and bolts, out-turning the shark, which only wins by
-  cutting the corner. A caught fish leaves a splash and returns seconds later.
-  After a meal the shark loses interest for a while.
-- It runs as a screen saver — no timer, **Escape** is the only way out — and the
-  map underneath stays fully usable throughout.
-- Both eggs work only on the GIS map; nowhere else in the app responds to them.
-
-## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Export to LeakZon: analyse first, then export in the Main platform's own format**
 - The export **starts with an analysis**. Before anything downloads you see the
   DMA count, meters assigned vs not, mains vs subs, which DMAs have no main
@@ -99,6 +66,48 @@ The running version is shown at the bottom of the side menu.
 - **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
   text "Main Meter", so its meters were exported as mains — in Woodlawn that was
   all 5,122 sub meters.
+- **Fixed: the export failed outright on a large project.** Woodlawn stopped
+  with *"Request failed (546)"* — the server ran out of memory while packaging
+  it. The finished zip was being sent back inside the response itself, which
+  meant the file, a text-encoded copy of it a third larger again, and the
+  response holding that copy all had to exist at the same moment. The export is
+  now saved and handed over as a download link, and the shapefiles are
+  compressed, so the same project packages in a fraction of the memory.
+- Layers are also processed one at a time and released as soon as they are
+  written, instead of three copies of every feature being kept alive at once.
+
+## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
+**The changelog is grouped by subject, and the Product Overview's tables render properly**
+- **124 separate version entries are now 29.** Versions that were steps toward
+  the same thing — the whole LeakZon export, meter imports, the sign-in failures,
+  layer deletion, the screen saver — are merged into one entry each, so a run of
+  small fixes reads as the single change it was. Nothing was dropped: every
+  version from 1.000 to 1.123 is accounted for, and each entry lists which ones
+  it covers.
+- Entries that change **the way you work** are marked **Important** — data in and
+  out, what a screen lets you do, or a fault that was costing time. Cosmetic and
+  internal changes are not.
+- **Fixed: tables in the Product Overview came out as a wall of `|` characters.**
+  The panel was rendering the file without table support, so the two reference
+  tables — the working views and the meter types — appeared as raw text. They are
+  proper tables now, and scroll sideways rather than being crushed in a narrow
+  panel.
+
+## 1.108, 1.115 – 1.123 — 2026-07-29 · *New feature*
+**Easter eggs on the GIS map: a coffee break, and a flood that turns into an aquarium**
+- **Ctrl + Shift + C** brews a coffee: it fills for ten seconds with a countdown,
+  then clears itself. Escape or "skip" ends it early.
+- **Ctrl + Shift + F** floods the screen. Waves roll in as the water rises, and
+  once it is full the tank comes alive — bubbles, ten fish, two sharks and three
+  turtles, with drifting light and a slow swell in the water itself.
+- Nothing swims in a straight line: every creature roams the whole screen on its
+  own. Sharks hunt the nearest fish and open their jaws on the closing run; the
+  fish sees it coming and bolts, out-turning the shark, which only wins by
+  cutting the corner. A caught fish leaves a splash and returns seconds later.
+  After a meal the shark loses interest for a while.
+- It runs as a screen saver — no timer, **Escape** is the only way out — and the
+  map underneath stays fully usable throughout.
+- Both eggs work only on the GIS map; nowhere else in the app responds to them.
 
 ## 1.109, 1.110 — 2026-07-28 · *New feature* · **Important**
 **Project type, and a Root flag on every meter**

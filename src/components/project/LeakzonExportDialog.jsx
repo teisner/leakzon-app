@@ -203,15 +203,28 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
         meter_number_field: meterNumberField,
         include_dma_shp: includeDmaShp,
       });
+      // The export is handed over as a link to a stored file. It used to come
+      // back inline as base64 inside the JSON response, which on a large
+      // project (Woodlawn) blew the Edge Function's memory limit outright —
+      // HTTP 546. `zip` is still accepted so an older cached tab keeps working.
+      const zipName = response.data?.zipName || "project_Layers";
+      const zipUrl = response.data?.zip_url;
       const base64Zip = response.data?.zip;
-      if (!base64Zip) throw new Error("Failed to generate export");
+      if (!zipUrl && !base64Zip) throw new Error(response.data?.error || "Failed to generate export");
 
-      const bytes = Uint8Array.from(atob(base64Zip), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: "application/zip" });
+      let blob;
+      if (zipUrl) {
+        const res = await fetch(zipUrl);
+        if (!res.ok) throw new Error(`Could not download the export (${res.status})`);
+        blob = await res.blob();
+      } else {
+        const bytes = Uint8Array.from(atob(base64Zip), (c) => c.charCodeAt(0));
+        blob = new Blob([bytes], { type: "application/zip" });
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const zipName = response.data?.zipName || "project_Layers";
       a.download = `${zipName}.zip`;
       document.body.appendChild(a);
       a.click();

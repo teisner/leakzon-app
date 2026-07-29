@@ -651,6 +651,8 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
 }
 
 const PAGE_SIZE = 5000;
+// Same bucket the layer files live in — it already exists and is wired up.
+const EXPORT_BUCKET = 'project-files';
 
 async function fetchAllMeters(projectId: string) {
   const all: any[] = [];
@@ -718,50 +720,70 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Memory is the constraint here, not time. A worker gets 256 MB, and a
+    // project like Woodlawn carries layers whose parsed GeoJSON is far larger
+    // than the file on disk. Everything below is written to hold one layer at a
+    // time and to drop each intermediate as soon as it has been written into
+    // the zip — and the finished zip goes to Storage rather than back through
+    // the JSON response, which previously meant holding the bytes, a base64
+    // copy (+33%) and the serialised response string all at once.
+    const mem = () => Math.round((Deno.memoryUsage?.().heapUsed ?? 0) / 1048576);
+    const peak = { mb: mem(), at: 'start' };
+    const mark = (at: string) => { const m = mem(); if (m > peak.mb) { peak.mb = m; peak.at = at; } };
+
     const JSZip = (await import('npm:jszip@3.10.1')).default;
     const innerZip = new JSZip();
     let totalFeatures = 0;
     let exportedLayers = 0;
+    let skippedLayers = 0;
 
     for (const layer of layers || []) {
       if (!layer.file_url || layer.layer_type !== 'shp') continue;
-      let geojson;
+      let features: any[] | null = null;
       try {
         const res = await fetch(layer.file_url);
-        if (!res.ok) continue;
-        geojson = await res.json();
+        if (!res.ok) { skippedLayers++; continue; }
+        const geojson = await res.json();
+        const outline = isBoundaryLayer(layer.name);
+        const diameterField = layer.pipe_config?.diameter_field;
+        // One pass: read only the four properties a shapefile carries, and
+        // apply the boundary outline styling in the same step. The previous
+        // three chained maps kept three full copies of every feature alive.
+        features = (geojson.features || []).map((f: any) => {
+          const feature = {
+            geometry: f.geometry,
+            properties: {
+              name: f.properties?.name || f.properties?.Name || '',
+              type: f.geometry?.type || '',
+              color: layer.color || '',
+              diameter: diameterField ? String(f.properties?.[diameterField] ?? '') : '',
+            },
+          };
+          return outline ? toOutline(feature, BOUNDARY_OUTLINE_COLOR, 'dashed') : feature;
+        });
       } catch {
+        skippedLayers++;
         continue;
       }
+      mark(`layer:${layer.name}`);
+      if (!features || features.length === 0) continue;
 
-      const rawFeatures = (geojson.features || []).map((f: any) => ({
-        geometry: f.geometry,
-        properties: {
-          name: f.properties?.name || f.properties?.Name || '',
-          type: f.geometry?.type || '',
-          color: layer.color || '',
-          diameter: layer.pipe_config?.diameter_field ? String(f.properties?.[layer.pipe_config.diameter_field] ?? '') : '',
-        },
-      }));
-      if (rawFeatures.length === 0) continue;
-
-      const styled = isBoundaryLayer(layer.name)
-        ? rawFeatures.map((f: any) => toOutline(f, BOUNDARY_OUTLINE_COLOR, 'dashed'))
-        : rawFeatures;
-
-      const groups = groupByGeometryType(styled);
+      const groups = groupByGeometryType(features);
+      features = null; // the groups hold the references now
       const baseName = sanitizeFileName(layer.name);
+      const multi = Object.keys(groups).length > 1;
       for (const [category, feats] of Object.entries(groups)) {
-        const suffix = Object.keys(groups).length > 1 ? `_${category}` : '';
-        const fileBase = `${baseName}${suffix}`;
+        const fileBase = `${baseName}${multi ? `_${category}` : ''}`;
         const shpSet = buildShapefileSet(feats);
         innerZip.file(`${fileBase}.shp`, shpSet.shp);
         innerZip.file(`${fileBase}.shx`, shpSet.shx);
         innerZip.file(`${fileBase}.dbf`, shpSet.dbf);
         innerZip.file(`${fileBase}.prj`, shpSet.prj);
         totalFeatures += feats.length;
+        groups[category] = []; // written; let the features go
       }
       exportedLayers++;
+      mark(`zipped:${layer.name}`);
     }
 
     const dmaFeatures: any[] = [];
@@ -800,8 +822,14 @@ Deno.serve(async (req) => {
       innerZip.file('DMA.prj', shpSet.prj);
       totalFeatures += dmaFeatures.length;
     }
+    dmaFeatures.length = 0;
 
-    const innerZipBytes = await innerZip.generateAsync({ type: 'uint8array' });
+    // Deflate: shapefiles are extremely compressible, and every megabyte saved
+    // here is a megabyte not held twice while the outer zip is assembled.
+    const innerZipBytes = await innerZip.generateAsync({
+      type: 'uint8array', compression: 'DEFLATE', compressionOptions: { level: 6 },
+    });
+    mark('inner-zip');
 
     const outerZip = new JSZip();
     outerZip.file('Shapefiles.zip', innerZipBytes);
@@ -830,19 +858,53 @@ Deno.serve(async (req) => {
       const noDma = buildNoDmaRows(analysis.unassigned);
       outerZip.file(`${filePrefix}_meters_no_dma.xlsx`, await buildSheetXlsx('Meters without DMA', Object.keys(noDma[0]), noDma));
     }
+    mark('workbooks');
 
-    const zipBuffer = await outerZip.generateAsync({ type: 'base64' });
+    const zipBytes = await outerZip.generateAsync({ type: 'uint8array' });
+    mark('outer-zip');
     const safeProjectName = sanitizeFileName(project.name);
 
+    // Hand the file over through Storage. Returning it inline meant the bytes,
+    // a base64 copy and the JSON response all lived in the worker at once,
+    // which is what pushed a large project past the memory limit (HTTP 546).
+    const objectPath = `leakzon-exports/${project_id}/${Date.now()}_${safeProjectName}_Layers.zip`;
+    const { error: uploadError } = await admin.storage
+      .from(EXPORT_BUCKET)
+      .upload(objectPath, zipBytes, { contentType: 'application/zip', upsert: true });
+    if (uploadError) return json({ error: `Could not store the export: ${uploadError.message}` }, 500);
+
+    // Long enough to download a large file on a slow connection, short enough
+    // that the link isn't a lasting handout.
+    const { data: signed, error: signError } = await admin.storage
+      .from(EXPORT_BUCKET)
+      .createSignedUrl(objectPath, 3600);
+    if (signError || !signed?.signedUrl) {
+      return json({ error: `Could not create a download link: ${signError?.message || 'unknown error'}` }, 500);
+    }
+
+    // Previous exports of this project are dead weight once a new one exists.
+    void admin.storage.from(EXPORT_BUCKET).list(`leakzon-exports/${project_id}`).then(({ data }) => {
+      const old = (data || [])
+        .map((f: any) => `leakzon-exports/${project_id}/${f.name}`)
+        .filter((p: string) => p !== objectPath);
+      if (old.length) return admin.storage.from(EXPORT_BUCKET).remove(old);
+    }).catch(() => {});
+
     return json({
-      zip: zipBuffer,
+      zip_url: signed.signedUrl,
       zipName: `${safeProjectName}_Layers`,
       stats: {
         layers: exportedLayers,
+        skippedLayers,
         features: totalFeatures,
-        dmaShapefile: wantDmaShp && dmaFeatures.length > 0,
+        dmaShapefile: wantDmaShp,
         meters: analysis.insights.metersTotal,
         dmas: (dmas || []).length,
+        zipBytes: zipBytes.length,
+        // Reported so a future failure says where the memory went instead of
+        // only "546".
+        peakHeapMb: peak.mb,
+        peakAt: peak.at,
       },
       insights: analysis.insights,
     });
