@@ -7,6 +7,8 @@ import { MapPin, KeyRound, Check, Info, AlertCircle } from "lucide-react";
 const FIELD_LABELS = {
   uid: "Index UID (Number/ID)",
   endpoint_id: "Endpoint ID",
+  meter_id: "Meter ID",
+  account_id: "Account ID",
   payer_name: "Payer / Account Name",
   address: "Address",
   city: "City",

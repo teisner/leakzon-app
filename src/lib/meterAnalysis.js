@@ -132,6 +132,8 @@ function suggestMappings(columns) {
   const suggestions = {
     uid: find(["meter", "^id$", "serial", "number", "uid", "no$", "mat", "מונה", "זיהוי", "משדר", "מספר"]),
     endpoint_id: find(["endpoint", "^ep$|^ep_id$", "device.?id", "transmitter.?id"]),
+    meter_id: find(["^meter.?id$", "^meter.?no$", "^meter.?num", "^mtr", "meter.?id"]),
+    account_id: find(["^account.?id$", "^account.?no$", "^acct", "account.?id", "^חשבון"]),
     payer_name: find(["payer", "customer", "consumer", "name", "account", "full.?name", "צרכן", "שם"]),
     address: find(["address", "addr", "street", "location", "כתובת"]),
     city: find(["^city$", "city", "עיר"]),
@@ -220,10 +222,25 @@ export async function extractMeterRecords(analysis, fileUrl, fileName, mappings,
         };
       }
       const mappedCols = Object.values(mappings).filter(Boolean);
-      const additionalIds = idCols
-        .filter((c) => !mappedCols.includes(c))
-        .map((c) => ({ label: c, value: String(row[c] || "").trim() }))
+      // Meter ID and Account ID are not columns on `meter` — they live in
+      // additional_ids and are found again by matching the label. Storing them
+      // under a fixed label rather than whatever the source file called its
+      // column is what makes a file with "MTR_NO" or "ACCT" resolve at all:
+      // see meterIdOf / accountIdOf, which the table and the export both use.
+      const namedIds = [
+        { field: "meter_id", label: "Meter ID" },
+        { field: "account_id", label: "Account ID" },
+      ]
+        .filter(({ field }) => mappings[field])
+        .map(({ field, label }) => ({ label, value: String(row[mappings[field]] || "").trim() }))
         .filter((id) => id.value);
+      const additionalIds = [
+        ...namedIds,
+        ...idCols
+          .filter((c) => !mappedCols.includes(c))
+          .map((c) => ({ label: c, value: String(row[c] || "").trim() }))
+          .filter((id) => id.value),
+      ];
       const altitude = mappings.altitude ? parseFloat(row[mappings.altitude]) : null;
       const diameter = mappings.diameter ? parseFloat(row[mappings.diameter]) : null;
       return {
