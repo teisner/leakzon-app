@@ -175,7 +175,7 @@ The running version is shown at the bottom of the side menu.
   instead of blocking modals pinned over the polygon being edited, and Edit DMA
   has a green border matching the layer and meter editors.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit a meter straight from the map.** Clicking any meter — main, insertion,
   ultrasonic or sub — offers **Edit meter details**, opening the same editor as
@@ -208,6 +208,15 @@ The running version is shown at the bottom of the side menu.
   confirmation **names the DMAs that will be left without a main**, and a failed
   delete says so instead of closing quietly.
 - **Fixed:** sub meters showed a blank DMA even when they sat inside one.
+- **Fixed: the "Sub-Meter in" DMA could not be picked on a main meter.** The
+  dropdown was opening *behind* the editor panel, so it looked like the field
+  simply refused to select anything, while "Linked DMA" just above it worked.
+  Which of the two broke depended only on where the panel sat on screen: a menu
+  with room below spills past the panel edge and stays usable, one near the
+  bottom flips upward and lands underneath it.
+- The same fault applied to every dropdown, tooltip and menu inside the floating
+  layer, DMA and meter editors. It is fixed once for all of them rather than one
+  dialog at a time, so it cannot come back on the next panel someone adds.
 
 ## 1.101, 1.103 — 2026-07-28 · *New feature + Bug fix*
 **Product Overview — how the platform works**
