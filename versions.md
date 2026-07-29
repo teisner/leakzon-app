@@ -1,1283 +1,496 @@
 # LeakZon — Version History
 
-Every change bumps the version by `0.001` (format `1.NNN`) and adds an entry
-here, newest first. Each entry is tagged with what it contains:
+Versions that belong to the same piece of work are grouped into one entry, so a
+run of small steps toward the same thing reads as a single change. Newest first.
+
+Each entry is tagged with what it contains:
 
 - **Bug fix** — something was broken and now works
 - **New feature** — something that wasn't there before
 - **Updated feature** — an existing feature changed, improved or removed
 - Combinations are listed together, e.g. *New feature + Bug fix*
 
-After the tag comes a one-line headline, then the details. The running version
-is shown at the bottom of the side menu.
+An entry marked **Important** changes the way you work — how data goes in or
+comes out, what a screen lets you do, or a fault that was costing you time.
+Entries without it are cosmetic, internal, or fun.
 
-## 1.123 — 2026-07-29 · *Updated feature*
-**The shark opens its jaws on the final run and snaps them shut on the fish**
-- On the closing stretch of a chase the shark's mouth swings open — dark gullet,
-  teeth and all — and slams shut the moment it takes the fish.
-- Straight after a meal it loses interest and cruises for a few seconds before
-  hunting again, so a kill is an event rather than a constant.
-- The mouth is completely invisible while shut, so a shark that is only cruising
-  looks exactly as it did before.
+The running version is shown at the bottom of the side menu.
 
-## 1.122 — 2026-07-28 · *Updated feature*
-**The tank is a real aquarium now: everything roams, and sharks hunt**
-- Three turtles and two sharks, and nothing is stuck crossing left to right any
-  more — every swimmer roams the whole screen, turning and changing direction on
-  its own.
-- Sharks hunt: they lock onto the nearest fish, aim ahead of it, and eat it if
-  they catch it. The fish sees the shark coming, bolts, and out-turns it — the
-  shark only wins by cutting the corner. An eaten fish leaves a splash and comes
-  back a few seconds later from the side.
-- Ten fish, with varied sizes and colours, and every swimmer now points the way
-  it is actually going.
+## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
+**The changelog is grouped by subject, and the Product Overview's tables render properly**
+- **124 separate version entries are now 29.** Versions that were steps toward
+  the same thing — the whole LeakZon export, meter imports, the sign-in failures,
+  layer deletion, the screen saver — are merged into one entry each, so a run of
+  small fixes reads as the single change it was. Nothing was dropped: every
+  version from 1.000 to 1.123 is accounted for, and each entry lists which ones
+  it covers.
+- Entries that change **the way you work** are marked **Important** — data in and
+  out, what a screen lets you do, or a fault that was costing time. Cosmetic and
+  internal changes are not.
+- **Fixed: tables in the Product Overview came out as a wall of `|` characters.**
+  The panel was rendering the file without table support, so the two reference
+  tables — the working views and the meter types — appeared as raw text. They are
+  proper tables now, and scroll sideways rather than being crushed in a narrow
+  panel.
 
-## 1.121 — 2026-07-28 · *Bug fix*
-**Fish no longer pile up at the edge, and the tank is alive the moment it fills**
-- Fish and bubbles used to wait their turn — up to half a minute before the last
-  one appeared. They now start mid-crossing, so the tank is fully populated the
-  instant the water reaches the top.
-- Fixed the pile of fish stuck against the side of the screen: an element with a
-  start delay was being drawn at its untransformed position until its turn came,
-  instead of waiting off screen.
-- The water fills a second faster.
+## 1.108, 1.115 – 1.123 — 2026-07-29 · *New feature*
+**Easter eggs on the GIS map: a coffee break, and a flood that turns into an aquarium**
+- **Ctrl + Shift + C** brews a coffee: it fills for ten seconds with a countdown,
+  then clears itself. Escape or "skip" ends it early.
+- **Ctrl + Shift + F** floods the screen. Waves roll in as the water rises, and
+  once it is full the tank comes alive — bubbles, ten fish, two sharks and three
+  turtles, with drifting light and a slow swell in the water itself.
+- Nothing swims in a straight line: every creature roams the whole screen on its
+  own. Sharks hunt the nearest fish and open their jaws on the closing run; the
+  fish sees it coming and bolts, out-turning the shark, which only wins by
+  cutting the corner. A caught fish leaves a splash and returns seconds later.
+  After a meal the shark loses interest for a while.
+- It runs as a screen saver — no timer, **Escape** is the only way out — and the
+  map underneath stays fully usable throughout.
+- Both eggs work only on the GIS map; nowhere else in the app responds to them.
 
-## 1.120 — 2026-07-28 · *Updated feature*
-**The flood goes back to just filling the screen**
-- The bursting-pipe build is gone: no zoom, no shaking map, no plume, no drawn
-  pipe. Ctrl + Shift + F simply floods the screen again.
-- Back to waves rolling in as the water rises, then bubbles, fish, and the
-  occasional shark and turtle once it is full. Escape is still the only exit.
-- The moving water stays — drifting caustics and a slow swell inside the body,
-  so it keeps flowing after the surface settles.
-
-## 1.119 — 2026-07-28 · *Updated feature*
-**The flood now starts on the real pipe: zoom in, break, flood out**
-- The drawn pipe illustration is gone. The egg zooms onto the thickest water
-  line on the map, marks it, and then that line breaks — the map itself lurches,
-  shock rings go out, and a plume stands off the break throwing droplets.
-- The water floods outwards from the break rather than rising from the bottom:
-  it spreads from the burst point across the screen behind a bright foam front,
-  then the fish, bubbles, shark and turtle arrive as before.
-- Projects with no pipe layer loaded still get the old rise-from-the-bottom
-  flood, since there is nothing there to break.
-
-## 1.118 — 2026-07-28 · *Updated feature*
-**The burst now looks like a broken main, not a firework**
-- The break is drawn as a cut pipe end — flange, barrel and open bore — with
-  water pouring out of it in an arc and spreading into a pool below, in the flat
-  vector style of the reference.
-- Animated throughout: the pipe kicks as it lets go, the jet grows out of the
-  bore and sways, light streaks run down the water, the pool spreads and
-  breathes, and spray arcs off the break.
-- The bore sits exactly on the real pipe on the map, and stays on it while the
-  view zooms in.
-
-## 1.117 — 2026-07-28 · *Updated feature*
-**The flood now starts as a burst main**
-- The easter egg picks the thickest water line on screen, zooms in on it, and
-  bursts it: a shock ring, jets spraying out under pressure, and a plume that
-  keeps boiling while the water rises out of the break.
-- The largest diameter wins, and among pipes of that diameter the longest run;
-  hidden layers and switched-off diameters are skipped. A project with no pipe
-  layer loaded just floods from the bottom as before.
-- The water itself moves now — drifting caustics and a slow swell inside the
-  body, so it keeps flowing after the surface has stopped climbing.
-- The break is labelled with the pipe diameter and layer name, in the project's
-  own units.
-- Escape still ends it, and now also returns the map to where you were before
-  it zoomed in.
-
-## 1.116 — 2026-07-28 · *Updated feature*
-**The flood turns into an aquarium**
-- Waves now roll in as the water rises, instead of the surface simply climbing.
-- Once the screen is full the water stays, and the tank comes alive: bubbles
-  drift up, six fish swim past at different depths and speeds, and a shark and
-  a sea turtle cross from time to time.
-- It runs as a screen saver now — no timer. **Escape** is the only way out, and
-  a small "Press Esc" hint sits at the bottom.
-- The map underneath is still fully usable throughout.
-
-## 1.115 — 2026-07-28 · *New feature*
-**Flood**
-- **Ctrl + Shift + F** on the GIS map slowly floods the screen with water —
-  rising surface, drifting waves and bubbles — then drains away. Escape ends it
-  early.
-- The water never blocks the map: you can keep panning, clicking and editing
-  while it rises.
-
-## 1.114 — 2026-07-28 · *New feature*
-**Choose whether the DMA boundaries ship as a shapefile**
-- The export now asks whether to include the **DMA shapefile**. It is **off by
-  default**: LeakZon reads the areas from the Groups file, so the shapefile is
-  redundant for it.
-- Tick it when the boundaries are going into a different GIS platform, where the
-  shapefile is the only way to carry them.
-- Every other layer's shapefile is unaffected — only the DMA one is optional.
-
-## 1.113 — 2026-07-28 · *Bug fix + Updated feature*
-**No duplicate meters in the export, and files named after the project**
-- A main meter serving more than one DMA appeared **once per DMA** in the Meter
-  Data file. It is one meter, so it now appears once.
-- The **Groups** file is unchanged and still lists it once per DMA — that file
-  describes which areas a meter belongs to, so those rows are meant to be there.
-- Exported files now start with the project name:
-  **`Obion TN_meter_data.xlsx`**, **`Obion TN_groups.xlsx`**,
-  **`Obion TN_meters_no_dma.xlsx`** — so several exports can sit in one folder
-  without guessing which is which.
-
-## 1.112 — 2026-07-28 · *Bug fix*
-**Excel files open without a warning**
-- Every spreadsheet the platform produced made Excel warn that *"the file format
-  and extension don't match — the file could be corrupted or unsafe"*. The files
-  were named **.xls** but their contents were a different format, so Excel
-  refused to open them without a confirmation.
-- They are now genuine **.xlsx** files and open normally.
-- Affects the LeakZon export (Meter Data, Groups, meters without a DMA), the
-  meter table export, and the DMA data export.
-- Existing files already downloaded still show the warning — export again to get
-  a clean copy.
-
-## 1.111 — 2026-07-28 · *Updated feature*
-**Export to LeakZon rewritten to the Main platform's import format**
-- The export now produces **three files** plus the shapefiles: **Meter Data**,
-  the new **Groups** file, and the existing separate file for meters with no DMA.
+## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+**Export to LeakZon: analyse first, then export in the Main platform's own format**
+- The export **starts with an analysis**. Before anything downloads you see the
+  DMA count, meters assigned vs not, mains vs subs, which DMAs have no main
+  meter, main meters linked to no DMA at all, and meters with no coordinates —
+  then you choose whether to continue. The insights are shown again at the end,
+  with a **Continue to LeakZon platform** button.
+- It produces **three files** plus the shapefiles: **Meter Data**, **Groups**,
+  and a separate file for meters with no DMA. Nothing is dropped — every meter
+  appears in one file or the other.
 - **Meter Data** carries the exact columns and order the Main platform expects,
-  with constants filled in — Installation Date is today, Unit follows the
-  project's water unit ("US gallons" or "m3"), multiplier 1, Isactive TRUE, ufr
-  FALSE, meter type water — and Location as latitude and longitude in one
-  comma-separated field.
+  with constants filled in: Installation Date today, Unit following the project's
+  water unit, multiplier 1, Isactive TRUE, ufr FALSE, meter type water, and
+  Location as latitude and longitude in one field. Headers are always English,
+  whatever language the app is set to.
 - **Groups** lists each meter's identifier, whether it is a main, its DMA name,
-  whether it is a root, type REGULAR, and its communication.
-- You now **choose which fields make up the Identifier** (joined with commas)
-  and **which field is the Meter Number**, and each option shows how many meters
-  actually have a value — so a column can't be exported empty by accident.
-- **Both files can be previewed before exporting**, with the choices applied
-  live.
-- Communication is **AMI** for every main; sub-meters use the new **Sub-meter
-  communication** setting in Project Settings.
-
-## 1.110 — 2026-07-28 · *New feature*
-**Project type — AMI or Hybrid**
-- New projects now choose a **Project type**: **AMI** (all meters read remotely)
-  or **Hybrid** (a mix of remote and manual reads). New projects start on AMI.
-- Existing projects can be set from **Edit project** on the dashboard.
-- Projects created before this show **no type** rather than being assumed to be
-  AMI — pick one when you next edit them.
-
-## 1.109 — 2026-07-28 · *New feature*
-**Root field on the meter editor**
-- Editing a meter now has a **Root** field with **Yes / No** radio buttons,
-  stored as true or false.
-- Every existing meter starts as **No**, and the field can never be left blank —
-  it is always one or the other.
-
-## 1.108 — 2026-07-28 · *New feature*
-**Coffee break**
-- **Ctrl + Shift + C** on the GIS map brews a coffee. It fills for ten seconds
-  with a countdown, then clears itself. Escape or "skip" ends it early.
-- Only on the map — nowhere else in the app responds to it.
-
-## 1.107 — 2026-07-28 · *New feature*
-**Edit DMA can reduce the number of points in a boundary**
-- When you open **Edit DMA**, the outline is checked to see whether it can be
-  drawn with fewer points. If it can, the panel says how many there are now and
-  how many there would be — for example *"50 → 34"* — and waits for you to
-  choose.
-- Nothing happens automatically, and nothing is offered when the shape is
-  already as simple as it can be, so the prompt only appears when it is worth
-  acting on.
-- After reducing, an **Undo** restores the original outline. The change is not
-  saved until you save the DMA, so leaving without saving also discards it.
-- The area is preserved: only points that sit on a straight line between their
-  neighbours are removed. Across the existing 91 DMAs the largest area change
-  would be under 1%.
-
-## 1.106 — 2026-07-28 · *Updated feature*
-**Green border on the Edit DMA panel**
-- The Edit DMA panel now has a green border, the same as the layer and meter
-  editors, so all three floating editors look alike and stand out against the
-  map.
-
-## 1.105 — 2026-07-28 · *Bug fix*
-**Deleting a main meter now works instead of silently doing nothing**
-- Selecting a main meter in the Meter Data table and confirming the delete
-  appeared to work, but the meter stayed. The database refuses to delete a meter
-  that a DMA is using as its main, and that refusal was only written to the
-  browser log — so the dialog closed as if it had succeeded.
-- The DMA is now unlinked first, so the delete goes through, and the
-  confirmation **names the DMAs that will be left without a main meter**.
-- If a delete still fails for any reason, it now says so instead of closing
-  quietly. It also checks the meters are really gone before reporting success.
-- Sub-meters and mains not linked to any DMA were never affected — they deleted
-  normally.
-
-## 1.104 — 2026-07-28 · *Bug fix + Updated feature*
-**Pipe diameters use the project's own units, and the DMA editor can be moved**
-- Diameter labels always said **mm**, whatever the project used. On a project set
-  to miles/feet they now read in **inches**, and the same unit is used in the
-  layer panel legend, the layer editor's pipe list and the prompt when drawing a
-  line by hand.
-- The number itself is never converted — it is whatever the utility surveyed.
-  Where a value already carries its own unit (`12"`, `63 מ"מ`) it is left
-  exactly as written, so nothing reads `12"mm` any more.
-- The **DMA edit panel can now be dragged**. It was pinned to the top centre of
-  the map — often directly over the DMA being edited.
-
-## 1.103 — 2026-07-28 · *Bug fix*
-**Product Overview now reads like the document it came from**
-- The overview was borrowing the changelog's styling, which is built for a
-  version list: body text was greyed out and cramped, **every bold phrase came
-  out green**, and a horizontal rule was drawn above each section.
-- It now has its own typography — full-contrast body text with proper line
-  spacing, normal bold, clear gaps between sections, styled tables, dividers and
-  note boxes — so the panel matches the file it is written in.
-- Heading colours are unchanged: blue sections, green components, amber wizard
-  stages.
-
-## 1.102 — 2026-07-28 · *New feature*
-**Network blocks show their main meter, and linked DMAs arrive together**
-- A DMA block now shows its **main meter** — the meter measuring water into that
-  area — with a blue inward arrow.
-- Where that same meter is also billed as a **sub-meter of a neighbouring DMA**,
-  both blocks say so: the supplying DMA notes "also sub in …", and the
-  neighbouring DMA shows the meter with an amber outward arrow and the area it
-  feeds. The two roles are never shown the same way, so it is always clear which
-  is which.
-- **Dragging one of a linked pair now brings the other with it**, already
-  connected — placed to its right, with the arrow running from the DMA that
-  bills the meter to the DMA it supplies. Works from either end.
-- The DMA list marks these with **"+ linked DMA"** so you know before dragging.
-
-## 1.101 — 2026-07-28 · *New feature*
-**Product Overview added to Version Updates**
-- A new **Product Overview — How the platform works** section sits above the
-  changelog in Version Updates.
-- It describes the dashboard and every working view, then each component —
-  layers, meters, DMAs, isolation points, consumption, annotations and the
-  customer view — and finally walks the nine onboarding steps in order, stage by
-  stage.
-- Headings are colour-coded: **blue** for sections, **green** for components,
-  **amber** for the wizard stages.
-- Kept as a file in the project (`Product_overview.md`), so it can be edited
-  like the changelog and is published with each release.
-
-## 1.100 — 2026-07-28 · *Updated feature*
-**Version number moved to the left of the bottom strip**
-- The version now sits on the **left** of the strip instead of the centre.
-- The dividing line above the strip is gone — it shares its background with the
-  side menu, so the line only split one surface in two.
-
-## 1.099 — 2026-07-28 · *Updated feature*
-**Bottom strip is thinner and matches the side menu**
-- The strip is now **28px** instead of 40px.
-- It was a lighter shade than the side menu in dark mode. Both now use the same
-  background, so the strip and the menu read as one surface. Light mode is
-  unchanged — both were already white, which is why it only showed in dark mode.
-
-## 1.098 — 2026-07-28 · *Updated feature*
-**Version number moved into the bottom strip**
-- "Ver 1.098" now sits **in** the bottom strip, centred, instead of above it at
-  the foot of the side menu.
-- The update badge moved with it, so a newer version is still flagged in the
-  same place and clicking it still offers to refresh.
-- The Import / Export page has the same strip now, so the version is in the
-  same place throughout a project.
-
-## 1.097 — 2026-07-28 · *Updated feature*
-**Bottom strip now matches the other panels**
-- The strip added in 1.096 was solid black. It now uses the same background as
-  the header and the panels — **white in light mode**, the same dark tone in
-  dark mode — with the standard divider line above it.
-
-## 1.096 — 2026-07-28 · *Updated feature*
-**Black strip along the bottom of the project page**
-- A black band now runs across the bottom of the project page, the same height
-  as the version block in the side menu — measured from its divider down to the
-  bottom edge (40px).
-- The map gives up the space rather than the strip being squeezed, so it stays
-  the same height at any window size.
-
-## 1.095 — 2026-07-28 · *Updated feature*
-**Custom layer icons removed**
-- The **Custom icon** option has been removed from Edit Layer. Layers are styled
-  with shape, size, colour and outline colour.
-- Two layers in "Woodlawn - Internal" were still using an icon and now show
-  their shape instead. Keeping the option hidden while leaving their icon in
-  place would have left them stuck — an icon hides the shape controls, so there
-  would have been no way to restyle them.
-
-## 1.094 — 2026-07-28 · *Updated feature*
-**Edit Layer redesigned into clear sections that fit on screen**
-- The panel is now grouped into **Details**, **Colour**, **Shape & size**,
-  **Custom icon** and **Pipe widths**, instead of one long list of fields.
-- **One colour palette instead of two.** Shape colour and outline colour now
-  share a palette with a small Shape / Outline switch. Two stacked palettes made
-  the panel taller than the screen, which is what pushed the buttons out of
-  view.
-- Shapes are compact icon buttons that wrap, so the new octagon fits without
-  crowding, and fill style and size sit on single labelled rows.
-- The **Save** and **Cancel** buttons are pinned to the bottom and always
-  visible; only the middle scrolls.
-- The "Apply defaults" prompt is now a small button in the Shape & size header
-  rather than a banner taking a full row.
-
-## 1.093 — 2026-07-28 · *New feature*
-**Octagon added to the layer shapes**
-- **Octagon** joins circle, star, square and triangle in the shape picker, for
-  layers and for the dashboard component defaults.
-- The shapes were defined separately in four places, so a new one would have
-  appeared on the map but not in the picker used to choose it — they now all
-  come from one definition.
-
-## 1.092 — 2026-07-28 · *Bug fix*
-**The ruler can now be placed anywhere, including on top of components**
-- Measuring points could not be placed on a meter, valve, pipe or any other
-  component — the click was taken by that component instead, so you had to aim
-  at bare map just beside it. Exactly where you most often want a measurement.
-- Clicks now reach the map wherever you point while the ruler is active.
-- The measurement line, its points and its distance labels now draw **above
-  every layer**, so a layer on top can no longer hide what you are measuring.
-- Popups still work normally; only measuring mode changes this.
-
-## 1.091 — 2026-07-28 · *Bug fix + Updated feature*
-**Sub-meters can now be properly filled, and dark colours are available**
-- Choosing **filled** on a sub-meter layer still looked washed out. Sub-meters
-  were locked to 45% fill whatever the layer's setting, so they never looked
-  filled — worst of all with a dark colour. Filled now means filled, for main
-  and sub alike.
-- Meters marked **inactive** are still shown faded, so they stay easy to pick
-  out.
-- **Added 13 dark colours** to the palette — dark green, red, orange, olive,
-  emerald, teal, blue, indigo, violet, magenta and pink. Every colour was
-  previously a mid or bright tone, so a genuinely dark shade could not be
-  chosen at all.
-- The new colours appear everywhere the palette is used: layer settings, DMA
-  settings and the dashboard component defaults.
-
-## 1.090 — 2026-07-28 · *Bug fix*
-**Fixed the black screen when opening a project**
-- Opening a project showed a black screen. The meter editor rewritten in 1.089
-  used something that was never imported, which crashes the whole page the
-  moment it renders.
-- Only affected the preview site — the live site was never on that version.
-- The project checks now catch this kind of mistake before it can ship. It had
-  slipped through twice, because building the app doesn't reveal it; only
-  running the page does.
-
-## 1.089 — 2026-07-28 · *Updated feature*
-**Meter editor is now a floating panel, and every meter has a status**
-- The meter editor is a **floating, draggable panel** instead of a centred
-  dialog — drag it by its header and keep working on the map underneath. It
-  widens when you open the location picker, and scrolls rather than growing off
-  screen.
-- **16,371 meters that had no status are now Active.** They showed as "N/A"
-  because the file they came from carried no status column. The 1,203 meters
-  explicitly marked inactive were left exactly as they were.
-- The screen flicker over the map is confirmed fixed. It was caused by Vercel's
-  performance tracking, which stays switched off.
-
-## 1.088 — 2026-07-28 · *New feature*
-**Edit a meter straight from the map**
-- Clicking a meter on the map — main, insertion, ultrasonic or sub — now offers
-  **Edit meter details**, opening the same editor as the Meter Data table.
-- Everything is editable there as usual: UID, account, address, provider,
-  diameter, coordinates, meter type, and the DMA links.
-- Saving refreshes the map and the DMA panel straight away, so a changed main
-  meter or DMA link shows without leaving the map.
-- The button is hidden on locked projects, matching the Meter Data table.
-
-## 1.087 — 2026-07-28 · *Bug fix*
-**Dashboard project figures were frozen and are now kept up to date**
-- The meter and DMA numbers on the projects dashboard were a stored snapshot
-  that **nothing was updating**. Obion TN showed 4 imported meters and 0
-  assigned to a DMA, against 599 and 594 actually in the project, and a project
-  created since the last manual refresh was **missing from the chart entirely**.
-- The scheduled job that keeps these figures current was never set up when the
-  platform moved off Base44. It now runs **every 15 minutes**.
-- The figures have also been refreshed once now, so the dashboard is already
-  correct — Obion TN reads 599 meters and 594 assigned.
-- The "force refresh" button still works for an immediate update.
-
-## 1.086 — 2026-07-28 · *Updated feature*
-**Imported meters default to Active**
-- Meters now come in as **Active** unless the file explicitly says they are not.
-- Previously a meter was left as **N/A** whenever the file had no status column,
-  or had one that was blank or held something unrecognised — so most imports
-  produced meters with no status at all.
-- Only a clear inactive value marks a meter out of service: *inactive, no,
-  false, 0, not active, disabled, off, dead*. Anything else counts as Active.
-- Applies to all three ways meters are created: meter data files, the carbon
-  copy import, and meters created from a map layer.
-- **Meters already imported keep their current status.** There are 16,371 with
-  no status; ask and they can be set to Active in one go.
-
-## 1.085 — 2026-07-28 · *Updated feature + Bug fix*
-**Meter table shows Meter ID, Account ID and Endpoint ID**
-- The meter table now has **Meter ID**, **Account ID** and **Endpoint ID**
-  columns next to the UID. **Comm.** and **Additional IDs** have been removed.
-- **Fixed the reason those columns would have been empty:** importing meter data
-  only kept *one* extra ID column — whichever became the UID — and threw the
-  rest away. The Account ID in your files was being discarded at import, so it
-  existed nowhere in the system. All ID columns in the file are now kept.
-- **Files imported before this keep only what they kept at the time.** Re-import
-  to pick up the Account ID and any other ID columns; the discarded values
-  aren't recoverable from what was stored.
-
-## 1.084 — 2026-07-27 · *New feature*
-**The project page and the customer view now keep each other up to date**
-- When the customer adds an annotation, the **annotation badge appears in the
-  project side menu on its own** — no reloading to find out.
-- When you send a **Request Design Approval**, the approve button appears in the
-  customer's view even if they already had the page open. It has a dark border
-  and pulses gently so it is noticed. The pulse stops on hover, and is disabled
-  for anyone who has asked their system to reduce motion.
-- When the customer approves, the project page **locks itself and tells you**,
-  naming who approved and reminding you that unlocking in Project Settings
-  withdraws the approval.
-- Both sides check every 15 seconds, and immediately whenever you switch back to
-  the tab. The check is deliberately tiny — 162 bytes rather than reloading the
-  whole project — so it costs nothing on large projects.
-
-## 1.083 — 2026-07-27 · *Updated feature*
-**A main meter serving several DMAs is now one row listing them all**
-- A main meter that feeds more than one DMA used to show the first DMA only.
-  It now stays as **a single row** with every area listed in the DMA column —
-  "North DMA, North Central".
-- The one case that does add a row: a main meter that is also **metered as a
-  sub-meter of another DMA** (the "Sub-Meter in" field). It then appears a
-  second time as a **Sub** row for that area, with a copy icon beside it.
-- That extra row is a view of the same meter, not another meter — it is **not
-  included in any of the counts** and can't be selected for deletion.
-
-## 1.082 — 2026-07-27 · *Updated feature*
-**Deleting a layer now asks first, and shows its progress**
-- Deleting a layer used to happen the instant you clicked the bin. It now asks
-  for confirmation and states plainly that it cannot be undone.
-- When the layer has meters, the confirmation says **how many will be deleted**
-  along with their consumption history — so a layer with thousands of meters
-  can't be removed by a stray click.
-- While it runs, a progress bar counts down from **100% to 0%** and names each
-  stage: unlinking DMA main meters, removing isolation points, deleting meters
-  and readings, removing the layer. Large layers take a while, and it was
-  previously impossible to tell whether anything was happening.
-
-## 1.081 — 2026-07-27 · *Bug fix*
-**Auto-created DMAs no longer leave the outermost meters unassigned**
-- An auto-drawn DMA was traced exactly through the outermost meters, so those
-  meters sat precisely *on* the edge and counted as outside it — they showed up
-  as unassigned along the rim of every DMA.
-- Auto-created DMAs now get **25 m of breathing room** beyond the outermost
-  meters, so the meters that define the shape sit inside it.
-- On "Obion Oren (test)" this takes the unassigned sub-meters from **26 to 0**,
-  without any meter falling into two DMAs.
-- **DMAs already created keep their current shape.** Delete and re-create them
-  to pick up the margin, or nudge their outline by hand.
-
-## 1.080 — 2026-07-27 · *Bug fix*
-**Meter imports keep their DMA names, and land in the right category**
-- Importing meters with a DMA column announced "DMA names detected", then
-  **"Auto-Create DMAs" reported none**. The names were being thrown away during
-  the import: they were only kept when a matching DMA already existed, and on a
-  first import none do — which is exactly when you need them.
-- The name from the file is now stored with each meter, so Auto-Create DMAs can
-  build the areas from it. Once the areas are created, the meters that named
-  them are **linked to them automatically**.
-- Imported meter layers showed a category of **Other**. They were never given a
-  category at all. A split import now creates its layers as **Main Meters** and
-  **Sub Meters**, and an unsplit one follows the Main/Sub choice you made.
-- **For a file already imported before this fix:** re-import it to pick up the
-  DMA names. The layer category can be corrected in the layer's settings
-  without re-importing.
-
-## 1.079 — 2026-07-27 · *New feature + Bug fix*
-**Valve points can now be moved on the map**
-- Any imported point layer — valves, hydrants, structures — now has the same
-  **edit points on map** button that manual layers have. Turn it on, drag a
-  point to its correct position, and save.
-- Useful where a surveyed valve sits a few metres off and you want to correct it
-  while reviewing the network.
-- **Fixed a data-loss risk found while adding this:** saving a point layer used
-  to rebuild each point from a short fixed list of fields, throwing away every
-  other attribute. Woodlawn's valve layer carries 21 columns — diameter,
-  condition, turns, install date, GPS accuracy and more — and all of them would
-  have been wiped by a single point move. Every attribute is now kept; only the
-  coordinates change.
-- Line layers (water mains) and boundary layers are deliberately not included:
-  the line editor rebuilds features from drawn segments and keeps only the
-  diameter, and boundaries have their own editor.
-
-## 1.078 — 2026-07-27 · *Bug fix*
-**Customer view now shows annotations properly instead of blank "Drawing" entries**
-- In the shared customer view, every annotation appeared as an untitled
-  **"Drawing"** and none of them were drawn on the map — comments lost their
-  text, arrows lost their direction, drawings lost their shape.
-- The annotations were being read in a format the database no longer uses (a
-  leftover from the Base44 migration), so their contents were silently thrown
-  away and only an empty shell remained.
-- They now load correctly, keeping their type, text and position. **Existing
-  annotations are unaffected and reappear on their own** — nothing was lost,
-  only misread.
-- The project-side "Customer Annotations" panel was always reading them
-  correctly, which is why the same annotations looked fine there.
-
-## 1.077 — 2026-07-27 · *Bug fix*
-**Fixes "Project not found" for LeakZon users with an out-of-date sign-in**
-- A LeakZon user could open a project and be told it wasn't found, while an
-  admin opened the same project fine. Their sign-in token was carrying an
-  out-of-date account type, so the database correctly refused rows they were
-  actually entitled to.
-- The app now notices this and **renews the sign-in automatically**, then loads
-  the project. Nothing to do — no signing out and back in.
-- It only retries once per project, so a project you genuinely cannot open still
-  fails cleanly instead of looping.
-- Confirmed the permissions themselves are correct: a freshly signed-in LeakZon
-  account sees all 22 projects and opens them normally.
-
-## 1.076 — 2026-07-27 · *Updated feature*
-**"Project not found" now tells you which account it refused**
-- "Project not found" was shown for two completely different situations: the
-  project genuinely not existing, and the database refusing it because the
-  account you are signed in as has no access. They looked identical, which made
-  the real cause impossible to see.
-- The screen now names the account it was signed in as, and points out that
-  **each web address keeps its own separate sign-in** — the preview site and the
-  live site do not share one, so you can be signed in as different people on
-  each without realising.
-- The browser console now records exactly why: the database's own error code,
-  the signed-in email, that account's user type, and whether its token had
-  expired.
-
-## 1.075 — 2026-07-27 · *Bug fix*
-**"Forgot password?" now actually sends the email**
-- The forgot-password flow generated a temporary PIN and told you to check your
-  email, but **no email was ever sent** — the sending step was never finished
-  during the migration, so the PIN went nowhere and nobody could reset a PIN
-  without an administrator.
-- It now emails the temporary PIN, using the same mail service the Mobile
-  Locator email already uses. The PIN expires after 30 minutes and works once.
-- Requesting a reset does **not** change your current PIN — it keeps working
-  until you actually complete the reset.
-- The temporary PIN is no longer written to the server logs, where anyone with
-  project access could have read it.
-
-## 1.074 — 2026-07-27 · *Updated feature*
-**Change-type tags are orange in the changelog**
-- The **Bug fix** / **New feature** / **Updated feature** tag on each version
-  line is now orange, so it stands apart from the blue version number and date.
-
-## 1.073 — 2026-07-27 · *Updated feature*
-**Every changelog entry now says what it is**
-- Each version in this changelog is tagged as a **Bug fix**, **New feature** or
-  **Updated feature** — or a combination — so you can see at a glance what a
-  version contains without reading it.
-- Applied to all 73 entries back to 1.000. A short guide to the tags is at the
-  top of the changelog.
-- The "what's new" heading had drifted into the middle of the file as entries
-  were added above it; it's back at the top.
-
-## 1.072 — 2026-07-27 · *Bug fix*
-**Opening a project no longer throws you back to the dashboard**
-- The bounce was caused by a change of mine in 1.068: if the sign-in had not
-  finished being restored within 3 seconds, the app assumed you were signed out
-  and sent you back to the dashboard. A slow token refresh looks exactly the
-  same as being signed out, so a perfectly valid sign-in got treated as expired.
-- The app no longer navigates you anywhere on its own. It waits, and loads the
-  project the moment the sign-in is ready — however long that takes.
-- If the sign-in really has expired you now get a clear **"Your sign-in has
-  expired"** message with a button, instead of being silently bounced.
-- The waiting time before giving up went from 3 seconds to 15.
-
-## 1.071 — 2026-07-27 · *Bug fix*
-**Fixed being bounced back to the dashboard when opening a project**
-- Root cause of this and the last two problems: your sign-in can quietly expire
-  on the Supabase side, but the app kept a local record saying you were still
-  signed in. It then looked logged in while the database refused every request —
-  showing an empty dashboard, "Project not found", or bouncing you back to the
-  dashboard after a few seconds.
-- The app now notices when the sign-in has ended and takes you to the **sign-in
-  screen**, instead of pretending you are still signed in. Signing in again
-  restores everything.
-- The dashboard no longer keeps showing cached projects once the sign-in has
-  gone, which is what made the problem look like it was only about opening a
-  project.
-
-## 1.070 — 2026-07-27 · *New feature*
-**New "Sub-Meter in" field on main meters, with suggested DMAs**
-- Editing a main meter (any type) now has a **Sub-Meter in** field alongside
-  **Linked DMA** — for the DMA that meters this meter as one of its consumers.
-  A main meter usually supplies one DMA while sitting inside a neighbouring one.
-- The DMA already chosen as Linked DMA is not offered under Sub-Meter in, since
-  a meter cannot both supply a DMA and be metered by it.
-- Both dropdowns now mark a suggestion with **(recommended)**, worked out from
-  the network: the Linked DMA suggestion is the DMA the meter sits inside (or
-  the closest one), and the Sub-Meter suggestion is the nearest other DMA. The
-  Sub-Meter suggestion updates as soon as you change the Linked DMA.
-- **Nothing is selected for you** — the suggestion is only a label, the choice
-  stays yours.
-- Meters with no coordinates get no suggestion rather than a misleading one.
-
-## 1.069 — 2026-07-27 · *Updated feature*
-**Turned off Vercel Speed Insights while chasing a screen flicker**
-- Investigating a flicker seen when moving the mouse over the map — reported on
-  the live site only, never on preview.
-- Speed Insights is the one thing that genuinely runs on the live site but not
-  on preview (the preview URL is behind a login, so its script never loads),
-  and it hooks into every mouse interaction to measure responsiveness. It is
-  switched off so we can confirm whether it is the cause.
-- Nothing else changes. If the flicker continues, it is not this, and the
-  setting goes straight back on.
-
-## 1.068 — 2026-07-27 · *Bug fix*
-**Fixed "Project not found" when opening a project**
-- Opening a project straight after loading the app could show **"Project not
-  found"** even though the project was right there on the dashboard. The page
-  asked for the project before your sign-in had finished being restored, so the
-  database correctly refused it — and a refused row looks exactly like a
-  missing one.
-- Same cause as the empty dashboard in 1.066. Every page that loads data on
-  open now waits for your sign-in first, through one shared piece of code
-  rather than each page handling it separately — so this cannot come back on a
-  page nobody thought to check.
-- If you really are signed out, you now get sent to the dashboard to sign in
-  instead of a misleading "not found" message.
-- The upload page had the same fault and is fixed too.
-
-## 1.067 — 2026-07-27 · *Updated feature*
-**Version number in the project side menu is green and centred**
-- In a project, the "Ver" line at the bottom of the side menu is now green and
-  centred, in both the expanded and collapsed states — it was grey and
-  left-aligned when the menu was open.
-
-## 1.066 — 2026-07-26 · *Bug fix*
-**Fixed the dashboard showing no projects at all**
-- After a deploy, the dashboard could come up completely empty and stay that
-  way. The project list is loaded as soon as the page opens, but the saved
-  sign-in is restored a moment later — so the request went out unauthenticated
-  and came back with nothing, which looked exactly like "you have no projects".
-- That empty result was then saved to the local cache and reused for an hour,
-  so reloading did not help.
-- The dashboard now waits for your sign-in before loading, never caches an
-  empty list, and reloads by itself the moment the session is restored. No
-  action needed — affected browsers recover on the next page load.
-
-## 1.065 — 2026-07-26 · *Bug fix*
-**Export analysis no longer counts a DMA as having a main meter it isn't linked to**
-- A DMA was treated as having a main meter whenever *any* main happened to sit
-  inside its area, even when no main was actually assigned to it. In Obion TN
-  that made "Central DMA" look complete — the analysis said 5/5 DMAs had a main
-  and no placeholder main was created for it.
-- A main meter now counts for a DMA **only when it is actually assigned to it**.
-  Main meters sit at inlets and boundaries and are often inside a DMA they do
-  not feed, so where they happen to fall says nothing about what they serve.
-- **Expect lower numbers here than before, and more placeholder mains.** They
-  reflect what is really assigned: Woodlawn has 2 of 5 DMAs with a main meter,
-  Pardesiya 0 of 4. Assigning the real main meters is what fixes those — the
-  placeholders only keep the export valid.
-- A main meter serving **several DMAs** now appears once per DMA in the export,
-  each row carrying that DMA's name, so no DMA is left without a main meter row.
-- New insight: **main meters not linked to a DMA**. These go to the separate
-  no-DMA file, and are usually the reason a DMA is missing its main.
-
-## 1.064 — 2026-07-26 · *Bug fix*
-**Removing a DMA's main meter now clears the DMA from that meter's record**
-- Unassigning a main meter from a DMA clears the DMA against that meter in the
-  Meter Data table, and in the LeakZon export. Previously the meter kept its
-  stored DMA, so it still exported under a DMA it was no longer linked to.
-- A main meter serving more than one DMA keeps the others — only the link you
-  removed is cleared.
-- A main meter shows a DMA only when it is actually linked to one. It no longer
-  picks one up just for sitting inside its area, which was why the DMA stayed
-  visible after unassigning.
-- **Fixed:** the DMA column in the Meter Data table was reading a field that no
-  longer exists, so **sub meters showed a blank DMA** even when they sat inside
-  one. They now show their DMA.
-- Saving a DMA now reports a failure instead of closing as if it had worked,
-  and the meter list refreshes after the change.
-
-## 1.063 — 2026-07-26 · *New feature + Updated feature*
-**Export to LeakZon analyses first, and DMA/boundary export as outlines**
-- The export now starts with an **analysis step**. Before anything is
-  downloaded you see the DMA count, how many meters are assigned vs not, mains
-  vs sub meters, which DMAs have no main meter, and how many meters have no
-  coordinates — then choose whether to continue.
-- **DMA.shp** and the **boundary** layer now export as outlines rather than
-  filled areas, so they sit over the map without hiding what is beneath.
-  DMA outlines are **black**, boundary outlines **red dashed** — carried both
-  as the shape geometry and as `color` / `style` attributes.
-- After the export finishes, the insights are shown **first**, with a
-  **Continue to LeakZon platform** button. The confetti now fires on that step
-  rather than interrupting the summary.
-
-## 1.062 — 2026-07-26 · *New feature + Updated feature + Bug fix*
-**Export to LeakZon now analyses the meters first, and reports what it found**
-- Meters **not assigned to any DMA** are written to their own
-  `meters_no_dma.xls` instead of being mixed into the main file. Nothing is
-  dropped — every meter still appears in one file or the other.
-- New **DMA Name** column. A meter's DMA comes from its explicit assignment,
-  or from which DMA polygon it falls inside — the same test the dashboard's
-  DMA counts use, so the numbers agree.
-- The **Type** column ("Main"/"Sub") is replaced by **Is Main**, with `TRUE`
-  for main, insertion and ultrasonic meters and `FALSE` for sub meters.
-- If a DMA has **no main meter**, a placeholder main is added for it: a numeric
-  UID that continues past the highest one already in the project, account name
-  `<DMA name>_Fic`, placed at the centre of the DMA.
-- Column headers are always English, whatever language the app is set to.
-- The finished dialog now shows **export insights**: meters assigned vs not,
-  mains vs subs, DMAs with a main meter, placeholder mains added (and for which
-  DMAs), and meters with no coordinates.
+  whether it is a root, type REGULAR, and its communication — AMI for every main,
+  and the **Sub-meter communication** project setting for sub-meters.
+- You **choose which fields make up the Identifier** and **which field is the
+  Meter Number**, each option showing how many meters actually have a value, so a
+  column can't be exported empty by accident. **Both files can be previewed**
+  with the choices applied live.
+- **A DMA with no main meter gets a placeholder main** — a numeric UID continuing
+  past the highest in the project, account name `<DMA name>_Fic`, placed at the
+  DMA's centre — so no DMA is exported without one.
+- **A main counts for a DMA only when it is actually assigned to it.** Mains sit
+  at inlets and boundaries and are often inside a DMA they do not feed, so where
+  one happens to fall says nothing about what it serves. Expect lower "DMAs with
+  a main" numbers and more placeholders than before — they reflect what is really
+  assigned.
+- **No duplicate meters:** a main serving several DMAs appears **once** in Meter
+  Data. The Groups file still lists it once per DMA, which is what that file is
+  for.
+- Files are named after the project — `Obion TN_meter_data.xlsx`,
+  `Obion TN_groups.xlsx`, `Obion TN_meters_no_dma.xlsx` — so several exports can
+  share a folder.
+- **Excel no longer warns that the file is corrupt.** Every spreadsheet was named
+  **.xls** while holding a different format. They are now genuine **.xlsx**.
+  Affects the LeakZon export, the meter table export and the DMA data export;
+  re-export anything downloaded before this.
+- **DMA.shp and the boundary layer export as outlines**, not filled areas — DMA
+  outlines black, boundary red dashed — so they sit over a map without hiding it.
+  Including the DMA shapefile is now **optional and off by default**, since
+  LeakZon reads the areas from the Groups file; tick it when the boundaries are
+  going into a different GIS platform.
+- **Fixed:** the SHP/JSON export page reported "No DMAs with a valid polygon to
+  export" for every project — it was reading the wrong column.
 - **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
-  text "Main Meter", so its meters were being treated as mains — in Woodlawn
-  that was all 5,122 sub meters. Sub-meter layers are no longer promoted.
+  text "Main Meter", so its meters were exported as mains — in Woodlawn that was
+  all 5,122 sub meters.
 
-## 1.061 — 2026-07-26 · *New feature*
-**Each user can have a default country for the projects dashboard**
-- The user list has a new **Country View** column showing which country that
-  user's projects dashboard opens on — **All Countries** unless set.
-- Editing a user offers the same choices as the dashboard's country menu (the
-  countries actually in use by projects) plus **All Countries**.
-- The dashboard now opens on that country. It is only a starting point: the
-  country menu still works exactly as before, and switching there does not
-  overwrite the saved preference.
+## 1.109, 1.110 — 2026-07-28 · *New feature* · **Important**
+**Project type, and a Root flag on every meter**
+- New projects choose a **Project type**: **AMI** (all meters read remotely) or
+  **Hybrid** (a mix of remote and manual). New projects start on AMI; existing
+  ones can be set from **Edit project** and show no type until you pick one.
+- The meter editor has a **Root** field with **Yes / No** radio buttons. It is
+  never blank — every existing meter starts as **No** — and it feeds the Root
+  column in the LeakZon export.
 
-## 1.060 — 2026-07-26 · *New feature*
-**Preview refreshes itself as soon as a new build is deployed**
-- On the preview site the tab now checks for a new build every 30 seconds and
-  reloads itself the moment one lands — no prompt, no manual refresh. Caches are
-  cleared first so it genuinely picks up the new build.
-- This runs on every screen, not only the ones showing the version number.
-- Production is unchanged: it still checks hourly and asks before reloading, so
-  nobody loses work mid-task.
-- Note: on preview an auto-reload will discard anything unsaved, which is the
-  trade for always looking at the newest build.
+## 1.041, 1.081, 1.104, 1.106, 1.107 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+**DMA editing: a movable panel, fewer boundary points, and auto-DMAs that keep their rim meters**
+- **Edit DMA can reduce the number of points in a boundary.** Opening the panel
+  checks whether the outline can be drawn with fewer points and, if so, says how
+  many there are now and how many there would be — *"50 → 34"* — and waits for
+  you to choose. Nothing happens automatically, nothing is offered when the shape
+  is already minimal, and an **Undo** restores the original. Only points sitting
+  on a straight line between their neighbours are removed: across the existing 91
+  DMAs the largest area change would be under 1%.
+- **Auto-created DMAs no longer leave the outermost meters unassigned.** The
+  outline was traced exactly through the rim meters, so those meters sat *on* the
+  edge and counted as outside. Auto-created DMAs now get **25 m of breathing
+  room**, which took "Obion Oren (test)" from 26 unassigned sub-meters to 0
+  without any meter falling into two DMAs. DMAs already created keep their shape
+  — re-create them to pick up the margin.
+- The **DMA configuration and Edit DMA panels are floating and draggable**
+  instead of blocking modals pinned over the polygon being edited, and Edit DMA
+  has a green border matching the layer and meter editors.
+
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+**Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
+- **Edit a meter straight from the map.** Clicking any meter — main, insertion,
+  ultrasonic or sub — offers **Edit meter details**, opening the same editor as
+  the Meter Data table, with everything editable: UID, account, address,
+  provider, diameter, coordinates, type and DMA links. Saving refreshes the map
+  and the DMA panel immediately. Hidden on locked projects.
+- The editor is a **floating, draggable panel** rather than a centred dialog —
+  keep working on the map underneath while it is open.
+- **A main meter can serve more than one DMA**, and now shows as **one row**
+  listing them all ("North DMA, North Central") instead of only the first.
+  The one case that adds a row: a main also metered as a **sub-meter of another
+  DMA**, which appears again as a **Sub** row with a copy icon — a view of the
+  same meter, **not counted** anywhere and not selectable for deletion.
+- New **Sub-Meter in** field beside **Linked DMA**, for the DMA that meters a
+  main as one of its consumers. Both dropdowns mark a **(recommended)**
+  suggestion worked out from the network, but nothing is ever selected for you.
+- **Removing a main meter from a DMA now clears the DMA on that meter**, in the
+  table and in the export. A main serving several DMAs keeps the others.
+- The table shows **Meter ID, Account ID and Endpoint ID** next to the UID
+  (**Comm.** and **Additional IDs** removed) — and the reason those columns would
+  have been empty is fixed: importing kept only *one* extra ID column and threw
+  the rest away. Re-import to pick up Account ID; the discarded values aren't
+  recoverable.
+- **16,371 meters with no status are now Active.** They read "N/A" because their
+  source file had no status column. The 1,203 explicitly marked inactive were
+  left alone.
+- **Deleting a main meter now works instead of silently doing nothing.** The
+  database refuses to delete a meter a DMA uses as its main, and that refusal was
+  only written to the browser log. The DMA is now unlinked first, the
+  confirmation **names the DMAs that will be left without a main**, and a failed
+  delete says so instead of closing quietly.
+- **Fixed:** sub meters showed a blank DMA even when they sat inside one.
+
+## 1.101, 1.103 — 2026-07-28 · *New feature + Bug fix*
+**Product Overview — how the platform works**
+- A **Product Overview** section sits above the changelog in Version Updates. It
+  describes the dashboard and every working view, then each component — layers,
+  meters, DMAs, isolation points, consumption, annotations and the customer view
+  — and walks the nine onboarding steps in order.
+- Headings are colour-coded: **blue** sections, **green** components, **amber**
+  wizard stages.
+- It is kept as a file in the project (`Product_overview.md`), editable like the
+  changelog and published with each release.
+- **Fixed:** it was borrowing the changelog's styling, which is built for a
+  version list — greyed cramped body text, every bold phrase green, a rule above
+  each section. It now has its own typography, tables, dividers and note boxes.
+
+## 1.018, 1.102 — 2026-07-28 · *New feature*
+**Network design shows main meters, and brings linked DMAs across together**
+- A DMA block shows its **main meter** with a blue inward arrow. Where that meter
+  is also billed as a **sub-meter of a neighbouring DMA**, both blocks say so —
+  the supplying DMA notes "also sub in …", the neighbour shows an amber outward
+  arrow — so the two roles are never confused.
+- **Dragging one of a linked pair brings the other with it**, already connected,
+  with the arrow running from the DMA that bills the meter to the one it
+  supplies. The DMA list marks these **"+ linked DMA"** before you drag.
+- Leaving the Network Design view after making changes offers to mark the
+  wizard's **Design Network Flow** step done. "Not yet" won't ask again until you
+  change something else.
+
+## 1.036, 1.046, 1.047, 1.067, 1.096 – 1.100 — 2026-07-28 · *Updated feature*
+**The version number moved into a strip along the bottom of the project page**
+- A strip now runs across the bottom of the project page, **28px** tall, sharing
+  its background with the side menu (white in light mode) and with no divider
+  above it — the line only split one surface in two. The map gives up the space,
+  so the strip is the same height at any window size.
+- The version sits on the **left** of that strip, with the update badge beside
+  it, and the Import / Export page has the same strip — so the version is in one
+  place throughout a project.
+- The login screen shows the version too, and Version Updates moved to the bottom
+  of the dashboard side menu, above Settings.
+
+## 1.014, 1.026, 1.029, 1.032, 1.037, 1.091, 1.093 – 1.095 — 2026-07-28 · *New feature + Updated feature + Bug fix*
+**Layer styling: one palette, dark colours, an octagon, and a panel that fits**
+- **Edit Layer is grouped into sections** — Details, Colour, Shape & size, Pipe
+  widths — instead of one long list, with **Save** and **Cancel** pinned to the
+  bottom and only the middle scrolling.
+- **One colour palette instead of two.** Shape and outline colour share a palette
+  with a small Shape / Outline switch; two stacked palettes made the panel taller
+  than the screen, which is what pushed the buttons out of view.
+- **Filled means filled.** Sub-meters were locked to 45% fill whatever the layer
+  said, so they never looked filled — worst with a dark colour. Inactive meters
+  are still shown faded.
+- **Added 13 dark colours** plus white and black, and a separate **outline
+  colour**, honoured everywhere a point is drawn — map, panel swatch, legend and
+  customer view. **Octagon** joins circle, star, square and triangle.
+- **Custom layer icons removed.** Layers are styled with shape, size, colour and
+  outline. Two layers in "Woodlawn - Internal" that still used an icon now show
+  their shape — an icon hid the shape controls, so leaving them would have made
+  them impossible to restyle.
+- **Default shape / size / colour per component type** in dashboard Settings
+  (Main, Sub Main, Insertion, Ultrasonic, Valves), applied to new layers on
+  import, with an **Apply** button to pull them into an existing layer.
+- The layer settings panel is **floating and draggable**, sized to its content;
+  and its category dropdown, which briefly opened *behind* the panel, opens on
+  top again.
+
+## 1.092 — 2026-07-28 · *Bug fix* · **Important**
+**The ruler can be used anywhere, including on top of components**
+- Measuring points could not be placed on a meter, valve or pipe — the click was
+  taken by that component, so you had to aim at bare map beside it. Exactly where
+  a measurement is most often wanted. Clicks now reach the map wherever you point
+  while the ruler is active.
+- The measurement line, its points and its distance labels draw **above every
+  layer**, so nothing can hide what you are measuring.
+
+## 1.028, 1.090 — 2026-07-28 · *Bug fix*
+**Fixed two black screens**
+- Opening a project showed a black screen: the meter editor used something that
+  was never imported, which crashes the page the moment it renders. Only the
+  preview site was ever affected.
+- Turning on point numbering did the same, after a rewrite removed three helper
+  functions the point-building code still called. A second crash found while
+  verifying it — a call-stack overflow on layers with many points — is fixed too.
+- The project checks now catch this class of mistake before it can ship. It had
+  slipped through twice, because building the app doesn't reveal it; only running
+  the page does.
+
+## 1.012, 1.015, 1.020, 1.030, 1.031, 1.045, 1.061, 1.087 — 2026-07-28 · *New feature + Updated feature + Bug fix*
+**Projects dashboard: live figures, sorting, a country per user, and clearer cards**
+- **The meter and DMA figures were frozen** — a stored snapshot nothing was
+  updating. Obion TN showed 4 imported meters and 0 assigned against 599 and 594
+  actually in the project, and a newly created project was missing from the chart
+  entirely. The job that keeps them current was never set up when the platform
+  moved off Base44; it now runs **every 15 minutes**, and the figures have been
+  refreshed once already.
+- **Each user can have a default country** for the dashboard, shown as a
+  **Country View** column in the user list. It is only a starting point — the
+  country menu still works as before and switching doesn't overwrite it.
+- **Sort projects** by name, last used or progress %, in either direction;
+  default is last used, newest first.
+- Locked projects are tinted amber across the grid, the lock indicator sits
+  inline before the DMA count, Settings moved to the bottom of the sidebar, and
+  the Projects icon matches the one inside a project.
+- Opening a project shows the LeakZon wordmark filling with water instead of a
+  spinner, and the app has a new icon (favicon, tab, home screen).
+
+## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086 — 2026-07-28 · *Updated feature + Bug fix* · **Important**
+**Meter imports: nothing silently dropped, the file decides what is a main, and DMA names survive**
+- **Imports were creating no meters at all.** A meter CSV/Excel import built the
+  layer but not a single meter — nothing on the map, nothing in the table — and
+  still reported success, because it sent a field that is no longer a column and
+  never noticed the database rejecting every batch. Bulk imports now stop and
+  show the real error instead of reporting rows they never saved.
+- **DMA names from the file are kept.** They used to be thrown away unless a
+  matching DMA already existed — which on a first import is never — so
+  "Auto-Create DMAs" reported none straight after announcing they were detected.
+  The name is now stored with each meter, and once the areas are created the
+  meters that named them are linked automatically.
+- **The file decides which meters are mains.** An **"Is Main"** field
+  (`is_main`, `IsMain`, `Is Main`, `main_meter`) is honoured meter by meter;
+  `yes / true / 1 / Y / main / primary / master` mean main. **With no such field,
+  meters import as sub meters** — unless the layer is explicitly a main type by
+  category or name. Columns like `MAIN_ID` or `MAIN SIZE` are ignored, so a
+  pipe-diameter column can't mark a whole layer as mains.
+- **Imported meters default to Active** unless the file clearly says otherwise
+  (*inactive, no, false, 0, not active, disabled, off, dead*). Applies to meter
+  files, the carbon copy import, and meters created from a map layer.
+- **Layer categories are detected instead of defaulting to Other**, which is what
+  left meter layers showing a feature count but 0 meters. A split import creates
+  **Main Meters** and **Sub Meters** layers; meter-type shapefile/GeoJSON imports
+  create real meter rows. The plain **"Meters"** category was removed as
+  confusing, **Ultrasonic Meters** added as a real category.
+- **Repair for a layer already imported wrong:** open its settings and set the
+  category — saving creates the missing meter records from the layer's own
+  points, and only when it has none, so it can't duplicate them. Re-import to
+  pick up DMA names.
+
+## 1.010, 1.011, 1.049, 1.051, 1.078, 1.084 — 2026-07-27 · *New feature + Bug fix* · **Important**
+**Customer view: design approval, and both sides staying in step**
+- The customer can **approve the network design** from the shared view. They
+  confirm and enter their name, the dialog spelling out that approving locks the
+  project. On approval the project locks in their name, a green banner appears,
+  and every wizard step except "Export to LeakZon" is marked done. Unlocking in
+  Project Settings withdraws the approval.
+- **The project page and the customer view keep each other up to date.** A
+  customer annotation raises the badge in the project side menu on its own; a
+  **Request Design Approval** makes the approve button appear in a customer's
+  already-open page, pulsing gently until noticed; an approval locks the project
+  page and tells you who approved. Both sides check every 15 seconds and on tab
+  focus, with a 162-byte check rather than a full reload.
+- **Fixed:** every annotation in the customer view appeared as an untitled
+  "Drawing" with nothing drawn — comments lost their text, arrows their
+  direction. They were being read in a format the database no longer uses, a
+  leftover from the Base44 migration. Nothing was lost, only misread, and they
+  reappeared on their own.
+- **Fixed:** "Approve this design" appeared to do nothing and froze the page —
+  the confirmation opened underneath the map while its backdrop swallowed clicks.
+- Customer view links can be **extended** — a calendar-plus button adds days to
+  an expiry, and extending an expired link reactivates it. Project
+  export/import now includes customer annotations.
+
+## 1.001, 1.003 – 1.006, 1.082 — 2026-07-27 · *Updated feature + Bug fix* · **Important**
+**Deleting a layer: asks first, shows progress, and no longer takes other layers' meters with it**
+- Deleting a layer **asks for confirmation** and states it cannot be undone.
+  When the layer has meters it says **how many will be deleted** along with their
+  consumption history, so thousands of meters can't go on a stray click.
+- A **progress bar counts down from 100% to 0%** naming each stage: unlinking DMA
+  main meters, removing isolation points, deleting meters and readings, removing
+  the layer. Large layers take a while and it was previously impossible to tell
+  whether anything was happening.
+- **Fixed data loss:** deletion removed meters by source file, but two layers
+  imported from one file (a "Main" and a "Sub" from the same CSV) share it — so
+  deleting one wiped the other's meters. Meters are now deleted by layer.
+- **Fixed silent failures:** a layer can't be deleted while meters or isolation
+  points reference it, and its meters may be referenced by a DMA's main meter.
+  Those references are now unwound first, for every layer type, and any error is
+  surfaced. Layers with more than 1,000 meters no longer stay undeletable.
+- Deletion is also much faster — a redundant scan of every reading in the project
+  on each layer delete is gone.
+- **Fixed:** manual meter layers duplicated their points on save for the same
+  foreign-key reason.
+
+## 1.079 — 2026-07-27 · *New feature + Bug fix* · **Important**
+**Valve points can be moved on the map**
+- Any imported point layer — valves, hydrants, structures — now has the same
+  **edit points on map** button manual layers have: turn it on, drag a point to
+  its correct position, save. Useful where a surveyed valve sits a few metres off.
+- **Fixed a data-loss risk found while adding this:** saving a point layer
+  rebuilt each point from a short fixed list of fields, discarding every other
+  attribute. Woodlawn's valve layer carries 21 columns — diameter, condition,
+  turns, install date, GPS accuracy — all of which a single point move would have
+  wiped. Every attribute is now kept; only the coordinates change.
+- Line and boundary layers are deliberately excluded: they have their own editors.
+
+## 1.021, 1.053, 1.066, 1.068, 1.071, 1.072, 1.075 – 1.077 — 2026-07-27 · *Bug fix* · **Important**
+**Sign-in: no more empty dashboard, "Project not found", or being bounced back**
+- One root cause behind most of these: a sign-in can quietly expire on the server
+  while the app keeps a local record saying you are still signed in. It then
+  looks logged in while the database refuses everything — an empty dashboard,
+  "Project not found", or a bounce back to the dashboard. The app now notices and
+  takes you to the **sign-in screen** instead of pretending.
+- **The dashboard could come up completely empty and stay that way.** The project
+  list loads as the page opens but the saved sign-in is restored a moment later,
+  so the request went out unauthenticated and the empty result was cached for an
+  hour. Every page that loads data on open now waits for the sign-in first,
+  through one shared piece of code, and an empty list is never cached.
+- **"Project not found" is no longer shown for two different situations.** It now
+  names the account it was signed in as and points out that **each web address
+  keeps its own sign-in** — the preview and live sites do not share one.
+- **A LeakZon user could be refused a project an admin opened fine**: their token
+  carried an out-of-date account type. The app now renews the sign-in
+  automatically and retries once. LeakZon accounts also had no global project
+  access at all in the authorization rules and saw "No Projects yet."
+- **"Forgot password?" now actually sends the email.** The flow generated a PIN
+  and told you to check your inbox, but the sending step was never finished
+  during the migration. The PIN expires after 30 minutes, works once, does not
+  change your current PIN until you complete the reset, and is no longer written
+  to the server logs.
+- **Fixed the empty dashboard after setting or resetting a PIN** — both paths
+  signed you in without creating a session.
+
+## 1.000, 1.017, 1.048, 1.050, 1.060, 1.073, 1.074 — 2026-07-27 · *New feature + Updated feature*
+**The changelog, and being told when a new version is out**
+- This changelog, the version number under the logo, the one-line headline on
+  every entry, and the **Bug fix / New feature / Updated feature** tag — orange,
+  so it stands apart from the blue version and date.
+- The app **checks hourly, and whenever you return to the tab**, whether a newer
+  version has been released, and shows an amber badge beside the version number.
+  Clicking it explains which version you are on and offers to refresh, warning
+  that unsaved work is lost.
+- A **refresh button on the changelog** pulls the newest entries from the live
+  site, since the panel otherwise shows the copy that shipped with your tab.
+- **The preview site reloads itself** within 30 seconds of a new build, clearing
+  caches first. Production still asks first, so nobody loses work mid-task.
+
+## 1.044, 1.069 — 2026-07-27 · *Updated feature*
+**Vercel Speed Insights added, then switched off**
+- Added to report real page-load performance, then switched off while chasing a
+  flicker seen when moving the mouse over the map on the live site only. It is
+  the one thing that genuinely runs on live but not preview, and it hooks into
+  every mouse interaction. The flicker stopped and it stays off.
 
 ## 1.059 — 2026-07-26 · *Bug fix*
 **Import dialogs are readable in dark mode**
-- The meter data import dialog was built with fixed light colours and no dark
-  variants at all — dark grey text on dark panels, and white blocks where a
-  tinted note should be. It now follows the theme like the rest of the app.
-- Same fix applied across the whole import flow: the upload dialog itself, the
-  meter column-mapping step, the consumption upload step and the undo import
-  dialog.
-- The blue / green / amber / red note boxes now use translucent tints that sit
-  correctly on either background, with lighter text in dark mode.
-
-## 1.058 — 2026-07-26 · *Bug fix*
-**Fixed meter data imports silently creating no meters at all**
-- Importing meter data from a CSV/Excel file created the layer but **not a
-  single meter** — no points on the map, nothing in the Meter Data table — and
-  still reported success. The import was sending a `DMA / Zone Name` field that
-  is no longer a column on the meter record, so the database rejected every
-  batch and the app never noticed.
-- The DMA name from the file is now matched to the project's DMAs (ignoring
-  case and spacing) and stored as a proper link, so importing meters with a DMA
-  column assigns them to that DMA.
-- Batch imports now stop and show the real error instead of reporting rows they
-  never saved. This applies to every bulk import, not just meters.
-- The "carbon copy" optimized importer was unaffected and worked throughout.
+- The meter import flow was built with fixed light colours and no dark variants —
+  dark grey text on dark panels, white blocks where a tinted note should be. The
+  upload dialog, column mapping, consumption upload and undo import now follow
+  the theme, with note tints that sit correctly on either background.
 
 ## 1.057 — 2026-07-26 · *New feature*
 **Preview builds are marked with a red PREVIEW label**
-- A small red **PREVIEW** appears under the LeakZon logo on the projects
-  dashboard and inside a project, plus under the logo on the login screen — so
-  a preview build is never mistaken for the live site.
-- Production (`ob.leakzon.app`) never shows it. Anything else — the Vercel
-  preview link, a local build — does.
+- A small red **PREVIEW** appears under the logo on the dashboard, inside a
+  project and on the login screen, so a preview build is never mistaken for the
+  live site. Production (`ob.leakzon.app`) never shows it.
 
-## 1.056 — 2026-07-26 · *Updated feature*
-**The imported file decides which meters are mains — no field means sub meters**
-- When an imported meter layer has an **"Is Main"** field, that field now decides
-  it, meter by meter. Recognised names: `is_main`, `IsMain`, `Is Main`,
-  `main_meter`. Values `yes / true / 1 / Y / main / primary / master` mean main.
-- When the file has **no such field**, meters are imported as **sub meters**.
-  The one exception: layers that are explicitly a main type by category or name
-  (Main Meters, Insertion Meters, Ultrasonic Meters) — those still come in as
-  mains, since the layer itself already says so.
-- Unrelated attribute columns like `MAIN_ID` or `MAIN SIZE` are ignored, so a
-  pipe-diameter column can't silently mark a whole layer as mains.
-- **Removed the plain "Meters" category** — it was confusing next to Main
-  Meters / Sub Meters. Meter-named layers now auto-detect as **Sub Meters**.
-  Added **Ultrasonic Meters** as a real category (it was landing under Sub
-  Meters while still behaving as a main). Layers already saved under the old
-  "Meters" category keep working as sub meters.
-
-## 1.055 — 2026-07-26 · *Bug fix + Updated feature*
-**Uploaded meter layers now create meter records, and the category is detected automatically**
-- Uploading a single shapefile/GeoJSON no longer defaults the layer category to
-  **Other** — it is now auto-detected from the layer name, the same way a
-  multi-layer ZIP already did. A file with "meter" in the name lands under
-  **Meters**.
-- Because the category was wrong, meter layers were created as a display layer
-  only: the layer showed a feature count but **0 meters**, with nothing on the
-  map or in the Meter Data table. Meter layers now always create the matching
-  meter records — main/insertion/ultrasonic layers as **mains**, plain
-  meter/connection/service layers as **sub meters**.
-- **Repair for a layer already uploaded this way:** open the layer's settings
-  and set its category to **Meters** (or Main/Sub/Insertion Meters). Saving now
-  creates the missing meter records from the layer's own points. It only does
-  this when the layer has no meter records yet, so re-saving can't duplicate
-  them.
-- A name like "Water_Mains_Meters" was read as a Water Lines layer; an explicit
-  "meter" in the name now wins over the pipe keywords. "Service line" style
-  names still classify as pipes.
-
-## 1.054 — 2026-07-26 · *New feature*
-**Admins can sign in as a user to reproduce their view**
-- On the login screen, an admin can enter a **user's email with their own PIN**
-  and be signed in as that user — useful for checking what a user actually sees.
-  Only works for accounts that have already been activated.
-- Only Admin / Super User / LeakZon PINs are accepted; a regular user's PIN can
-  never open someone else's account.
+## 1.054 — 2026-07-26 · *New feature* · **Important**
+**Admins can sign in as a user to reproduce what they see**
+- An admin can enter a **user's email with their own PIN** and be signed in as
+  that user, for activated accounts only. Only Admin / Super User / LeakZon PINs
+  are accepted — a regular user's PIN can never open someone else's account.
 - An amber "Support login — viewing as …" bar stays visible for the whole
-  session, with an End button, so a support session can't be mistaken for your
-  own. Every use is recorded, and it doesn't touch the user's own "last login".
+  session with an End button. Every use is recorded, and it does not touch the
+  user's own "last login".
 
-## 1.053 — 2026-07-26 · *Bug fix*
-**Fixed empty dashboard after setting or resetting your PIN**
-- Setting a PIN for the first time, or resetting it via "forgot password", signed
-  you in without actually creating a session — so the app treated you as not
-  logged in and the dashboard showed no projects at all, whatever your user type.
-  Both paths now sign you in properly, exactly like a normal login.
-- Only affected first-time sign-in and password reset; ordinary logins were fine.
+## 1.019, 1.027, 1.042, 1.052 — 2026-07-26 · *New feature + Updated feature* · **Important**
+**"Find border valves" for isolation points**
+- Highlights the valves sitting on a border between two DMAs — the likely
+  isolation valves — to speed up marking them. Needs at least two DMAs and a
+  valve layer. Replaced the "Isolation DMA View" toggle.
+- **A single valve on a shared border is now found.** It previously needed a
+  second valve from the neighbouring DMA right beside it, and borders are very
+  often isolated by one valve. On a real 9-DMA project with 6,324 valves,
+  findings went from 28 to 173 and DMA coverage from 5 to 7 of 9.
+- Valves already marked as isolation points are no longer highlighted, so the
+  results shrink as you work through them — but they still count when pairing.
+- The search distance is the **Isolation Valve Distance** setting, shown in the
+  project's own unit: 60 m metric, 200 ft imperial.
 
-## 1.052 — 2026-07-26 · *Updated feature*
-**"Find border valves" skips valves already marked as isolation points**
-- Valves you've already marked as isolation points are no longer highlighted —
-  only the ones still needing attention show up, so the results shrink as you
-  work through them.
-- They're still used when pairing, so a valve on the other side of the same
-  border is still found.
+## 1.043 — 2026-07-26 · *Bug fix* · **Important**
+**The Mobile Locator link from the email works again**
+- Opening the emailed link failed with "Failed to load meters" or bounced to the
+  login screen. It is meant to be used in the field without logging in, but the
+  meter endpoints required a logged-in user.
+- The link now carries a secure token valid for 30 days, the same mechanism the
+  customer view uses. Requests without one are still refused. **Links sent before
+  this fix won't work** — send a fresh one.
 
-## 1.051 — 2026-07-26 · *Bug fix + Updated feature*
-**Fixed the frozen customer approval dialog; changelog colours**
-- Clicking "Approve this design" in the customer view appeared to do nothing and
-  froze the page — the confirmation opened *underneath* the map while its
-  backdrop still swallowed clicks. It now opens above the map.
-- Renamed the project-side button to **Request Design Approval**.
-- Changelog: version and date in blue, the headline in green, details unchanged.
+## 1.034, 1.038 – 1.040 — 2026-07-26 · *Updated feature*
+**Consumption charts and distance settings**
+- Consumption lines are **blue for main and insertion meters, green for
+  sub-meters**, across the line, bar and monthly views including axis labels.
+- **Data Completion is removed** — the wand button, estimated-values line,
+  results panel and its project setting — along with the zero-value and spike
+  shading that was the last part of it.
+- "Boundary Deviation Distance" and "Isolation Valve Distance" are **sliders**
+  with the value shown live, 0–500 ft (metric projects show 0–150 m), defaulting
+  to 100 ft / 30 m. Existing projects keep their current values.
 
-## 1.050 — 2026-07-26 · *New feature*
-**Refresh button on the changelog**
-- A small refresh icon next to the Changelog heading in Version Updates pulls
-  the newest changelog from the live site — the panel otherwise shows the copy
-  that shipped with your tab, so new entries wouldn't appear until you reloaded.
-- The same click checks the version: if a newer one is out you get the same
-  "refresh to update" prompt as the badge in the project menu. If you're already
-  up to date, the icon briefly turns into a tick.
-
-## 1.049 — 2026-07-26 · *New feature*
-**Customers can approve the network design from the shared view**
-- Customer View dialog: a green **Approve Network Design** button asks the
-  customer to sign off (available once a share link exists, and can be
-  cancelled).
-- Shared customer view: a large **Approve this design** button appears at the
-  bottom centre. The customer confirms and enters their name — the dialog spells
-  out that approving locks the project.
-- On approval the project is locked in the customer's name with a timestamp, a
-  green banner appears at the top of the project page, and every onboarding
-  wizard step is marked done except "Export to LeakZon".
-- Unlocking the project in Project Settings withdraws the approval and removes
-  the steps the approval ticked — steps you marked yourself are kept.
-
-## 1.048 — 2026-07-26 · *New feature*
-**Notifies you when a newer version has been deployed**
-- The app now checks hourly (and whenever you return to the tab) whether a newer
-  version has been released. When it has, an amber badge appears next to the
-  version number in the project side menu.
-- Clicking the badge explains which version you're on, which is available, and
-  offers to refresh — with a warning that unsaved work is lost, so you can
-  choose "Later".
-
-## 1.047 — 2026-07-26 · *Updated feature*
-**Version Updates moved to the side menu footer**
-- On the projects dashboard, Version Updates now sits at the bottom of the side
-  menu directly above Settings, instead of in the main list with Projects,
-  Archive and Users.
-
-## 1.046 — 2026-07-26 · *Updated feature*
-**Version number shown on the login screen**
-- The login box now shows "Ver 1.046" in its bottom-right corner, below the
-  Continue button, so the running version is visible before signing in.
-
-## 1.045 — 2026-07-26 · *Updated feature*
-**Locked projects are tinted on the dashboard**
-- A locked project's card now has a warm amber tint and border instead of the
-  normal card colour, matching its lock badge — so locked projects stand out
-  across the grid, not just by the small icon.
-
-## 1.044 — 2026-07-26 · *New feature*
-**Added Vercel Speed Insights**
-- Installed `@vercel/speed-insights` and mounted it at the app root, so real
-  page-load performance shows up in the Vercel dashboard's Speed Insights tab.
-
-## 1.043 — 2026-07-26 · *Bug fix*
-**Fixed the Mobile Locator link from the email**
-- Opening the emailed Mobile Locator link failed with "Failed to load meters"
-  (or bounced to the login screen). The link is meant to be used in the field
-  without logging in, but the meter endpoints required a logged-in user.
-- The emailed link now carries a secure access token, valid for 30 days, which
-  the app presents when loading meters and saving a location — the same
-  mechanism the customer view already uses. Requests without a valid token are
-  still refused.
-- Links sent before this fix won't work; send a fresh one from the project.
-
-## 1.042 — 2026-07-26 · *Updated feature*
-**"Find border valves" now finds single valves sitting on a DMA border**
-- It previously only flagged a valve when a *second* valve from the neighbouring
-  DMA sat right next to it. Shared borders are very often isolated by one valve,
-  so those DMAs returned nothing even though the boundary valve was there. A
-  valve within range of two different DMA boundaries is now flagged on its own.
-- Checked against a real 9-DMA project with 6,324 valves: findings went from 28
-  to 173 and DMA coverage from 5 to 7 of 9 at a 60 m distance.
-- Reminder: the search distance is the "Isolation Valve Distance" slider in
-  Project Settings — raise it if a border is still missed.
-
-## 1.041 — 2026-07-26 · *Updated feature*
-**DMA settings is now a floating, draggable panel**
-- The DMA configuration dialog (name, colour, transparency, boundary align) is
-  no longer a blocking modal — it's a floating panel you can drag by its header,
-  so the map and the polygon you just drew stay visible while you set it up.
-  Sized to its content and capped to the viewport, with the body scrolling.
-
-## 1.040 — 2026-07-26 · *Updated feature*
-**Consumption charts colour-coded: main blue, sub-meters green**
-- Meter consumption chart: the line is blue for main and insertion meters, green
-  for sub-meters.
-- DMA consumption chart: the main meter series is now blue and the sub-meters
-  series green (the main series was amber).
-- Applies to the line, bar and monthly views, including axis labels.
-
-## 1.039 — 2026-07-26 · *Updated feature*
-**Distance settings are now drag sliders (0–500 ft, default 100 ft)**
-- "Boundary Deviation Distance" (DMA Focus) and "Isolation Valve Distance"
-  (Isolation Points) are now sliders you drag with the mouse, with the value
-  shown live beside them, instead of typed number boxes.
-- Range 0–500 ft, default 100 ft. Metric projects show the isolation slider in
-  metres over the equivalent 0–150 m range, defaulting to 30 m (the same
-  distance as 100 ft).
-- Existing projects keep whatever distance they were already set to — only the
-  default for new projects changed.
-
-## 1.038 — 2026-07-26 · *Updated feature*
-**Removed the zero-value / spike shading from the consumption chart**
-- The amber "Zero values" and purple "high spikes" shaded areas (and their
-  legend) are gone from the consumption chart. They were the remaining part of
-  Data Completion, kept back in 1.034.
-
-## 1.037 — 2026-07-25 · *New feature*
-**Pull a layer's style from the dashboard component defaults**
-- When editing a layer that matches a component type configured in dashboard
-  Settings (Main, Sub Main, Insertion Meters, Ultrasonic Meter, Valves), the
-  layer settings now offer an **Apply** button that pulls that type's shape,
-  size, fill and colours in, overwriting the layer's current style. Nothing is
-  saved until you press Save, so you can still adjust or cancel.
-- The prompt follows the layer's current name/category, so changing the category
-  in the dialog updates which defaults are offered.
-
-## 1.036 — 2026-07-25 · *Updated feature*
-**Version number moved to the bottom of the side menu**
-- The version now sits at the bottom of the side menu, below the lock control
-  and separated by a divider, shown as "Ver 1.036" — instead of under the logo.
-  Applied to both the dashboard and project side menus, and it stays readable
-  when the menu is collapsed.
-
-## 1.035 — 2026-07-25 · *Updated feature*
-**Layer reordering is disabled on locked projects**
-- Layers can no longer be dragged to change their map z-order while a project is
-  locked. Previously the drag still ran and simply did nothing on drop; now the
-  row isn't draggable at all and the handle is dimmed with a tooltip explaining
-  why.
-
-## 1.034 — 2026-07-25 · *Updated feature*
-**Removed the Data Completion feature**
-- Removed Data Completion everywhere: the wand button and estimated-values line
-  on the meter consumption chart, its results panel, and the "Data Completion →
-  Nearby Meter Radius" project setting. The `calculateConsumptionCompletion`
-  Edge Function was deleted from the repo too.
-- Kept the chart's data-quality highlighting (blank readings, and zero values
-  followed by a spike) — those markers stand on their own and aren't part of
-  the removed feature.
+## 1.016, 1.035 — 2026-07-25 · *Updated feature + Bug fix*
+**Project lock**
+- **Lock/unlock was never saving.** The toggle wrote a field that isn't a real
+  column, so the whole update was rejected silently. A failed project update now
+  shows an error instead of doing nothing.
+- Layers can no longer be dragged to reorder on a locked project — previously the
+  drag ran and simply did nothing on drop.
 
 ## 1.033 — 2026-07-25 · *Updated feature*
-**Map legend renamed to "Legend" and rolls up smoothly when closed**
-- The map legend panel is now titled **Legend** (was "Map Layers").
-- Collapsing it now rolls up with a smooth animation instead of vanishing, and
-  the header tightens as it closes. Applied to both the project map and the
-  customer view.
+**Map legend renamed and rolls up smoothly**
+- The panel is titled **Legend** (was "Map Layers") and collapses with an
+  animation instead of vanishing. Applies to the project map and customer view.
 
-## 1.032 — 2026-07-25 · *Bug fix*
-**Fixed layer category dropdown not opening (regression from 1.029)**
-- The category dropdown in layer settings appeared not to open. Making that
-  dialog a floating panel in 1.029 put it above the dropdown's own layer, so the
-  menu was opening behind the panel. It now opens on top again.
+## 1.008, 1.009, 1.023 – 1.025 — 2026-07-25 · *New feature + Bug fix*
+**Point numbering: correct order, per-DMA focus, and style controls**
+- **Numbering now genuinely reads left-to-right, top-to-bottom.** The row
+  grouping capped its band at 60 m, so on projects spanning kilometres every
+  point became its own row and the order collapsed to north-south. Rows are now
+  fixed horizontal stripes, verified against real project data and against
+  horizontal, vertical and grid layouts. Badges in a tight cluster read in order
+  too.
+- With a DMA focused, numbering **shows only that DMA's points** — inside the
+  polygon, within the boundary-deviation distance, plus its linked main meter —
+  while each point **keeps its global number**, so it never renumbers.
+- A **Number Style** control sets badge size and colour, for all numbers or only
+  selected ones, saved per project and applied in the customer view. Default is
+  red on white.
 
-## 1.031 — 2026-07-25 · *Updated feature*
-**Dashboard "Projects" icon now matches the project page**
-- The Projects item in the dashboard sidebar uses the same grid icon as the
-  "back to projects" button inside a project, so one glyph means "projects"
-  throughout the app (was a folder icon).
-
-## 1.030 — 2026-07-25 · *Updated feature*
-**Project loading shows the LeakZon logo filling with water**
-- Opening a project now shows the LeakZon wordmark slowly filling with water
-  instead of a spinning circle. The logo's own transparency is used as a mask,
-  so the water is clipped to the letters and it works on light and dark
-  backgrounds. Honours "reduce motion" and keeps a screen-reader label.
-
-## 1.029 — 2026-07-25 · *Updated feature*
-**Layer settings is now a floating, draggable panel**
-- The layer settings dialog is no longer a blocking modal — it's a floating
-  panel you can drag by its header (same behaviour as the onboarding wizard), so
-  the map stays visible and usable while you restyle a layer.
-- The frame now fits its content: sized to the widest element (the colour
-  palette) instead of a fixed modal width, capped to the viewport, with the body
-  scrolling and the header/footer pinned — so nothing is clipped.
-
-## 1.028 — 2026-07-25 · *Bug fix*
-**Fixed black screen when turning point numbering on (regression from 1.025)**
-- Turning on point numbering crashed the app to a blank screen. The 1.025
-  numbering rewrite accidentally removed three helper functions that the
-  point-building code still called (`isMeterLayerVisible`,
-  `extractUltrasonicPoints`, `isUltrasonicLayer`), so it threw immediately.
-  Restored them; numbering order from 1.025 is unchanged.
-- Also fixed a second crash found while verifying this: the latitude range was
-  computed with `Math.max(...lats)`, which overflows the call stack on layers
-  contributing a lot of points. Now uses a plain loop (verified with 200k points).
-
-## 1.027 — 2026-07-25 · *New feature*
-**Configurable isolation valve distance for "Find border valves"**
-- New **Isolation Points → Isolation Valve Distance** setting in Project
-  Settings: how close two valves on opposite sides of a DMA boundary must be to
-  count as a candidate isolation point. It drives the DMA panel's "Find border
-  valves" highlight, so you can widen or tighten the search per project.
-- Shown in the project's own distance unit and defaults accordingly —
-  **60 m** for metric projects, **200 ft** for imperial ones. Stored in metres,
-  so switching the project's distance unit re-labels the value without changing
-  the actual distance.
-
-## 1.026 — 2026-07-25 · *New feature*
-**White & black shape colors, plus a separate outline color**
-- Added **white** and **black** to the color palette, and unified it: the same
-  palette is now used by the project layer settings and the dashboard component
-  defaults (Settings).
-- Shapes can now have **one color for the shape and a different color for the
-  outline** — e.g. a white shape with a dark outline so it stays visible on any
-  basemap. Set it in the layer settings ("Outline color") and per component type
-  in dashboard Settings; "Same as shape" clears it. Leaving it unset keeps the
-  previous single-color behavior, so existing layers look unchanged.
-- The outline color is honored everywhere a point is drawn: the map, the layers
-  panel swatch, the map legend, and the customer view.
-
-## 1.025 — 2026-07-25 · *Bug fix*
-**Fixed point numbering running right-to-left**
-- Numbering now genuinely reads left-to-right, top-to-bottom. The row grouping
-  capped its band at 60 m, so on real projects spanning kilometres every point
-  became its own "row" and the order collapsed to pure north-south, ignoring
-  left-to-right entirely. Rows are now fixed horizontal stripes (about √n of
-  them), ordered north-first and left-to-right within each stripe — verified
-  against real project data and against horizontal-line, vertical-line and grid
-  layouts.
-- Badges in a tight cluster now also read left-to-right: the lower number takes
-  the left slot instead of being nudged right (which read as "2 1").
-
-## 1.024 — 2026-07-25 · *Updated feature*
-**Focused-DMA numbering keeps each point's global number**
-- Point numbers stay numbered across all points (as if every DMA were visible),
-  so a point keeps the same number whether or not a DMA is focused — focusing a
-  DMA only hides the numbers that don't belong to it, instead of renumbering the
-  remainder 1..N.
-
-## 1.023 — 2026-07-25 · *New feature*
-**Point numbers limited to the focused DMA when zooming to a DMA**
-- With a DMA focused ("Zoom DMA on map"), point numbering now shows only the
-  points belonging to that DMA — inside its polygon or within the project's
-  boundary-deviation proximity, plus the DMA's linked main meter even if it sits
-  further out. All other numbers are hidden. Clearing the focus restores the
-  full set.
-
-## 1.022 — 2026-07-25 · *Updated feature*
-**Map layer z-order now follows the panel exactly; DMAs always at the bottom**
-- DMA polygons now always render **beneath every layer** (they previously drew on
-  top, shading the layers above them). DMA name labels stay on top so they remain
-  readable.
-- Map z-order now matches the layers panel exactly, top to bottom. Previously
-  meter (data) layers were forced above all shapefile layers, which silently
-  overrode manual ordering — dragging a shapefile layer above a meter layer had
-  no effect and the panel re-grouped after the drop.
-- **Dragging a layer in the panel now really changes its z-order**, and
-  **hide/unhide only changes visibility, never the order** — unhiding a layer no
-  longer makes it jump to the top. Each layer draws into its own dedicated
-  Leaflet pane, so stacking is explicit instead of depending on load order.
-
-## 1.021 — 2026-07-25 · *Bug fix*
-**Fixed "LeakZon" users seeing no projects (global-access authorization)**
-- The RLS/authorization rules only granted global project access to "Admin" and
-  "Super User", not "LeakZon" — so LeakZon users (the platform-owner type, and
-  the default) saw "No Projects yet." Added LeakZon to the privileged set in
-  both the database RLS function and the Edge Function auth helper (backend
-  migration + Edge Function redeploy). Affected users should log out and back
-  in to pick up the change.
-
-## 1.020 — 2026-07-25 · *New feature*
-**Sort projects on the dashboard (name / last used / progress, both directions)**
-- Added a sort control to the projects dashboard: sort by name (A–Z / Z–A),
-  last used (newest / oldest), or progress % — the assigned-meters percentage
-  from the card gauge — high→low or low→high. Defaults to last used (newest).
-
-## 1.019 — 2026-07-25 · *New feature + Updated feature*
-**DMA panel: "Find border valves" highlight; removed "Isolation DMA View"**
-- Removed the "Isolation DMA View" toggle from the DMA panel.
-- Added "Find border valves" in the isolation-points section: it highlights
-  valves sitting at borders between two DMAs (pairs of valves close to each
-  other but on opposite sides of a shared boundary) — the likely isolation
-  valves — to speed up marking them as isolated points. Needs at least two DMAs
-  and a valve layer.
-
-## 1.018 — 2026-07-25 · *New feature*
-**Prompt to mark "Design Network Flow" done when leaving the view after changes**
-- If you make changes in the Network Design view and then switch to another view
-  while the onboarding wizard's "Design Network Flow" step isn't marked done yet,
-  a dialog now asks whether you're finished and offers to mark that step as done.
-  Choosing "Not yet" won't nag again until you make further changes.
-
-## 1.017 — 2026-07-25 · *Updated feature*
-**Changelog now has a one-line headline per version**
-- versions.md entries now begin with a bold headline that sums up the main
-  change, followed by the detailed bullets (same details as before). Existing
-  entries were updated to the new format.
-
-## 1.016 — 2026-07-25 · *Bug fix*
-**Fixed project lock/unlock not saving**
-- Fixed project lock/unlock not working: the toggle wrote a `locked_by_name`
-  field that isn't a real column (the schema uses `locked_by_id`), so the whole
-  update was rejected and the lock never saved. Now writes `locked_by_id`,
-  resolves the locker's name via a join for the "Locked by …" label, and shows
-  an error if a project update fails instead of silently doing nothing.
-
-## 1.015 — 2026-07-25 · *Updated feature*
-**Dashboard: Settings moved to sidebar bottom; lock icon by the DMA count**
-- Dashboard: moved Settings to the bottom of the sidebar (just above the lock
-  control) and switched it to the standard gear icon.
-- Project cards: the "locked" indicator now appears inline just before the
-  "N DMAs" count (instead of the top-left corner), shown to everyone.
-
-## 1.014 — 2026-07-25 · *New feature*
-**Default shape / size / color per component type (dashboard Settings)**
-- New **Settings** area in the main dashboard (admins): set the default shape,
-  size and color for each component type — Main, Sub Main, Insertion Meters,
-  Ultrasonic Meter, and Valves. These defaults are applied automatically to new
-  layers when you import them (single or ZIP) or create them manually. Existing
-  layers aren't changed; settings are saved per browser.
-
-## 1.013 — 2026-07-25 · *Updated feature*
-**A main meter can serve more than one DMA**
-- A main meter (any type) can now be assigned to **more than one DMA** — e.g.
-  one meter serving both "North" and "North Central". Assigning a main meter to
-  a DMA no longer unlinks it from other DMAs, and the insertion-meter list /
-  network inventory now show all DMAs a shared meter serves.
-
-## 1.012 — 2026-07-25 · *Updated feature*
-**New application icon**
-- New application icon (favicon, browser tab, apple-touch-icon, and PWA/
-  home-screen icon) using the LeakZon map-pin logo.
-
-## 1.011 — 2026-07-24 · *New feature + Updated feature*
-**Extend share links, in-app changelog, faster carbon-copy upload**
-- Customer view links can now be **extended**: a calendar-plus button on each
-  active (or expired) link adds the chosen number of days to its expiry —
-  extending an expired link reactivates it.
-- Added a **Changelog ("What's New")** panel at the top of Version Updates that
-  shows this file, so you can see recent changes and the current version.
-- **Carbon copy uploads are much faster**: large overlay images are downscaled
-  and compressed client-side before upload (no visible difference on the map).
-
-## 1.010 — 2026-07-24 · *Updated feature*
-**Project export/import now includes customer annotations**
-- Project export/import now includes **customer annotations** (customer-view
-  comments/arrows/drawings) — previously they were left out of export, restore,
-  and duplicate, and weren't cleared on an overwrite-import. Applies to the
-  exportProjectData and importProjectData Edge Functions (requires an Edge
-  Function deploy, separate from the Vercel frontend deploy).
-
-## 1.009 — 2026-07-24 · *Updated feature*
-**Point-number default color is now red**
-- Point numbering default color is now red (#ef4444) with white text. Saved
-  styles still on the old default are migrated to red (users who explicitly
-  chose another color keep theirs).
-
-## 1.008 — 2026-07-24 · *Bug fix + New feature*
-**Point-number ordering fix + size/color controls**
-- Point numbering: order now reads cleanly left-to-right, top-to-bottom — rows
-  are grouped by comparing each point to the previous one (rolling reference),
-  so a row with gradual vertical spread stays together instead of splitting.
-- Added a "Number Style" control (palette icon in the map toolbar, shown when
-  numbering is on): change badge size (slider) and color (16 colors), applied
-  to all numbers or only selected ones. Click a number on the map to select it.
-  Settings persist per project and also apply in the customer view.
-
-## 1.007 — 2026-07-24 · *Bug fix*
-**Meter-type shapefile imports now create meter rows**
-- Importing a meter-type layer (Main / Insertion / Ultrasonic Meters) as a
-  shapefile/GeoJSON now also creates `is_main` meter rows from its point
-  features — previously the shapefile import only created a display layer, so
-  those meters never appeared in the meter table, network inventory, DMA
-  main-meter linking, or point numbering. Applied to both the single-layer and
-  multi-layer (ZIP) import paths in UploadData and UploadLayerDialog.
-
-## 1.006 — 2026-07-24 · *Updated feature*
-**Faster layer deletion**
-- Made layer deletion much faster: removed an explicit consumption_reading
-  delete that scanned all of a project's readings (by source_file_url) on every
-  layer delete — even boundary/shp layers with no meters. Readings are already
-  removed via the ON DELETE CASCADE on consumption_reading.meter_id when the
-  layer's meters are deleted, so the extra scan was redundant and slow.
-
-## 1.005 — 2026-07-24 · *Bug fix*
-**Fixed data loss when deleting a layer that shares a file**
-- Fixed a data-loss bug in layer deletion: deleting a layer removed meters by
-  `source_file_url`, but two layers imported from the same file (e.g. a "Main"
-  and a "Sub" meters layer from one CSV) share that URL, so deleting one wiped
-  the other's meters too. Meters are now deleted by `layer_id` (precise), and
-  by `source_file_url` only when no other layer shares that file.
-
-## 1.004 — 2026-07-24 · *Bug fix*
-**Fixed layer deletion failing on layers with >1000 meters**
-- Fixed layer deletion still failing on layers with many meters
-  ("violates foreign key constraint meter_layer_id_fkey"): the previous fix
-  collected meter ids via a read that PostgREST caps at 1000 rows, so layers
-  with >1000 meters left rows behind and stayed undeletable. Now deletes
-  meters by filter in a loop until none remain, and unlinks affected DMAs from
-  the DMA side so it's never limited by the meter read cap.
-
-## 1.003 — 2026-07-24 · *Bug fix*
-**Fixed silent layer-delete failures (foreign-key references)**
-- Fixed deleting a layer silently failing (e.g. the Ultrasonic layer): a layer
-  can't be deleted while `meter.layer_id` or `isolated_point.layer_id` rows
-  reference it, and its meters may be referenced by `dma.main_meter_id`. Delete
-  now unwinds those references first (unlink DMAs, remove isolated points and
-  meters) regardless of layer type, then deletes the layer and surfaces any
-  error. Previously it deleted the layer first and only cleaned up meters for
-  `data`-type layers, so manual meter layers (type `shp`) never deleted.
-
-## 1.002 — 2026-07-24 · *Bug fix*
-**Fixed "No DMAs with a valid polygon to export"**
-- Fixed "No DMAs with a valid polygon to export" on the SHP/JSON export page:
-  `parsePolygon` only checked `dma.polygon`, but the export page loads DMAs
-  straight from the table where the column is `polygon_json` — so every DMA
-  was wrongly filtered out. Now reads `polygon_json` (falling back to
-  `polygon`), which also corrects the polygon data in the JSON export.
-
-## 1.001 — 2026-07-24 · *Bug fix*
-**Fixed meter duplication on save + silent SHP export**
-- Fixed manual meter layers (Insertion/Ultrasonic) duplicating points on save:
-  the delete was blocked by the `dma.main_meter_id` foreign key when a DMA
-  referenced one of the meters. Now unlinks affected DMAs, deletes, re-inserts,
-  and re-links each DMA to its recreated main meter.
-- Fixed the "Export SHP" button silently doing nothing: added error surfacing
-  (it previously swallowed Edge Function errors) and made the download robust
-  for the after-`await` case that some browsers block.
-
-## 1.000 — 2026-07-24 · *New feature*
-**Introduced the version number and this changelog**
-- Introduced the version number (shown in small text under the logo, upper-left)
-  and this changelog.
+## 1.022 — 2026-07-25 · *Updated feature* · **Important**
+**Map layer order follows the panel exactly, and DMAs sit at the bottom**
+- DMA polygons now render **beneath every layer** instead of shading the layers
+  above them; their name labels stay on top.
+- **Dragging a layer in the panel really changes its z-order**, and hide/unhide
+  only changes visibility — unhiding no longer jumps a layer to the top. Meter
+  layers were previously forced above all shapefile layers, silently overriding
+  manual ordering.

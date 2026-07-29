@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Upload, X, Lightbulb, RefreshCw, Bug, Image as ImageIcon, Clock, FolderOpen, History, ChevronDown, ChevronRight, Check, BookOpen } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import changelogMd from "../../../versions.md?raw";
 import overviewMd from "../../../Product_overview.md?raw";
 import { APP_VERSION } from "@/lib/version";
@@ -214,10 +215,12 @@ export default function VersionUpdates({ project, currentUser, projects }) {
             {showOverview ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
           </button>
           {showOverview && (
-            <div className="border-t border-border px-5 py-4 max-h-[520px] overflow-y-auto changelog-markdown product-overview">
+            <div className="border-t border-border px-5 py-4 max-h-[520px] overflow-y-auto overflow-x-auto changelog-markdown product-overview">
               {/* Headings are coloured by level in CSS (.product-overview), so
-                  the markdown stays plain and needs no HTML plugin. */}
-              <ReactMarkdown>{overviewMd}</ReactMarkdown>
+                  the markdown stays plain and needs no HTML plugin. GFM is what
+                  turns the pipe tables into real tables — without it they render
+                  as a wall of literal | characters. */}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{overviewMd}</ReactMarkdown>
             </div>
           )}
         </div>
@@ -253,7 +256,7 @@ export default function VersionUpdates({ project, currentUser, projects }) {
           </button>
           {showChangelog && (
             <div className="border-t border-border px-5 py-4 max-h-[420px] overflow-y-auto changelog-markdown">
-              <ReactMarkdown>{changelog}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{changelog}</ReactMarkdown>
             </div>
           )}
         </div>

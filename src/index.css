@@ -349,6 +349,16 @@
 /* The change-type tag on the version line — orange, so it reads as its own
    thing next to the blue version and date. */
 .changelog-markdown h2 em { color: #f97316; font-style: normal; font-weight: 600; }
+/* "Important" on the version line — an entry that changes the way you work.
+   Bold is only ever used for this in a heading, so the selector is safe. */
+.changelog-markdown h2 strong {
+  color: #ef4444; font-weight: 700; font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  border: 1px solid #ef4444; border-radius: 999px;
+  padding: 0.05rem 0.4rem; vertical-align: middle;
+}
+/* The grouped version list is long — give the headings room to breathe. */
+.changelog-markdown h2 { line-height: 1.5; }
 .changelog-markdown p { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin: 0.35rem 0; }
 /* The bold one-line headline under each version */
 .changelog-markdown p strong { color: #22c55e; font-weight: 700; }
@@ -439,6 +449,9 @@
 }
 .product-overview table {
   width: 100%; border-collapse: collapse; margin: 0.7rem 0; font-size: 0.78rem;
+  /* Two-column reference tables squeeze badly in a narrow panel; below this the
+     container scrolls sideways instead of crushing the first column. */
+  min-width: 340px;
 }
 .product-overview th, .product-overview td {
   border: 1px solid hsl(var(--border)); padding: 0.4rem 0.55rem;

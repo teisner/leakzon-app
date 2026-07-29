@@ -85,16 +85,26 @@ never push a broken build.
 
 ### Changelog entry format
 
-Every `versions.md` entry is tagged with what it contains, so the reader can
-tell at a glance without reading the detail:
+`versions.md` is **grouped by subject, not one entry per version.** When a change
+continues work an existing entry already covers — the same feature, the same bug,
+the same screen — fold it into that entry and add the new version to its heading
+range rather than starting a new one. Only genuinely new subjects get a new entry.
 
 ```
-## 1.073 — 2026-07-27 · Updated feature
+## 1.041, 1.081, 1.104 – 1.107 — 2026-07-28 · *Updated feature + Bug fix* · **Important**
 **One-line headline**
 - detail bullets
 ```
 
-Tags are **Bug fix**, **New feature**, **Updated feature**, or a combination
-joined with ` + ` (e.g. `New feature + Bug fix`). Keep the `## <version> — <date> · <tag>`
-shape — the changelog is rendered straight through ReactMarkdown, and the
-heading line is what the reader scans.
+- Versions are listed newest-group-first; a range uses an en dash (`1.104 – 1.107`),
+  separate versions a comma. Every version ever shipped must appear in exactly one
+  heading.
+- The date is the newest one in the group.
+- Tags are **Bug fix**, **New feature**, **Updated feature**, or a combination
+  joined with ` + `.
+- Append ` · **Important**` when the entry **changes the way the user works** —
+  how data goes in or comes out, what a screen lets them do, or a fault that was
+  costing them time. Cosmetic, internal and easter-egg entries are not marked.
+- Keep the `## <versions> — <date> · <tag>` shape: the changelog is rendered
+  through ReactMarkdown (with `remark-gfm`), and the heading line is what the
+  reader scans. `.changelog-markdown h2 strong` styles the Important badge.
