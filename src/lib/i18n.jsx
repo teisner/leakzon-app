@@ -807,6 +807,16 @@ const translations = {
 
     // Meter Edit Dialog
     'meterEdit.title': 'Edit Meter — {uid}',
+    'meterEdit.sectionIdentity': 'Identification',
+    'meterEdit.sectionCustomer': 'Customer',
+    'meterEdit.sectionLocation': 'Location',
+    'meterEdit.sectionRole': 'Role in the network',
+    'meterEdit.sectionDma': 'DMA links',
+    'meterEdit.meterId': 'Meter ID',
+    'meterEdit.meterIdPlaceholder': 'The utility\u2019s meter number',
+    'meterEdit.accountId': 'Account ID',
+    'meterEdit.accountIdPlaceholder': 'The billing account number',
+    'meterEdit.otherIds': 'Other IDs from the import',
     'meterEdit.uid': 'UID',
     'meterEdit.uidPlaceholder': 'Meter identifier',
     'meterEdit.endpointId': 'Endpoint ID',
@@ -1852,6 +1862,16 @@ const translations = {
 
     // Meter Edit Dialog
     'meterEdit.title': 'עריכת מונה — {uid}',
+    'meterEdit.sectionIdentity': 'זיהוי',
+    'meterEdit.sectionCustomer': 'לקוח',
+    'meterEdit.sectionLocation': 'מיקום',
+    'meterEdit.sectionRole': 'תפקיד ברשת',
+    'meterEdit.sectionDma': 'שיוך לאיזורי פחת',
+    'meterEdit.meterId': 'מזהה מונה',
+    'meterEdit.meterIdPlaceholder': 'מספר המונה של התאגיד',
+    'meterEdit.accountId': 'מזהה חשבון',
+    'meterEdit.accountIdPlaceholder': 'מספר חשבון החיוב',
+    'meterEdit.otherIds': 'מזהים נוספים מהייבוא',
     'meterEdit.uid': 'UID',
     'meterEdit.uidPlaceholder': 'מזהה מונה',
     'meterEdit.endpointId': 'מזהה נקודת קצה',
