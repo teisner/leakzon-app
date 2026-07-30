@@ -225,7 +225,7 @@ The running version is shown at the bottom of the side menu.
 - The validation scripts are kept in the project (`scripts/validation/`) so this
   can be repeated in minutes rather than rebuilt from scratch.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139, 1.140 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.141 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
@@ -263,6 +263,17 @@ The running version is shown at the bottom of the side menu.
   reliable kind, not the least.
 - The map popup names the same five cases; it could previously only say
   "geocoded" or "estimated from street data" whatever had actually happened.
+- **Fixed: setting a meter's location by dropping a pin appeared to save and did
+  not.** The two new labels above — "placed by hand" and "located in the field" —
+  were not on the database's list of permitted values, so it refused every one of
+  those saves. The list now includes them.
+- **Fixed the reason nobody was told.** Both places that save a location threw the
+  database's refusal away and carried on as if it had worked: the pin cleared, the
+  view switched back, and the meter was unchanged. They now report exactly what
+  the database said and keep your pin on screen so nothing is lost.
+- Only saves made in the last few hours were affected, and only the pin and
+  Mobile Locator paths — no data was altered or lost, the writes simply never
+  happened.
 - **New "No location" filter** in the meter table, showing only the meters that
   still have no coordinates — the ones the mobile locator and the estimation
   tools exist for. It carries its own count, and it stacks with everything else:

@@ -203,7 +203,10 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
         updates.layer_id = await ensureMainMetersLayer(projectId);
       }
 
-      await supabase.from('meter').update(updates).eq('id', meter.id);
+      // Same rule as everywhere else that writes from the browser: check the
+      // error. This closed as though saved when the write was refused.
+      const { error: updateError } = await supabase.from('meter').update(updates).eq('id', meter.id);
+      if (updateError) throw new Error(updateError.message);
 
       // Handle DMA linking (only for main meters)
       if (form.is_main && linkedDmaId !== originalDmaId) {

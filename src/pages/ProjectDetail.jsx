@@ -1538,14 +1538,24 @@ export default function ProjectDetail() {
         const parsed = parseFloat(pinpointDiameter);
         updateData.diameter = !isNaN(parsed) ? parsed : null;
       }
-      await supabase.from('meter').update(updateData).eq('id', pinpointMeter.id);
+      // supabase-js resolves with an error rather than throwing, and this used to
+      // ignore it inside an empty catch — so a rejected write cleared the pin and
+      // switched view exactly as if it had saved. That is how a check-constraint
+      // violation went unnoticed through three attempts.
+      const { error } = await supabase.from('meter').update(updateData).eq('id', pinpointMeter.id);
+      if (error) {
+        alert(`Could not save the location: ${error.message}`);
+        return;
+      }
       loadMeters();
       setPinpointMeter(null);
       setPinpointCoords(null);
       setPinpointAddress(null);
       setPinpointDiameter(null);
       setViewMode("data");
-    } catch {}
+    } catch (err) {
+      alert(`Could not save the location: ${err?.message || err}`);
+    }
   };
 
   const handlePinpointCancel = () => {
