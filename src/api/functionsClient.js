@@ -11,12 +11,24 @@ export async function invokeFunction(name, payload) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // The gateway in front of Edge Functions rejects a request with no
+  // Authorization header before it reaches the function — UNAUTHORIZED_NO_AUTH_
+  // HEADER, 401. So the header is always sent, falling back to the anon key
+  // when nobody is signed in. That is the case for every anonymous surface: the
+  // mobile locator opened from an email and the shared customer view both have
+  // no session, and both were failing at the gateway with their share token
+  // never being looked at.
+  //
+  // The anon key is public by design and grants nothing on its own — each
+  // function still resolves the caller itself, and falls back to validating the
+  // share token when there is no real user.
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      apikey: anonKey,
+      Authorization: `Bearer ${session?.access_token || anonKey}`,
     },
     body: JSON.stringify(payload || {}),
   });

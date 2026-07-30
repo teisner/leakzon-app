@@ -225,6 +225,22 @@ The running version is shown at the bottom of the side menu.
 - The validation scripts are kept in the project (`scripts/validation/`) so this
   can be repeated in minutes rather than rebuilt from scratch.
 
+## 1.145 — 2026-07-30 · *Bug fix* · **Important**
+**The Mobile Locator link never worked when opened from the email**
+- Opening the emailed link showed *"Failed to load meters — this link may have
+  expired"* however fresh the link was. The link and its token were fine: the
+  request was being turned away before it reached the platform, because a phone
+  opening a link has nobody signed in and the app only identified itself when
+  someone was. The share token was never even looked at.
+- Both halves of the Mobile Locator were affected — listing the meters that need
+  a location, and saving a position once you had walked to one. So the feature has
+  not worked from a link since it was introduced, for anyone not already signed in
+  on that device.
+- The shared **Customer View** link was never affected; it is set up differently
+  and has always been reachable without a login.
+- Verified on a simulated phone with no stored login: the link now loads Obion
+  TN's remaining meters straight away.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The

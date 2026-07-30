@@ -424,3 +424,10 @@ verify_jwt = false
 
 [functions.manageCustomerViewLinks]
 verify_jwt = false
+
+# getUnlocatedMeters and updateMeterLocation are the mobile locator's two
+# endpoints and are also reached without a login, but deliberately keep
+# verify_jwt on: the frontend always sends the anon key as the bearer (see
+# src/api/functionsClient.js), so a caller must at least present a project key,
+# and both functions validate the share token themselves on top of that. Turning
+# it off here would make them reachable with no credential at all.
