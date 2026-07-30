@@ -199,11 +199,14 @@ function BoxZoomHandler({ active, onDone }) {
   return null;
 }
 
-// How long a meter blinks after "View on map" brings you here, and how fast.
-// The blink is driven from state rather than a CSS class: react-leaflet applies
-// pathOptions through Leaflet's setStyle(), which ignores `className`, so a
-// class named there never reaches the SVG element at all.
-const BLINK_MS = 2000;
+// The blink that marks the meter "View on map" brought you to. It keeps going
+// until the operator does something — clicks, types, scrolls, pans the map —
+// rather than stopping on a timer, so a meter found on one screen is still
+// marked when you look back at it on another.
+//
+// Driven from state rather than a CSS class: react-leaflet applies pathOptions
+// through Leaflet's setStyle(), which ignores `className`, so a class named
+// there never reaches the SVG element at all.
 const BLINK_INTERVAL_MS = 250;
 // The map takes this long to fly to the meter; blinking during the flight is
 // mostly wasted, so the two seconds start once it has settled.
@@ -463,25 +466,40 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
     // Nothing to blink for a meter with no coordinates.
     if (!hasPosition) return undefined;
 
-    // Blink it for two seconds so the eye lands on the right point among
-    // thousands. The amber highlight ring stays afterwards, which is what tells
-    // you which meter you came here for once the blinking stops.
+    // Blink until the operator does something, so the eye can find the point
+    // among thousands however long that takes. The amber highlight ring stays
+    // behind afterwards, which is what still says "this is the one".
     let flip;
-    let stop;
+    let detach = () => {};
     const start = setTimeout(() => {
       setBlinkUid(focusMeter.uid);
       setBlinkOn(true);
       flip = setInterval(() => setBlinkOn((v) => !v), BLINK_INTERVAL_MS);
-      stop = setTimeout(() => {
+
+      const stopBlinking = () => {
         clearInterval(flip);
-        setBlinkUid(null);
         setBlinkOn(false);
-      }, BLINK_MS);
+        setBlinkUid(null);
+        detach();
+      };
+      // Anything that counts as touching something. Bound only now that the
+      // fly-to has finished — the flight itself fires the map's own move and
+      // zoom events, which would otherwise cancel the blink immediately.
+      const events = ["pointerdown", "keydown", "wheel", "touchstart"];
+      for (const e of events) window.addEventListener(e, stopBlinking, { once: true, passive: true });
+      const map = mapRef?.current;
+      const mapEvents = "dragstart zoomstart click";
+      if (map) map.on(mapEvents, stopBlinking);
+      detach = () => {
+        for (const e of events) window.removeEventListener(e, stopBlinking);
+        if (map) map.off(mapEvents, stopBlinking);
+      };
     }, FLY_MS);
+
     return () => {
       clearTimeout(start);
       clearInterval(flip);
-      clearTimeout(stop);
+      detach();
       setBlinkUid(null);
       setBlinkOn(false);
     };
