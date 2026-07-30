@@ -1,5 +1,5 @@
 import { estimateLocationFromStreet } from "./streetInterpolation";
-import { parseAddress, getStreetKey } from "./addressParser";
+import { parseAddress, getStreetKey, normalizeStreetKey } from "./addressParser";
 
 // Build a queue of meter IDs that can be estimated:
 // - No existing coordinates
@@ -12,7 +12,7 @@ export function buildEstimationQueue(meters) {
       if (m.latitude != null || m.longitude != null) return false;
       const parsed = parseAddress(m.address);
       if (!parsed || !parsed.street) return false;
-      const streetKey = parsed.street.toLowerCase().replace(/\s+/g, " ").trim();
+      const streetKey = normalizeStreetKey(parsed.street);
       return list.some(
         (other) =>
           other.id !== m.id &&
@@ -21,6 +21,32 @@ export function buildEstimationQueue(meters) {
       );
     })
     .map((m) => m.id);
+}
+
+// Why a meter without coordinates can or cannot be estimated. Street
+// interpolation places a meter between its located neighbours on the same
+// street, so a street with no located meter on it gives it nothing to work
+// from — and the operator needs telling that, rather than the tool opening and
+// closing with no explanation.
+export function explainEstimationQueue(meters) {
+  const list = meters || [];
+  const located = new Map();
+  for (const m of list) {
+    if (m.latitude == null || m.longitude == null) continue;
+    const key = getStreetKey(m.address);
+    if (key) located.set(key, (located.get(key) || 0) + 1);
+  }
+
+  const result = { noLocation: 0, estimable: 0, noAddress: 0, noStreetReference: 0 };
+  for (const m of list) {
+    if (m.latitude != null && m.longitude != null) continue;
+    result.noLocation++;
+    const key = getStreetKey(m.address);
+    if (!key) { result.noAddress++; continue; }
+    if (located.has(key)) result.estimable++;
+    else result.noStreetReference++;
+  }
+  return result;
 }
 
 // Compute a confidence score (1-100) for the estimated location.
@@ -64,7 +90,7 @@ export function computeConfidence(meter, proposed, similarMeters) {
 export function computeEstimationTarget(meter, allMeters) {
   const proposed = estimateLocationFromStreet(meter, allMeters);
   const parsed = parseAddress(meter.address);
-  const streetKey = parsed?.street?.toLowerCase().replace(/\s+/g, " ").trim();
+  const streetKey = normalizeStreetKey(parsed?.street);
   const similarMeters = (allMeters || []).filter(
     (m) =>
       m.id !== meter.id &&

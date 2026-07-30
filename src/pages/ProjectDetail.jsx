@@ -28,7 +28,7 @@ import ManualLayerDialog from "@/components/project/ManualLayerDialog";
 import OnboardingCompleteBanner from "@/components/project/OnboardingCompleteBanner";
 import IsolatedPointDialog from "@/components/project/IsolatedPointDialog";
 import AnnotationDialog from "@/components/project/AnnotationDialog";
-import { buildEstimationQueue, computeEstimationTarget } from "@/lib/estimationQueue";
+import { buildEstimationQueue, computeEstimationTarget, explainEstimationQueue } from "@/lib/estimationQueue";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { buildPipeConfig } from "@/lib/pipeStyling";
 import { findNearestDmas, buildIsolatedLayerGeoJSON } from "@/lib/isolatedPoints";
@@ -295,6 +295,13 @@ export default function ProjectDetail() {
 
   const handleStartInteractiveEstimation = () => {
     const queue = buildEstimationQueue(meters);
+    if (queue.length === 0) {
+      // Opening the threshold dialog only to close it again told the operator
+      // nothing. Say how many meters are waiting and why none of them can be
+      // placed from their street.
+      setEstimationNone(explainEstimationQueue(meters));
+      return;
+    }
     setEstimationQueue(queue);
     setShowThresholdDialog(true);
   };
@@ -1288,6 +1295,9 @@ export default function ProjectDetail() {
   };
 
   const [refetchingBoundary, setRefetchingBoundary] = useState(false);
+  // Set when "Complete missing GIS" has nothing it can estimate, so the reason
+  // can be shown instead of nothing happening.
+  const [estimationNone, setEstimationNone] = useState(null);
   // Set when the automatic lookup found nothing for this project's city.
   const [boundaryMissing, setBoundaryMissing] = useState(false);
 
@@ -1895,6 +1905,34 @@ export default function ProjectDetail() {
         show={showOnboardingBanner}
         onClose={() => setShowOnboardingBanner(false)}
       />
+      {/* "Complete missing GIS" had nothing to offer — explain why. */}
+      <AlertDialog open={!!estimationNone} onOpenChange={(v) => { if (!v) setEstimationNone(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('estimation.noneTitle')}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {estimationNone?.noLocation === 0
+                    ? t('estimation.noneAllLocated')
+                    : t('estimation.noneBody', { count: estimationNone?.noLocation ?? 0 })}
+                </p>
+                {estimationNone?.noStreetReference > 0 && (
+                  <p>{t('estimation.noneNoReference', { count: estimationNone.noStreetReference })}</p>
+                )}
+                {estimationNone?.noAddress > 0 && (
+                  <p>{t('estimation.noneNoAddress', { count: estimationNone.noAddress })}</p>
+                )}
+                {estimationNone?.noLocation > 0 && <p>{t('estimation.noneWhatNext')}</p>}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setEstimationNone(null)}>{t('estimation.noneClose')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* No boundary could be found for this city — offer the ways to add one
           rather than leaving the project without the layer everything else is
           clipped to. */}

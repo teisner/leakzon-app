@@ -1,4 +1,4 @@
-import { parseAddress, getStreetKey } from "./addressParser";
+import { parseAddress, getStreetKey, normalizeStreetKey } from "./addressParser";
 
 // Estimate the location of a meter without GIS by interpolating from
 // other meters on the same street that DO have GIS coordinates.
@@ -9,7 +9,7 @@ export function estimateLocationFromStreet(meter, allMeters) {
   const parsed = parseAddress(meter.address);
   if (!parsed || !parsed.street) return null;
 
-  const streetKey = parsed.street.toLowerCase().replace(/\s+/g, " ").trim();
+  const streetKey = normalizeStreetKey(parsed.street);
 
   // Find meters on the same street with GIS coordinates
   const sameStreetMeters = (allMeters || []).filter((m) => {

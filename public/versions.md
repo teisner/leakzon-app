@@ -183,6 +183,28 @@ The running version is shown at the bottom of the side menu.
   instead of blocking modals pinned over the polygon being edited, and Edit DMA
   has a green border matching the layer and meter editors.
 
+## 1.138 — 2026-07-30 · *Bug fix* · **Important**
+**"Complete missing GIS" found nothing it could place, and never said why**
+- **Fixed: the same street written two ways counted as two streets.** A meter is
+  placed by measuring between its located neighbours on the same street, and the
+  streets were matched on their raw text — so a meter at *"1680 MARTIN DR"* was
+  looking for neighbours filed under *"MARTIN DR"* while they were all under
+  *"MARTIN DRIVE"*, and it found none. Street types, compass directions, trailing
+  dots and ordinals are now read as the same street: **DR/DRIVE, ST/STREET,
+  RD/ROAD, AVE/AVENUE, HWY/HIGHWAY, N/NORTH, W/WEST**, and so on.
+- In Obion TN this took the meters it can place from **0 to 11** of the 43 that
+  have no location, and merged 175 fragmented streets into 146 — which also means
+  more reference meters per street, so the positions it proposes for every
+  project are better founded than before.
+- **Fixed: clicking it with nothing to place did nothing at all.** The tool asked
+  for a confidence threshold and then closed silently. It now says how many
+  meters are waiting, how many are on streets where no meter has a location yet
+  (nothing to measure from), how many have no usable address, and what to do
+  instead — the Mobile Locator, or setting a position from the map, where the
+  address search will find most of them.
+- Hebrew addresses are unaffected: the abbreviations being merged are English
+  ones, and Hebrew street names group exactly as before.
+
 ## 1.136 — 2026-07-30 · *Bug fix* · **Important**
 **Full route-by-route validation: two real faults found and fixed**
 - Every route was loaded in a real browser against live data — dashboard, all
