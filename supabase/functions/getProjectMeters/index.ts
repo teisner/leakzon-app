@@ -64,6 +64,12 @@ function applySearch(query: any, search: string) {
   );
 }
 
+// Meters still waiting on a location — the ones the mobile locator and the
+// estimation tools exist for. Either coordinate being null is enough.
+function applyNoLocation(query: any) {
+  return query.or('latitude.is.null,longitude.is.null');
+}
+
 function applyMeterType(query: any, meterType: string | undefined, insertionLayerIds: string[] | undefined) {
   if (meterType === 'main') {
     query = query.eq('is_main', true);
@@ -81,7 +87,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { project_id, page, pageSize, search, meterType, sortKey, sortDir, countsOnly, dmaFilter, insertionLayerIds } = body;
+    const { project_id, page, pageSize, search, meterType, sortKey, sortDir, countsOnly, dmaFilter, insertionLayerIds, noLocation } = body;
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
     const user = await getCallerUser(req);
@@ -155,10 +161,16 @@ Deno.serve(async (req) => {
         filtered.sort((a, b) => priority(a) - priority(b));
       }
 
+      // Counted before the no-location filter is applied, so the chip reports
+      // how many meters need a location rather than how many are on screen.
+      const unlocatedCount = filtered.filter((m) => m.latitude == null || m.longitude == null).length;
+      if (noLocation) {
+        filtered = filtered.filter((m) => m.latitude == null || m.longitude == null);
+      }
+
       const total = filtered.length;
       const mainCount = filtered.filter((m) => m.is_main && !(insertionLayerIds?.length && insertionLayerIds.includes(m.layer_id))).length;
       const mainInsCount = filtered.filter((m) => insertionLayerIds?.length && insertionLayerIds.includes(m.layer_id)).length;
-      const unlocatedCount = filtered.filter((m) => m.latitude == null || m.longitude == null).length;
 
       if (countsOnly) {
         return json({ total, mainCount, mainInsCount, subCount: total - mainCount - mainInsCount, unlocatedCount });
@@ -237,6 +249,7 @@ Deno.serve(async (req) => {
           const fetchCount = remainingSkip + remainingLimit;
           let gq = admin.from('meter').select('*').eq('project_id', project_id).order('id').limit(fetchCount);
           if (search) gq = applySearch(gq, search);
+          if (noLocation) gq = applyNoLocation(gq);
           gq = applyGroup(gq);
           const { data: groupMeters } = await gq;
           const groupCount = groupMeters?.length || 0;
@@ -266,6 +279,7 @@ Deno.serve(async (req) => {
       let q = admin.from('meter').select('*').eq('project_id', project_id);
       q = applyMeterType(q, meterType, insertionLayerIds);
       if (search) q = applySearch(q, search);
+      if (noLocation) q = applyNoLocation(q);
       q = q.order(sortCol, { ascending: sortDir !== 'desc' }).range(skip, skip + pageSize - 1);
       const { data: meters } = await q;
       const hasMore = (meters?.length || 0) === pageSize;

@@ -27,6 +27,9 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  // Orthogonal to the type filter: "sub meters with no location" is a real thing
+  // to want, so this is a toggle rather than a fifth mutually-exclusive chip.
+  const [noLocationOnly, setNoLocationOnly] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [consumptionTableMeter, setConsumptionTableMeter] = useState(null);
   const [editMeter, setEditMeter] = useState(null);
@@ -78,6 +81,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
       sortKey: sortKey || undefined,
       sortDir,
       dmaFilter,
+      noLocation: noLocationOnly || undefined,
     })
       .then((res) => {
         setMeters(res.data?.meters || []);
@@ -119,7 +123,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
     setPage(1);
     loadPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, debouncedSearch, filter, sortKey, sortDir, dmaFilter, insertionLayerIds]);
+  }, [projectId, debouncedSearch, filter, sortKey, sortDir, dmaFilter, insertionLayerIds, noLocationOnly]);
 
   useEffect(() => {
     loadCounts();
@@ -240,6 +244,11 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
     setPage(1);
   };
 
+  const toggleNoLocationOnly = () => {
+    setNoLocationOnly((v) => !v);
+    setPage(1);
+  };
+
   // Pre-parse DMA polygons for meter→DMA lookup
   const parsedDmas = useMemo(() => {
     return (dmas || []).map((dma) => {
@@ -311,7 +320,9 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
   const activeFilterCount = filter === "main" ? counts.main : filter === "main_ins" ? counts.mainIns : filter === "sub" ? counts.sub : counts.total;
   const hasMeters = counts.total > 0 || (hasInitiallyLoaded && meters.length > 0);
   // Fallback: also derive "has more" from total counts — more reliable than the paginated response
-  const hasMorePages = hasMore || (counts.total > page * PAGE_SIZE);
+  // counts.total ignores the no-location filter (so the chips keep showing real
+  // totals), so while it is on trust only what the server said about this page.
+  const hasMorePages = hasMore || (!noLocationOnly && counts.total > page * PAGE_SIZE);
 
   const maxReadings = useMemo(() => {
     if (meters.length === 0) return 0;
@@ -404,6 +415,20 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                 </span>
               </Button>
             ))}
+            <Button
+              variant={noLocationOnly ? "default" : "outline"}
+              size="sm"
+              onClick={toggleNoLocationOnly}
+              disabled={!hasMeters || (counts.unlocatedCount === 0 && !noLocationOnly)}
+              className="h-7 text-xs gap-1.5"
+              title={t('meterData.noLocationFilterHint')}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              {t('meterData.noLocationFilter')}
+              <span className={`text-[10px] ${noLocationOnly ? "text-blue-100" : "text-muted-foreground/70"}`}>
+                {countsLoading ? "…" : (counts.unlocatedCount || 0).toLocaleString()}
+              </span>
+            </Button>
           </div>
         </div>
         <div className="relative max-w-sm">

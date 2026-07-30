@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium } from "../../node_modules/playwright/index.mjs";
 import fs from "fs";
 const SCR = "/private/tmp/claude-502/-Users-tomereisner-Documents-Onboarding/ee5cec51-7c73-434f-beb2-26e59601c2ec/scratchpad";
 const BASE = "http://localhost:4319";
@@ -7,7 +7,7 @@ const user = JSON.parse(fs.readFileSync(`${SCR}/user.json`, "utf8"))[0];
 const projects = JSON.parse(fs.readFileSync(`${SCR}/projects.json`, "utf8"));
 const obion = projects.find(p => p.name === "Obion TN");
 const wood = projects.find(p => p.name === "Woodlawn");
-const env = fs.readFileSync("/Users/tomereisner/Documents/Onboarding/leakzon-app/.env.local", "utf8");
+const env = fs.readFileSync("./.env.local", "utf8");
 const ref = env.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)[1];
 
 const browser = await chromium.launch();

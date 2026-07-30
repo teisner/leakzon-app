@@ -203,7 +203,7 @@ The running version is shown at the bottom of the side menu.
 - The validation scripts are kept in the project (`scripts/validation/`) so this
   can be repeated in minutes rather than rebuilt from scratch.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
@@ -227,6 +227,13 @@ The running version is shown at the bottom of the side menu.
 - **Coordinates are smaller and stacked** — latitude above longitude, with the
   altitude beneath — instead of one long line that was the widest thing in the
   table.
+- **New "No location" filter** in the meter table, showing only the meters that
+  still have no coordinates — the ones the mobile locator and the estimation
+  tools exist for. It carries its own count, and it stacks with everything else:
+  Sub + No location, or a search + No location, both work.
+- The count on the button always reports how many meters need a location, not how
+  many are currently on screen, so it doesn't collapse to the number you are
+  already looking at once the filter is on.
 - The panel was one column of eleven inputs, which put unrelated fields
   side by side. It is now grouped into **Identification**, **Customer**,
   **Location**, **Role in the network** and **DMA links** — and the DMA section

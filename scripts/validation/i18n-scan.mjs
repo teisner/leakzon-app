@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium } from "../../node_modules/playwright/index.mjs";
 import fs from "fs";
 const SCR = "/private/tmp/claude-502/-Users-tomereisner-Documents-Onboarding/ee5cec51-7c73-434f-beb2-26e59601c2ec/scratchpad";
 const session = JSON.parse(fs.readFileSync(`${SCR}/session.json`, "utf8"));
