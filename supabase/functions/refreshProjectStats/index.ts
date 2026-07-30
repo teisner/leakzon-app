@@ -16,10 +16,18 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
     const { error } = await admin.rpc('refresh_project_stats');
-    if (error) throw error;
+    // supabase-js hands back a plain object, not an Error, so `throw error`
+    // landed in the catch below and was reported as a bare "Internal error" —
+    // the actual Postgres message was thrown away. Report it.
+    if (error) {
+      return json({ error: error.message || 'Could not refresh the statistics', code: error.code ?? null }, 500);
+    }
 
     return json({ success: true });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : 'Internal error' }, 500);
+    const message = error instanceof Error
+      ? error.message
+      : (typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : 'Internal error');
+    return json({ error: message }, 500);
   }
 });

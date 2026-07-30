@@ -111,6 +111,7 @@ const translations = {
     'project.customerApprovedBody': '{name} approved the network design for "{project}". The project is now locked as approved. Unlock it in Project Settings to withdraw the approval.',
     'project.customerApprovedFallbackName': 'The customer',
     'project.customerApprovedOk': 'Got it',
+    'project.unassigned': 'No owner assigned',
     'project.notFound': 'Project not found.',
     'project.backToDashboard': 'Back to Dashboard',
 
@@ -1166,6 +1167,7 @@ const translations = {
     'project.customerApprovedBody': '{name} אישר את תכנון הרשת עבור "{project}". הפרויקט נעול כעת כמאושר. ניתן לבטל את האישור בהגדרות הפרויקט.',
     'project.customerApprovedFallbackName': 'הלקוח',
     'project.customerApprovedOk': 'הבנתי',
+    'project.unassigned': 'לא הוקצה בעל פרויקט',
     'project.notFound': 'הפרויקט לא נמצא.',
     'project.backToDashboard': 'חזרה ללוח הבקרה',
 

@@ -183,6 +183,26 @@ The running version is shown at the bottom of the side menu.
   instead of blocking modals pinned over the polygon being edited, and Edit DMA
   has a green border matching the layer and meter editors.
 
+## 1.136 — 2026-07-30 · *Bug fix* · **Important**
+**Full route-by-route validation: two real faults found and fixed**
+- Every route was loaded in a real browser against live data — dashboard, all
+  seven project views, import/export, mobile locator, customer view and the 404
+  page — and all 25 server functions were exercised. Two things were broken.
+- **The dashboard's "force refresh" button had stopped working.** Recomputing the
+  project figures now takes about 13 seconds across 24 projects and 78,000
+  meters, which is longer than the database allows a single request to run, so it
+  was cancelled every time and reported as "Internal error". The refresh is now
+  allowed the time it needs, and the real reason is reported if anything else
+  goes wrong. The scheduled 15-minute refresh was never affected — only the
+  button.
+- **"project.unassigned" was showing as raw text** in the project header on every
+  view, wherever a project has no owner assigned. It now reads "No owner
+  assigned", in both languages.
+- No other route rendered a broken screen, and no other text on any screen is
+  untranslated. English and Hebrew both carry all 973 phrases.
+- The validation scripts are kept in the project (`scripts/validation/`) so this
+  can be repeated in minutes rather than rebuilt from scratch.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
