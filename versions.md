@@ -404,7 +404,7 @@ The running version is shown at the bottom of the side menu.
   version list — greyed cramped body text, every bold phrase green, a rule above
   each section. It now has its own typography, tables, dividers and note boxes.
 
-## 1.018, 1.102 — 2026-07-28 · *New feature*
+## 1.018, 1.102, 1.147 — 2026-07-30 · *New feature + Bug fix*
 **Network design shows main meters, and brings linked DMAs across together**
 - A DMA block shows its **main meter** with a blue inward arrow. Where that meter
   is also billed as a **sub-meter of a neighbouring DMA**, both blocks say so —
@@ -416,6 +416,16 @@ The running version is shown at the bottom of the side menu.
 - Leaving the Network Design view after making changes offers to mark the
   wizard's **Design Network Flow** step done. "Not yet" won't ask again until you
   change something else.
+- **Fixed: the smaller blocks were too small for what they had to say.** A block
+  is sized by its DMA's real area, and a small DMA landed at a size that could not
+  hold its name, meter count, main meter and "also sub in …" line — so text was cut
+  off mid-word or spilled outside the box.
+- Every block is now at least as big as its own contents, measured from what is
+  actually on screen rather than guessed from the text, and still grows with area
+  above that. On Obion TN the two crowded blocks went from 108×38 and 89×37 to
+  139×42 and 121×41; the larger blocks are unchanged.
+- Checked across the projects that have a network design, including one with
+  Hebrew DMA names: nothing clipped, nothing overflowing, in any block.
 
 ## 1.036, 1.046, 1.047, 1.067, 1.096 – 1.100 — 2026-07-28 · *Updated feature*
 **The version number moved into a strip along the bottom of the project page**

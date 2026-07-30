@@ -9,6 +9,8 @@ const NODE_MIN_W = 130;
 const NODE_MIN_H = 55;
 const NODE_MAX_W = 300;
 const NODE_MAX_H = 120;
+// border-2 on the block, outside the measured content box.
+const NODE_BORDER = 2;
 
 const DIRS = [
   { x: 1, y: 0 },
@@ -24,16 +26,26 @@ function parsePolygon(dma) {
   } catch { return null; }
 }
 
-function getNodeSize(node, sizeMap) {
+// A block is sized by its DMA's real area, but never smaller than the text it
+// has to hold. The area calculation alone put a small DMA at 130x55, which is
+// not enough for a name, a meter count, a main meter and an "also sub in …"
+// line — so the content spilled out of the box or was clipped mid-word.
+// `measured` carries what each block's content actually needs, taken from the
+// DOM after it renders rather than estimated from character counts, which
+// cannot be done reliably across fonts and languages.
+function getNodeSize(node, sizeMap, measured) {
   if (node.node_type === "source" || node.node_type === "orphans") {
     return { w: SOURCE_W, h: SOURCE_H };
   }
-  return sizeMap[node.dma_id] || { w: NODE_MIN_W, h: NODE_MIN_H };
+  const area = sizeMap[node.dma_id] || { w: NODE_MIN_W, h: NODE_MIN_H };
+  const need = measured?.[node.id];
+  if (!need) return area;
+  return { w: Math.max(area.w, need.w), h: Math.max(area.h, need.h) };
 }
 
-function getConnectionPoints(from, to, sizeMap) {
-  const fs = getNodeSize(from, sizeMap);
-  const ts = getNodeSize(to, sizeMap);
+function getConnectionPoints(from, to, sizeMap, measured) {
+  const fs = getNodeSize(from, sizeMap, measured);
+  const ts = getNodeSize(to, sizeMap, measured);
   const fromCx = from.pos_x + fs.w / 2;
   const fromCy = from.pos_y + fs.h / 2;
   const toCx = to.pos_x + ts.w / 2;
@@ -535,7 +547,41 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
     return map;
   }, [dmas]);
 
-  const nodeSize = (node) => getNodeSize(node, sizeMap);
+  // What each block's content needs, measured from the DOM. Written once per
+  // change and only when it actually differs, so this cannot loop.
+  const [measured, setMeasured] = useState({});
+  const contentRefs = useRef({});
+
+  useEffect(() => {
+    const next = {};
+    let changed = false;
+    for (const node of nodes) {
+      if (node.node_type === "source" || node.node_type === "orphans") continue;
+      const el = contentRefs.current[node.id];
+      if (!el) continue;
+      // The wrapper's own scrollWidth is not enough on its own: each text row is
+      // a nowrap flex line, and a flex item's overflow does not count towards an
+      // ancestor's scrollWidth — so a row needing 165px inside a 155px wrapper
+      // left the wrapper reporting no overflow at all. Add the worst shortfall
+      // any row is under, and the block's 2px border, which sits outside the
+      // measured content box.
+      let shortfall = 0;
+      for (const row of el.querySelectorAll("p, span")) {
+        shortfall = Math.max(shortfall, row.scrollWidth - row.clientWidth);
+      }
+      const need = {
+        w: Math.ceil(el.scrollWidth) + Math.ceil(Math.max(0, shortfall)) + NODE_BORDER * 2,
+        h: Math.ceil(el.scrollHeight) + NODE_BORDER * 2,
+      };
+      next[node.id] = need;
+      const prev = measured[node.id];
+      if (!prev || Math.abs(prev.w - need.w) > 1 || Math.abs(prev.h - need.h) > 1) changed = true;
+    }
+    if (changed || Object.keys(next).length !== Object.keys(measured).length) setMeasured(next);
+    // Re-measure whenever anything that changes the text changes.
+  }, [nodes, dmas, meters, meterCounts, measured]);
+
+  const nodeSize = (node) => getNodeSize(node, sizeMap, measured);
 
   const contentW = Math.max(1000, ...nodes.map((n) => n.pos_x + nodeSize(n).w + 100));
   const contentH = Math.max(600, ...nodes.map((n) => n.pos_y + nodeSize(n).h + 100));
@@ -548,7 +594,7 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
     const computeObstacles = (excludeIds) =>
       displayNodes
         .filter((n) => !excludeIds.includes(n.id))
-        .map((n) => { const s = getNodeSize(n, sizeMap); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
+        .map((n) => { const s = getNodeSize(n, sizeMap, measured); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
 
     const findBestD2 = (from, to, d1, obstacles) => {
       let best = null, bestScore = Infinity;
@@ -727,10 +773,10 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                         const p2 = getPortPoint(to, opt.d2, sizeMap);
                         return { x1: p1.x, y1: p1.y, d1: opt.d1, x2: p2.x, y2: p2.y, d2: opt.d2 };
                       })()
-                    : getConnectionPoints(from, to, sizeMap);
+                    : getConnectionPoints(from, to, sizeMap, measured);
                   const obstacles = displayNodes
                     .filter((n) => n.id !== from.id && n.id !== to.id)
-                    .map((n) => { const s = getNodeSize(n, sizeMap); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
+                    .map((n) => { const s = getNodeSize(n, sizeMap, measured); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
                   const d = getOrthogonalPath(pts.x1, pts.y1, pts.x2, pts.y2, pts.d1, pts.d2, obstacles);
                   return (
                     <g key={link.id}>
@@ -785,7 +831,7 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                   const port = getNearestPort(from, connectMouse.x, connectMouse.y, sizeMap);
                   const previewObstacles = displayNodes
                     .filter((n) => n.id !== from.id)
-                    .map((n) => { const s = getNodeSize(n, sizeMap); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
+                    .map((n) => { const s = getNodeSize(n, sizeMap, measured); return { x: n.pos_x, y: n.pos_y, w: s.w, h: s.h }; });
                   return (
                     <>
                       <path
@@ -831,8 +877,12 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                     style={{
                       left: node.pos_x,
                       top: node.pos_y,
+                      // A minimum, not a cap: the block is at least its
+                      // area-proportional size and grows if the text needs more.
                       width: ns.w,
                       height: ns.h,
+                      minWidth: ns.w,
+                      minHeight: ns.h,
                       ...(isDma ? {
                         backgroundColor: (dma?.color || "#3b82f6") + "18",
                         borderColor: dma?.color || "#3b82f6",
@@ -855,7 +905,10 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                         ))}
                       </div>
                     )}
-                    <div className="relative z-10 flex items-center gap-2 p-2.5 h-full">
+                    <div
+                      ref={(el) => { if (isDma) contentRefs.current[node.id] = el; }}
+                      className="relative z-10 flex items-center gap-2 p-2.5 h-full"
+                    >
                       {isSource ? (
                         <div className="w-8 h-8 rounded-lg bg-slate-300 dark:bg-slate-500 flex items-center justify-center shrink-0">
                           <Droplets className="w-4 h-4 text-slate-700 dark:text-slate-100" />
@@ -865,8 +918,8 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                           <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: dma?.color || "#3b82f6" }} />
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className={`${isDma ? "text-sm font-bold" : "text-xs font-semibold"} truncate text-foreground`}>{node.name}</p>
+                      <div className="flex-1 min-w-0 max-w-[300px]">
+                        <p className={`${isDma ? "text-sm font-bold" : "text-xs font-semibold"} text-foreground break-words`}>{node.name}</p>
                         <p className="text-[10px] text-muted-foreground">{count} meters</p>
                         {isDma && (() => {
                           const roles = dmaMeterRoles(dma, meters, dmas);
@@ -875,25 +928,25 @@ export default function FlowChartCanvas({ nodes, links, dmas, meters, meterCount
                             <div className="mt-1 space-y-0.5">
                               {/* The meter measuring water INTO this DMA. */}
                               {roles.main && (
-                                <p className="flex items-center gap-1 text-[10px] leading-tight truncate" title={`Main meter: ${roles.main.uid}`}>
+                                <p className="flex items-center gap-1 text-[10px] leading-tight whitespace-nowrap" title={`Main meter: ${roles.main.uid}`}>
                                   <ArrowDownToLine className="w-2.5 h-2.5 shrink-0 text-blue-500" />
                                   <span className="font-semibold text-blue-600 dark:text-blue-400">Main</span>
-                                  <span className="text-muted-foreground truncate">{roles.main.uid}</span>
+                                  <span className="text-muted-foreground">{roles.main.uid}</span>
                                 </p>
                               )}
                               {/* The same meter, billed as a consumer elsewhere. */}
                               {roles.main && roles.mainAlsoSubIn && (
-                                <p className="text-[9px] leading-tight text-muted-foreground/80 truncate ps-3.5" title={`Also a sub-meter of ${roles.mainAlsoSubIn.name}`}>
+                                <p className="text-[9px] leading-tight text-muted-foreground/80 whitespace-nowrap ps-3.5" title={`Also a sub-meter of ${roles.mainAlsoSubIn.name}`}>
                                   also sub in {roles.mainAlsoSubIn.name}
                                 </p>
                               )}
                               {/* Another DMA's main that THIS DMA bills. */}
                               {roles.incoming.map(({ meter, suppliesDmas }) => (
-                                <p key={meter.id} className="flex items-center gap-1 text-[10px] leading-tight truncate"
+                                <p key={meter.id} className="flex items-center gap-1 text-[10px] leading-tight whitespace-nowrap"
                                    title={`${meter.uid} is metered here as a sub-meter, and is the main for ${suppliesDmas.map((d) => d.name).join(", ")}`}>
                                   <ArrowUpFromLine className="w-2.5 h-2.5 shrink-0 text-amber-500" />
                                   <span className="font-semibold text-amber-600 dark:text-amber-400">Sub</span>
-                                  <span className="text-muted-foreground truncate">
+                                  <span className="text-muted-foreground">
                                     {meter.uid} → {suppliesDmas.map((d) => d.name).join(", ")}
                                   </span>
                                 </p>
