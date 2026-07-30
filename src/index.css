@@ -107,6 +107,12 @@
   }
 }
 
+/* NOTE: this never actually runs. The class is set through react-leaflet's
+   pathOptions, which are applied with Leaflet's setStyle() — and setStyle
+   ignores className, so it never reaches the SVG element. The highlight and
+   bulk-highlight rings therefore render but sit still. Kept because the rings
+   are wanted; if the pulse is ever wanted too, drive it from state the way the
+   two-second blink in ProjectMap does, or add the class through a ref. */
 .leaflet-path.meter-highlight-pulse {
   transform-origin: center;
   transform-box: fill-box;

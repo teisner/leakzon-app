@@ -1478,7 +1478,10 @@ export default function ProjectDetail() {
   }, [highlightUnassigned, dmas, meters]);
 
   const handleViewMeterOnMap = (meter) => {
-    setFocusMeter(meter);
+    // The stamp matters: clicking "View on map" for the same meter twice would
+    // otherwise pass the identical object and the map's effect — keyed on the
+    // value — would not run again, so the second click did nothing visible.
+    setFocusMeter({ ...meter, _focusedAt: Date.now() });
     setViewMode("gis");
   };
 

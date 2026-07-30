@@ -199,10 +199,22 @@ function BoxZoomHandler({ active, onDone }) {
   return null;
 }
 
+// How long a meter blinks after "View on map" brings you here, and how fast.
+// The blink is driven from state rather than a CSS class: react-leaflet applies
+// pathOptions through Leaflet's setStyle(), which ignores `className`, so a
+// class named there never reaches the SVG element at all.
+const BLINK_MS = 2000;
+const BLINK_INTERVAL_MS = 250;
+// The map takes this long to fly to the meter; blinking during the flight is
+// mostly wasted, so the two seconds start once it has settled.
+const FLY_MS = 800;
+
 export default function ProjectMap({ project, layers, meters, mapType, setMapType, mapSource, setMapSource, onToggleVisibility, mapRef, onLayerUpdated, clipToBoundary, dmas, onDmaCreated, drawMode, setDrawMode, drawTarget, onBoundaryDrawn, editDma, setEditDma, estimationTarget, onDragProposed, manualEditLayer, onSaveManualLayer, onCancelManualLayer, focusedDmaIds, onToggleFocusDma, highlightedMeterIds, focusMeter, editBoundary, onBoundaryEditSave, onBoundaryEditCancel, onRedrawBoundary, onRefetchBoundary, refetchingBoundary, pinpointMeter, pinpointCoords, onPinpointPlaced, pinpointAddress, pinpointLoading, onPinpointConfirm, onPinpointCancel, pinpointDiameter, onPinpointDiameterChange, imageOverlays, editingOverlayId, onImageOverlayBoundsChange, croppingOverlayId, onCropApplied, onCropCancel, isolatedMode, isolatedPoints, onValveClick, onDeleteIsolatedPoint, onExitIsolatedMode, onToggleMeterMain, onEditMeter, highlightBorderValves, isolationViewMode, annotations, annotationMode, onAnnotationClick, onArrowFirstClick, onArrowSecondClick, arrowStart, highlightedAnnotationId, onCancelAnnotation,   annotationsHidden, hiddenAnnotationIds, focusIsolatedPoint, customerAnnotations, customerAnnotationsHidden, hiddenCustomerAnnotationIds }) {
   const proximityMeters = feetToMeters(project?.boundary_deviation_feet ?? DEFAULT_PROXIMITY_FEET);
   const [geojsonCache, setGeojsonCache] = useState({});
   const [highlightedUid, setHighlightedUid] = useState(null);
+  const [blinkUid, setBlinkUid] = useState(null);
+  const [blinkOn, setBlinkOn] = useState(false);
   const [boxMode, setBoxMode] = useState(false);
   const [drawPoints, setDrawPoints] = useState([]);
   const [mousePos, setMousePos] = useState(null);
@@ -444,9 +456,35 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   useEffect(() => {
     if (!focusMeter) return;
     setHighlightedUid(focusMeter.uid);
-    if (mapRef?.current && focusMeter.latitude != null && focusMeter.longitude != null) {
-      mapRef.current.flyTo([focusMeter.latitude, focusMeter.longitude], 17, { duration: 0.8 });
+    const hasPosition = focusMeter.latitude != null && focusMeter.longitude != null;
+    if (mapRef?.current && hasPosition) {
+      mapRef.current.flyTo([focusMeter.latitude, focusMeter.longitude], 17, { duration: FLY_MS / 1000 });
     }
+    // Nothing to blink for a meter with no coordinates.
+    if (!hasPosition) return undefined;
+
+    // Blink it for two seconds so the eye lands on the right point among
+    // thousands. The amber highlight ring stays afterwards, which is what tells
+    // you which meter you came here for once the blinking stops.
+    let flip;
+    let stop;
+    const start = setTimeout(() => {
+      setBlinkUid(focusMeter.uid);
+      setBlinkOn(true);
+      flip = setInterval(() => setBlinkOn((v) => !v), BLINK_INTERVAL_MS);
+      stop = setTimeout(() => {
+        clearInterval(flip);
+        setBlinkUid(null);
+        setBlinkOn(false);
+      }, BLINK_MS);
+    }, FLY_MS);
+    return () => {
+      clearTimeout(start);
+      clearInterval(flip);
+      clearTimeout(stop);
+      setBlinkUid(null);
+      setBlinkOn(false);
+    };
   }, [focusMeter]);
 
   const handleMeterSelect = (meter) => {
@@ -899,6 +937,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   meters={layerMeters}
                   layerConfig={layer}
                   highlightedUid={highlightedUid}
+                  blinkUid={blinkUid}
+                  blinkOn={blinkOn}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
                   onEditMeter={onEditMeter}
@@ -1105,6 +1145,8 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
                   meters={layerMeters}
                   layerConfig={layer}
                   highlightedUid={highlightedUid}
+                  blinkUid={blinkUid}
+                  blinkOn={blinkOn}
                   highlightedMeterIds={highlightedMeterIds}
                   onToggleMain={onToggleMeterMain}
                   onEditMeter={onEditMeter}

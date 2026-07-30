@@ -6,7 +6,7 @@ import { resolvePointColors } from "@/lib/colorPalette";
 import { useLanguage } from "@/lib/i18n";
 import { locationSourceInfo, locationSourceLabelKey } from "@/lib/locationSource";
 
-export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, onEditMeter, pane }) {
+export default function MeterMarkers({ meters, layerConfig, highlightedUid, blinkUid, blinkOn, highlightedMeterIds, onToggleMain, onEditMeter, pane }) {
   const { t } = useLanguage();
   // Optional Leaflet pane so these markers land in their layer's z-order slot.
   const paneProp = pane ? { pane } : {};
@@ -75,6 +75,7 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
   );
 
   const isHighlighted = (m) => highlightedUid && m.uid === highlightedUid;
+  const isBlinking = (m) => blinkOn && blinkUid && m.uid === blinkUid;
   const isBulkHighlighted = (m) => highlightedMeterIds && highlightedMeterIds.has(m.id);
 
   const renderBulkHighlight = (m) => (
@@ -165,6 +166,22 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
         );
       })}
       {validMeters.filter(isBulkHighlighted).map(renderBulkHighlight)}
+      {/* Two seconds of blinking on arrival — a filled disc over the point,
+          which reads at any zoom, unlike a thin ring. It is mounted and
+          unmounted on a timer in ProjectMap rather than animated in CSS,
+          because a className passed through pathOptions never lands on the
+          element. */}
+      {validMeters.filter(isBlinking).map((m) => (
+        <CircleMarker
+          key={`blink-${m.id}`}
+          center={[m.latitude, m.longitude]}
+          {...paneProp}
+          radius={radius + 10}
+          pathOptions={{
+            color: "#f59e0b", weight: 3, fillColor: "#fbbf24", fillOpacity: 0.55,
+          }}
+        />
+      ))}
       {validMeters.filter(isHighlighted).map((m) => (
         <CircleMarker
           key={`hl-ring-${m.id}`}
