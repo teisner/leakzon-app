@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Gauge, Loader2, Inbox, BarChart3, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
+import { Search, Loader2, Inbox, BarChart3, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { meterIdOf, accountIdOf } from "@/lib/meterIds";
@@ -346,17 +346,19 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
             </button>
           </div>
         )}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Gauge className="w-5 h-5 text-blue-600" />
-            <h2 className="text-sm font-semibold text-foreground">Meter Data</h2>
-            <Badge variant="secondary" className="text-xs">
-              {countsLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                `${activeFilterCount.toLocaleString()} meters`
-              )}
-            </Badge>
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* No "Meter Data" heading — the view is already named in the side
+              menu, and the count is what anyone actually reads here, so it gets
+              the room the title was taking. */}
+          <div className="flex items-baseline gap-1.5">
+            {countsLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            ) : (
+              <span className="text-2xl font-bold text-foreground tabular-nums leading-none">
+                {activeFilterCount.toLocaleString()}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground">{t('meterData.metersLabel')}</span>
           </div>
           <div className="flex-1" />
 
@@ -411,19 +413,6 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
             </Button>
           </div>
 
-          {/* Take the data out */}
-          <div className="flex items-center rounded-lg border border-border/70 bg-muted/40 p-1">
-            <Button
-              onClick={() => setShowAnomalyExport(true)}
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-              disabled={!hasMeters}
-            >
-              <AlertTriangle className="w-3.5 h-3.5" /> {t('meterData.exportAnomalies')}
-            </Button>
-          </div>
-
           {/* Go and locate the meters that have no position */}
           <div className="flex items-center gap-1.5 flex-wrap rounded-lg border border-border/70 bg-muted/40 p-1">
             <Button
@@ -444,6 +433,19 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
               title={counts.unlocatedCount === 0 ? "No meters with missing GIS coordinates" : `${counts.unlocatedCount} meters need location`}
             >
               <Smartphone className="w-3.5 h-3.5" /> Mobile Locator
+            </Button>
+          </div>
+
+          {/* Take the data out */}
+          <div className="flex items-center rounded-lg border border-border/70 bg-muted/40 p-1">
+            <Button
+              onClick={() => setShowAnomalyExport(true)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={!hasMeters}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" /> {t('meterData.exportAnomalies')}
             </Button>
           </div>
         </div>
