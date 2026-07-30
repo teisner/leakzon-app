@@ -183,7 +183,7 @@ The running version is shown at the bottom of the side menu.
   instead of blocking modals pinned over the polygon being edited, and Edit DMA
   has a green border matching the layer and meter editors.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133, 1.134 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
@@ -198,6 +198,15 @@ The running version is shown at the bottom of the side menu.
   database over real columns, and those IDs are not stored as columns.
 - It matches the ID *values* only, so searching a word like "account" doesn't
   return every meter that happens to have an account number.
+- **The meter table has been re-laid out.** A new **Sub-DMA** column sits beside
+  DMA, holding the area that meters a main as one of its consumers — blank for a
+  sub-meter, where it never applies.
+- **Status is no longer a column.** It reads as a coloured stripe down the left
+  edge of each row: teal for active, grey for inactive, nothing where the status
+  was never recorded. It stays available to screen readers.
+- **Coordinates are smaller and stacked** — latitude above longitude, with the
+  altitude beneath — instead of one long line that was the widest thing in the
+  table.
 - The panel was one column of eleven inputs, which put unrelated fields
   side by side. It is now grouped into **Identification**, **Customer**,
   **Location**, **Role in the network** and **DMA links** — and the DMA section
@@ -209,11 +218,11 @@ The running version is shown at the bottom of the side menu.
   and the DMA panel immediately. Hidden on locked projects.
 - The editor is a **floating, draggable panel** rather than a centred dialog —
   keep working on the map underneath while it is open.
-- **A main meter can serve more than one DMA**, and now shows as **one row**
-  listing them all ("North DMA, North Central") instead of only the first.
-  The one case that adds a row: a main also metered as a **sub-meter of another
-  DMA**, which appears again as a **Sub** row with a copy icon — a view of the
-  same meter, **not counted** anywhere and not selectable for deletion.
+- **A main meter can serve more than one DMA**, and shows as **one row** listing
+  them all ("North DMA, North Central") instead of only the first. **No meter is
+  ever listed twice** — a main that is also metered as a sub-meter of a
+  neighbouring DMA used to get a second row for that role; it now has a
+  **Sub-DMA** column on its own row instead, so a UID appears exactly once.
 - New **Sub-Meter in** field beside **Linked DMA**, for the DMA that meters a
   main as one of its consumers. Both dropdowns mark a **(recommended)**
   suggestion worked out from the network, but nothing is ever selected for you.

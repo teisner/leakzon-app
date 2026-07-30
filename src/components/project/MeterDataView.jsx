@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle, Copy } from "lucide-react";
+import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { meterIdOf, accountIdOf } from "@/lib/meterIds";
@@ -292,22 +292,20 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
     setPage(1);
   }, [dmaFilter]);
 
-  // Rows actually rendered. A meter appears once, except when it is a main that
-  // is ALSO metered as a sub-meter of another DMA — then it gets a second,
-  // clearly-marked row. That extra row is presentation only: it is excluded
-  // from every count and from selection, so totals still reflect real meters.
+  // One row per meter, always. A main that is also metered as a sub-meter of a
+  // neighbouring DMA used to get a second row for that role, which meant the
+  // same UID appeared twice and had to be excluded from every count. The role
+  // is now a Sub-DMA column on the meter's own row instead.
   const displayRows = useMemo(() => {
-    const rows = [];
-    for (const m of meters) {
-      rows.push({ meter: m, key: m.id, dmaNames: getMeterDmaNames(m), asSubMeter: false });
-      const subDma = m.sub_meter_dma_id
-        ? (dmas || []).find((d) => d.id === m.sub_meter_dma_id)
-        : null;
-      if (m.is_main && subDma) {
-        rows.push({ meter: m, key: `${m.id}:sub`, dmaNames: [subDma.name], asSubMeter: true });
-      }
-    }
-    return rows;
+    return meters.map((m) => ({
+      meter: m,
+      key: m.id,
+      dmaNames: getMeterDmaNames(m),
+      // Only a main meter can be billed as a consumer of another DMA.
+      subDma: m.is_main && m.sub_meter_dma_id
+        ? (dmas || []).find((d) => d.id === m.sub_meter_dma_id) || null
+        : null,
+    }));
   }, [meters, dmas, getMeterDmaNames]);
 
   const activeFilterCount = filter === "main" ? counts.main : filter === "main_ins" ? counts.mainIns : filter === "sub" ? counts.sub : counts.total;
@@ -488,8 +486,8 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                   { key: "address", label: t('meterData.colAddress') },
                   { key: null, label: t('meterData.colProvider') },
                   { key: null, label: t('meterData.colDiameter') },
-                  { key: "status", label: t('meterData.colStatus') },
                   { key: null, label: t('meterData.colDma') },
+                  { key: null, label: t('meterData.colSubDma') },
                   { key: null, label: t('meterData.colLocation') },
                   { key: null, label: "" },
                 ].map((col, i) => (
@@ -525,10 +523,22 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                 const m = row.meter;
                 const hasLocation = m.latitude != null && m.longitude != null;
                 return (
-                  <tr key={row.key} className={`hover:bg-muted transition-colors ${row.asSubMeter ? "bg-muted/30" : ""}`}>
-                    <td className="px-4 py-2.5 font-mono text-xs font-medium">
+                  <tr key={row.key} className="hover:bg-muted transition-colors">
+                    {/* The status column is gone; it reads as a stripe down the
+                        left edge of the row instead — teal for active, grey for
+                        inactive, nothing at all when it was never recorded. */}
+                    <td className="relative px-4 py-2.5 font-mono text-xs font-medium">
+                      <span
+                        aria-hidden="true"
+                        className={`absolute inset-y-0 start-0 w-1 ${
+                          m.is_active == null ? "bg-transparent" : m.is_active ? "bg-teal-500" : "bg-slate-300 dark:bg-slate-600"
+                        }`}
+                      />
+                      <span className="sr-only">
+                        {m.is_active == null ? "N/A" : m.is_active ? t('meterData.active') : t('meterData.inactive')}
+                      </span>
                       <div className="flex items-center gap-2">
-                        {deleteMode && !row.asSubMeter && (
+                        {deleteMode && (
                           <Checkbox
                             checked={selectedIds.has(m.id)}
                             onCheckedChange={() => toggleSelect(m.id)}
@@ -560,19 +570,6 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                     <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{m.endpoint_id || "—"}</td>
                     <td className="px-4 py-2.5">
                       {(() => {
-                        if (row.asSubMeter) {
-                          // Same physical meter shown a second time because it is
-                          // metered as a consumer of another DMA. Marked so it is
-                          // never mistaken for an extra meter — it is not counted.
-                          return (
-                            <span className="inline-flex items-center gap-1">
-                              <Badge variant="secondary" className="text-[10px]">{t('meterData.sub')}</Badge>
-                              <span title={t('meterData.duplicateRowHint')}>
-                                <Copy className="w-3 h-3 text-amber-500" />
-                              </span>
-                            </span>
-                          );
-                        }
                         const isIns = insertionLayerIds.includes(m.layer_id);
                         if (isIns) {
                           return <Badge variant="default" className="text-[10px] bg-blue-600 hover:bg-blue-700">Mains (Ins)</Badge>;
@@ -588,19 +585,6 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                     <td className="px-4 py-2.5 text-muted-foreground max-w-[200px] truncate">{m.address || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground max-w-[140px] truncate">{m.provider || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground text-xs">{m.diameter != null ? `${m.diameter} mm` : "—"}</td>
-                    <td className="px-4 py-2.5">
-                      {m.is_active == null ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground/70">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                          N/A
-                        </span>
-                      ) : (
-                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${m.is_active ? "text-emerald-600" : "text-muted-foreground/70"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${m.is_active ? "bg-emerald-500" : "bg-slate-300"}`} />
-                          {m.is_active ? t('meterData.active') : t('meterData.inactive')}
-                        </span>
-                      )}
-                    </td>
                     <td className="px-4 py-2.5">
                       {row.dmaNames.length > 0 ? (
                         // A main serving several DMAs stays one row, listing them
@@ -620,15 +604,36 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                         <span className="text-xs text-muted-foreground/50">—</span>
                       )}
                     </td>
-                    <td className={`px-4 py-2.5 text-xs font-mono whitespace-nowrap ${hasLocation ? "text-muted-foreground" : "text-red-600 font-semibold"}`}>
+                    {/* Sub-DMA — the area that meters this main as one of its
+                        consumers. Only a main can have one, so a sub-meter's
+                        cell is simply empty rather than showing a dash. */}
+                    <td className="px-4 py-2.5">
+                      {row.subDma ? (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-dashed">
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: row.subDma.color || "#64748b" }}
+                          />
+                          {row.subDma.name}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/40">{m.is_main ? "—" : ""}</span>
+                      )}
+                    </td>
+                    <td className={`px-4 py-1.5 text-[11px] font-mono leading-tight whitespace-nowrap ${hasLocation ? "text-muted-foreground" : "text-red-600 font-semibold text-xs"}`}>
                       {hasLocation ? (
-                        <span className="flex items-center gap-1">
-                          {m.latitude.toFixed(5)}, {m.longitude.toFixed(5)}
-                          {m.altitude != null && (
-                            <span className="text-muted-foreground/70" title="Altitude (m)">
-                              · {m.altitude.toFixed(1)}m
-                            </span>
-                          )}
+                        <span className="flex items-start gap-1">
+                          {/* Latitude over longitude — one long run of digits on
+                              a single line was the widest thing in the table. */}
+                          <span className="flex flex-col">
+                            <span>{m.latitude.toFixed(5)}</span>
+                            <span>{m.longitude.toFixed(5)}</span>
+                            {m.altitude != null && (
+                              <span className="text-muted-foreground/70" title="Altitude (m)">
+                                {m.altitude.toFixed(1)}m
+                              </span>
+                            )}
+                          </span>
                           {m.location_source && (
                             <span
                               title={t('meterData.locationCalculated', { source: m.location_source })}
