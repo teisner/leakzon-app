@@ -225,7 +225,7 @@ The running version is shown at the bottom of the side menu.
 - The validation scripts are kept in the project (`scripts/validation/`) so this
   can be repeated in minutes rather than rebuilt from scratch.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
@@ -256,6 +256,16 @@ The running version is shown at the bottom of the side menu.
 - The count on the button always reports how many meters need a location, not how
   many are currently on screen, so it doesn't collapse to the number you are
   already looking at once the filter is on.
+- **The meter table's buttons are grouped by what they do.** They were in one
+  undivided row in no particular order. Now there are three clusters, each in its
+  own frame: **narrowing the view** (the type filters, No location, Select
+  Meters), **taking data out** (Export Anomalies), and **locating meters**
+  (Complete missing GIS, Mobile Locator).
+- **Fixed: on a 1280px screen the Mobile Locator button was cut off entirely.**
+  The pane holding the view was 1423px wide inside a 1280px window and the excess
+  was simply clipped, so the toolbar could never wrap. It now shrinks to the
+  window and the buttons wrap onto a second row when they need to — checked at
+  1600, 1280 and 1024px, with nothing clipped and no sideways scrolling.
 - The panel was one column of eleven inputs, which put unrelated fields
   side by side. It is now grouped into **Identification**, **Customer**,
   **Location**, **Role in the network** and **DMA links** — and the DMA section

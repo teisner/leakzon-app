@@ -1659,7 +1659,11 @@ export default function ProjectDetail() {
       <div className="flex-1 flex overflow-hidden">
         <ProjectNav viewMode={viewMode} onChange={handleViewModeChange} onImportData={() => navigate(`/project/${id}/upload`)} locked={isLocked} onOpenWizard={() => setShowWizard(true)} onOpenCustomerView={() => setShowCustomerViewDialog(true)} customerAnnotationCount={customerAnnotations.filter(a => !a.viewed).length} currentUser={currentUser} />
 
-        <div className="flex-1 relative">
+        {/* min-w-0: a flex child refuses to shrink below its content's own
+            minimum width unless told to, so this pane was 1423px wide inside a
+            1280px window and the view inside it was clipped by the parent's
+            overflow-hidden — the meter toolbar could never wrap. */}
+        <div className="flex-1 relative min-w-0">
           {viewMode === "gis" ? (
             <>
               {/* Floating button to reopen side panel when hidden */}

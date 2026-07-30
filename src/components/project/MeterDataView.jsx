@@ -358,44 +358,13 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
             </Badge>
           </div>
           <div className="flex-1" />
-          <Button
-            onClick={() => setShowAnomalyExport(true)}
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1.5"
-            disabled={!hasMeters}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" /> {t('meterData.exportAnomalies')}
-          </Button>
-          <Button
-            onClick={onStartInteractiveEstimation}
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1.5"
-            disabled={locked || !hasMeters}
-          >
-            <MousePointerClick className="w-3.5 h-3.5" /> Complete missing GIS
-          </Button>
-          <Button
-            onClick={() => setShowMobileLocator(true)}
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs gap-1.5"
-            disabled={!hasMeters || counts.unlocatedCount === 0}
-            title={counts.unlocatedCount === 0 ? "No meters with missing GIS coordinates" : `${counts.unlocatedCount} meters need location`}
-          >
-            <Smartphone className="w-3.5 h-3.5" /> Mobile Locator
-          </Button>
-          <Button
-            onClick={deleteMode ? exitDeleteMode : enterDeleteMode}
-            variant={deleteMode ? "destructive" : "outline"}
-            size="sm"
-            className="h-7 text-xs gap-1.5"
-            disabled={locked || !hasMeters}
-          >
-            <Trash2 className="w-3.5 h-3.5" /> {deleteMode ? "Cancel" : "Select Meters"}
-          </Button>
-          <div className="flex items-center gap-1.5 flex-wrap">
+
+          {/* Three clusters, so a control's neighbours tell you what kind of
+              control it is: narrowing what you see, exporting it, then the two
+              tools that go and change the data. */}
+
+          {/* Narrow the view — filters, then selecting rows to act on */}
+          <div className="flex items-center gap-1.5 flex-wrap rounded-lg border border-border/70 bg-muted/40 p-1">
             {[
               { key: "all", label: "All", count: counts.total },
               { key: "main", label: "Main", count: counts.main },
@@ -428,6 +397,52 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
               <span className={`text-[10px] ${noLocationOnly ? "text-blue-100" : "text-muted-foreground/70"}`}>
                 {countsLoading ? "…" : (counts.unlocatedCount || 0).toLocaleString()}
               </span>
+            </Button>
+            <div className="w-px h-5 bg-border mx-0.5" />
+            <Button
+              onClick={deleteMode ? exitDeleteMode : enterDeleteMode}
+              variant={deleteMode ? "destructive" : "outline"}
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={locked || !hasMeters}
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {deleteMode ? "Cancel" : "Select Meters"}
+            </Button>
+          </div>
+
+          {/* Take the data out */}
+          <div className="flex items-center rounded-lg border border-border/70 bg-muted/40 p-1">
+            <Button
+              onClick={() => setShowAnomalyExport(true)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={!hasMeters}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" /> {t('meterData.exportAnomalies')}
+            </Button>
+          </div>
+
+          {/* Go and locate the meters that have no position */}
+          <div className="flex items-center gap-1.5 flex-wrap rounded-lg border border-border/70 bg-muted/40 p-1">
+            <Button
+              onClick={onStartInteractiveEstimation}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={locked || !hasMeters}
+            >
+              <MousePointerClick className="w-3.5 h-3.5" /> Complete missing GIS
+            </Button>
+            <Button
+              onClick={() => setShowMobileLocator(true)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={!hasMeters || counts.unlocatedCount === 0}
+              title={counts.unlocatedCount === 0 ? "No meters with missing GIS coordinates" : `${counts.unlocatedCount} meters need location`}
+            >
+              <Smartphone className="w-3.5 h-3.5" /> Mobile Locator
             </Button>
           </div>
         </div>
