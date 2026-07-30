@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/api/supabaseClient";
-import { Loader2, Link2, Unlink, MapPin, ChevronUp, Gauge, GripVertical, X } from "lucide-react";
+import { invokeFunction } from "@/api/functionsClient";
+import { Loader2, Link2, Unlink, MapPin, ChevronUp, Gauge, GripVertical, X, MessageSquareWarning } from "lucide-react";
 import MeterLocationPicker from "@/components/project/MeterLocationPicker";
 import { useLanguage } from "@/lib/i18n";
 import { recommendLinkedDmaId, recommendSubMeterDmaId } from "@/lib/dmaRecommendation";
@@ -49,6 +50,8 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showMap, setShowMap] = useState(false);
+  const [clearingNote, setClearingNote] = useState(false);
+  const [noteCleared, setNoteCleared] = useState(false);
   // Floating/draggable panel so the map stays visible and usable while editing
   // a meter — the same interaction as the layer editor.
   const [pos, setPos] = useState(() => ({
@@ -113,6 +116,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       setLinkedDmaId(dmaId);
       setOriginalDmaId(dmaId);
       setSubMeterDmaId(meter.sub_meter_dma_id || "");
+      setNoteCleared(false);
       setError("");
     }
   }, [meter, dmas]);
@@ -145,6 +149,22 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       </span>
     </SelectItem>
   );
+
+  // Clearing goes through the same endpoint the field uses, so there is one
+  // place that owns the note and its timestamp.
+  const handleClearFieldNote = async () => {
+    setClearingNote(true);
+    try {
+      const res = await invokeFunction("saveMeterFieldNote", { meter_id: meter.id, note: "" });
+      if (res.data?.error) throw new Error(res.data.error);
+      setNoteCleared(true);
+      onSaved?.();
+    } catch (err) {
+      setError(err?.message || "Could not clear the note");
+    } finally {
+      setClearingNote(false);
+    }
+  };
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -323,6 +343,33 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
               </div>
             )}
           </Section>
+
+          {/* Reported from the field. Read-only here — it is the technician's
+              account of what they found — but the office can clear it once it
+              has been dealt with. */}
+          {meter?.field_note && !noteCleared && (
+            <section className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300 mb-1.5 flex items-center gap-1.5">
+                <MessageSquareWarning className="w-3.5 h-3.5" /> {t('meterEdit.fieldNote')}
+              </h3>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{meter.field_note}</p>
+              {meter.field_note_at && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {new Date(meter.field_note_at).toLocaleString()}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2 h-7 text-xs"
+                disabled={clearingNote}
+                onClick={handleClearFieldNote}
+              >
+                {clearingNote ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t('meterEdit.clearFieldNote')}
+              </Button>
+            </section>
+          )}
 
           <Section title={t('meterEdit.sectionCustomer')}>
             <div className="space-y-1.5">

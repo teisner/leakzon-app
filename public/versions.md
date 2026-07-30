@@ -241,6 +241,31 @@ The running version is shown at the bottom of the side menu.
 - Verified on a simulated phone with no stored login: the link now loads Obion
   TN's remaining meters straight away.
 
+## 1.146 — 2026-07-30 · *New feature* · **Important**
+**Mobile Locator redesigned: report what you find, and see what is around you**
+- **A technician can now say why a meter could not be located.** Every meter on
+  the list has a **Report an issue** action beside **Set location** — five common
+  reasons are one tap each (not found, no access, buried or paved over, wrong
+  address, removed from service) with room to add anything else.
+- The note goes straight onto the meter and **shows in the Meter Data table with
+  an amber icon**, the note itself as its tooltip. It also appears in the meter
+  editor with the time it was sent, and a button to clear it once dealt with.
+- The meter **stays on the list** after a note — it still has no location — but it
+  is no longer anonymous. The list shows the note under the meter so the next
+  person out does not repeat the trip, counts how many have been reported, and can
+  filter to the reported ones or the ones nobody has looked at.
+- **The map now shows what is around the pin.** Located meters, valves, hydrants,
+  water mains, plant — every visible layer the project carries — drawn in the same
+  colours the office sees, each labelled with its distance. That is what makes it
+  possible to work out which house a missing meter belongs to by looking at the
+  network rather than guessing from an address.
+- The radius is yours to choose — **100 m, 250 m or 600 m** — and the surroundings
+  follow the pin as you drag the map. Filtering happens on the server, so a phone
+  on cell data at the roadside is not made to download a project's whole valve
+  layer.
+- A legend under the map names everything with its count, so nothing found reads
+  as "nothing mapped within 250 m" rather than looking like a failure to load.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The

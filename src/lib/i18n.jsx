@@ -824,6 +824,8 @@ const translations = {
 
     // Meter Edit Dialog
     'meterEdit.title': 'Edit Meter — {uid}',
+    'meterEdit.fieldNote': 'Reported from the field',
+    'meterEdit.clearFieldNote': 'Clear this note',
     'meterEdit.sectionIdentity': 'Identification',
     'meterEdit.sectionCustomer': 'Customer',
     'meterEdit.sectionLocation': 'Location',
@@ -1896,6 +1898,8 @@ const translations = {
 
     // Meter Edit Dialog
     'meterEdit.title': 'עריכת מונה — {uid}',
+    'meterEdit.fieldNote': 'דווח מהשטח',
+    'meterEdit.clearFieldNote': 'נקה את ההערה',
     'meterEdit.sectionIdentity': 'זיהוי',
     'meterEdit.sectionCustomer': 'לקוח',
     'meterEdit.sectionLocation': 'מיקום',

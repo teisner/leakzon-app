@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import { Navigation, Check, Loader2, Satellite, Mountain, MapPin } from "lucide-react";
+import { Navigation, Check, Loader2, Satellite, Mountain, MapPin, Layers, Eye, EyeOff } from "lucide-react";
 import { callFunction } from "@/lib/publicFunction";
 import "leaflet/dist/leaflet.css";
 import MapKeyboardNav from "@/components/project/MapKeyboardNav";
+import NearbyFeatures from "@/components/mobile/NearbyFeatures";
 
 function MapResize() {
   const map = useMap();
@@ -35,12 +36,17 @@ function MapCenterTracker({ onCenterChange }) {
   return null;
 }
 
-export default function MobileMeterMap({ meter, project, onSave, token }) {
+export default function MobileMeterMap({ meter, project, projectId, onSave, token }) {
   const [position, setPosition] = useState(null);
   const [gpsLoading, setGpsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [flyTrigger, setFlyTrigger] = useState(0);
   const [mapType, setMapType] = useState("satellite");
+  // The surrounding network, so the pin can be placed by looking at the valves,
+  // mains and neighbouring meters rather than guessing from the address.
+  const [showNearby, setShowNearby] = useState(true);
+  const [nearby, setNearby] = useState(null);
+  const [radius, setRadius] = useState(250);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -124,6 +130,16 @@ export default function MobileMeterMap({ meter, project, onSave, token }) {
           <MapResize />
           <FlyTo lat={position[0]} lng={position[1]} trigger={flyTrigger} />
           <MapCenterTracker onCenterChange={handleCenterChange} />
+          {showNearby && (
+            <NearbyFeatures
+              projectId={projectId || meter.project_id}
+              token={token}
+              centre={position}
+              excludeMeterId={meter.id}
+              radius={radius}
+              onLoaded={setNearby}
+            />
+          )}
         </MapContainer>
         {/* Center pinpoint — tip marks the exact saved location */}
         <div
@@ -146,7 +162,48 @@ export default function MobileMeterMap({ meter, project, onSave, token }) {
             <Mountain className="w-3 h-3" /> Terrain
           </button>
         </div>
+        {/* What is around the pin, and how far out to look */}
+        <div className="absolute bottom-2 left-2 z-[1000] flex items-center gap-1.5">
+          <button
+            onClick={() => setShowNearby((v) => !v)}
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium shadow-md border border-white/40 ${showNearby ? "bg-blue-600 text-white" : "bg-white/90 text-slate-700"}`}
+          >
+            {showNearby ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            <Layers className="w-3 h-3" /> Nearby
+          </button>
+          {showNearby && (
+            <select
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className="px-1.5 py-1.5 rounded-lg text-[11px] font-medium bg-white/90 text-slate-700 shadow-md border border-white/40"
+            >
+              <option value={100}>100 m</option>
+              <option value={250}>250 m</option>
+              <option value={600}>600 m</option>
+            </select>
+          )}
+        </div>
       </div>
+
+      {/* Legend — names what the dots and lines are, with counts, so an empty
+          result reads as "nothing mapped here" rather than "still loading". */}
+      {showNearby && nearby && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ background: "#94a3b8" }} />
+            {nearby.counts?.meters || 0} located meters
+          </span>
+          {(nearby.layers || []).map((l) => (
+            <span key={l.id} className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full" style={{ background: l.color }} />
+              {l.name} ({l.features.length})
+            </span>
+          ))}
+          {(nearby.counts?.meters || 0) === 0 && (nearby.layers || []).length === 0 && (
+            <span>Nothing mapped within {radius} m</span>
+          )}
+        </div>
+      )}
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleUseGps}

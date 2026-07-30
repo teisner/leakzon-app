@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Loader2, Inbox, BarChart3, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
+import { Search, Loader2, Inbox, BarChart3, MessageSquareWarning, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { meterIdOf, accountIdOf } from "@/lib/meterIds";
@@ -594,6 +594,16 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                           <BarChart3 className="w-3.5 h-3.5" />
                           {m.uid}
                         </button>
+                        {/* Reported from the field: someone went to this meter
+                            and could not locate it. The note is the tooltip. */}
+                        {m.field_note && (
+                          <span
+                            title={`Reported from the field: ${m.field_note}`}
+                            className="shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                          >
+                            <MessageSquareWarning className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                         {(m.reading_count === 0 || (maxReadings > 0 && (m.reading_count || 0) < maxReadings * 0.5)) && (
                           <span
                             title={

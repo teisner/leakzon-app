@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { callFunction } from "@/lib/publicFunction";
-import { MapPin, Loader2, ChevronDown, Smartphone, CheckCircle2 } from "lucide-react";
+import { MapPin, Loader2, ChevronDown, Smartphone, CheckCircle2, AlertTriangle, Crosshair, MessageSquarePlus } from "lucide-react";
 import MobileMeterMap from "@/components/mobile/MobileMeterMap";
 import ProjectOverviewMap from "@/components/mobile/ProjectOverviewMap";
+import FieldNoteForm from "@/components/mobile/FieldNoteForm";
 
 export default function MobileLocator() {
   const { projectId } = useParams();
@@ -17,6 +18,10 @@ export default function MobileLocator() {
   const [error, setError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [view, setView] = useState("locate");
+  // Which of the two jobs is open on the expanded meter: place it, or say why
+  // you cannot. Both are reasonable outcomes of walking to an address.
+  const [mode, setMode] = useState("locate");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     callFunction("getUnlocatedMeters", { project_id: projectId, token })
@@ -32,6 +37,19 @@ export default function MobileLocator() {
     setMeters((prev) => prev.filter((m) => m.id !== meterId));
     setExpandedId(null);
   };
+
+  // A note does not take the meter off the list — it still has no location, and
+  // the office may well come back with an answer. It just stops being anonymous.
+  const handleNoteSaved = (meterId, note) => {
+    setMeters((prev) => prev.map((m) => (
+      m.id === meterId ? { ...m, field_note: note || null, field_note_at: note ? new Date().toISOString() : null } : m
+    )));
+  };
+
+  const reportedCount = meters.filter((m) => m.field_note).length;
+  const shown = filter === "reported" ? meters.filter((m) => m.field_note)
+    : filter === "open" ? meters.filter((m) => !m.field_note)
+    : meters;
 
   if (loading) {
     return (
@@ -69,7 +87,31 @@ export default function MobileLocator() {
                 meter{meters.length !== 1 ? "s" : ""} remaining
               </span>
             </div>
+            {reportedCount > 0 && (
+              <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full px-2 py-1">
+                <AlertTriangle className="w-3 h-3" /> {reportedCount} reported
+              </span>
+            )}
           </div>
+          {reportedCount > 0 && (
+            <div className="flex gap-1.5 mt-2">
+              {[
+                { key: "all", label: `All ${meters.length}` },
+                { key: "open", label: `Not yet reported ${meters.length - reportedCount}` },
+                { key: "reported", label: `Reported ${reportedCount}` },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border ${
+                    filter === f.key ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -95,7 +137,7 @@ export default function MobileLocator() {
       <div className="px-4 py-4 space-y-3 max-w-2xl mx-auto">
         {view === "map" ? (
           <ProjectOverviewMap projectId={projectId} project={project} />
-        ) : meters.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
             <h2 className="text-lg font-semibold text-slate-900">All Done!</h2>
@@ -104,7 +146,7 @@ export default function MobileLocator() {
             </p>
           </div>
         ) : (
-          meters.map((meter, idx) => {
+          shown.map((meter, idx) => {
             const isExpanded = expandedId === meter.id;
             return (
               <div
@@ -112,11 +154,13 @@ export default function MobileLocator() {
                 className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm"
               >
                 <button
-                  onClick={() => setExpandedId(isExpanded ? null : meter.id)}
+                  onClick={() => { setExpandedId(isExpanded ? null : meter.id); setMode("locate"); }}
                   className="w-full flex items-start gap-3 p-4 text-left active:bg-slate-50"
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0 mt-0.5">
-                    {idx + 1}
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold shrink-0 mt-0.5 ${
+                    meter.field_note ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600"
+                  }`}>
+                    {meter.field_note ? <AlertTriangle className="w-4 h-4" /> : idx + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-900 font-mono break-all">
@@ -131,6 +175,12 @@ export default function MobileLocator() {
                     {!meter.address && !meter.payer_name && (
                       <p className="text-xs text-slate-300 mt-0.5">No additional info</p>
                     )}
+                    {/* What was already reported, so nobody repeats the trip */}
+                    {meter.field_note && (
+                      <p className="mt-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                        {meter.field_note}
+                      </p>
+                    )}
                   </div>
                   <ChevronDown
                     className={`w-4 h-4 text-slate-400 shrink-0 mt-1 transition-transform ${
@@ -140,7 +190,32 @@ export default function MobileLocator() {
                 </button>
                 {isExpanded && (
                   <div className="px-4 pb-4">
-                    <MobileMeterMap meter={meter} project={project} onSave={handleSaved} token={token} />
+                    {/* Place it, or say why you cannot */}
+                    <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 mb-3">
+                      <button
+                        onClick={() => setMode("locate")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium ${mode === "locate" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+                      >
+                        <Crosshair className="w-3.5 h-3.5" /> Set location
+                      </button>
+                      <button
+                        onClick={() => setMode("note")}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium ${mode === "note" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+                      >
+                        <MessageSquarePlus className="w-3.5 h-3.5" /> Report an issue
+                      </button>
+                    </div>
+                    {mode === "locate" ? (
+                      <MobileMeterMap
+                        meter={meter}
+                        project={project}
+                        projectId={projectId}
+                        onSave={handleSaved}
+                        token={token}
+                      />
+                    ) : (
+                      <FieldNoteForm meter={meter} token={token} onSaved={handleNoteSaved} />
+                    )}
                   </div>
                 )}
               </div>

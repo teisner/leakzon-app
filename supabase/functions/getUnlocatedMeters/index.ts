@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     while (hasMore) {
       const { data: batch } = await admin
         .from('meter')
-        .select('id, uid, address, payer_name, is_main')
+        .select('id, uid, address, payer_name, is_main, field_note, field_note_at')
         .eq('project_id', project_id)
         .or('latitude.is.null,longitude.is.null')
         .order('uid')
@@ -41,6 +41,10 @@ Deno.serve(async (req) => {
       address: m.address || null,
       payer_name: m.payer_name || null,
       is_main: m.is_main || false,
+      // So the technician sees what was already reported about this meter —
+      // including by whoever went out last week.
+      field_note: m.field_note || null,
+      field_note_at: m.field_note_at || null,
     }));
 
     return json({
