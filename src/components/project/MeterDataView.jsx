@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Gauge, Loader2, Inbox, BarChart3, Sparkles, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
+import { Search, Gauge, Loader2, Inbox, BarChart3, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { meterIdOf, accountIdOf } from "@/lib/meterIds";
@@ -17,6 +17,7 @@ import CreateLayerFromMetersDialog from "./CreateLayerFromMetersDialog";
 import MobileLocatorDialog from "./MobileLocatorDialog";
 import ExportAnomaliesDialog from "./ExportAnomaliesDialog";
 import { useLanguage } from "@/lib/i18n";
+import LocationSourceBadge from "@/components/project/LocationSourceBadge";
 
 const PAGE_SIZE = 100;
 
@@ -674,14 +675,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
                               </span>
                             )}
                           </span>
-                          {m.location_source && (
-                            <span
-                              title={t('meterData.locationCalculated', { source: m.location_source })}
-                              className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-purple-100 text-purple-600 shrink-0"
-                            >
-                              <Sparkles className="w-2.5 h-2.5" />
-                            </span>
-                          )}
+                          <LocationSourceBadge meter={m} />
                         </span>
                       ) : (
                         t('meterData.noLocation')

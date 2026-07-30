@@ -187,6 +187,12 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       }
       if (form.latitude !== "") updates.latitude = lat;
       if (form.longitude !== "") updates.longitude = lng;
+      // A coordinate changed here was typed in or dragged on the picker, so it
+      // is no longer the imported position — record that, or the meter table
+      // keeps presenting a hand-placed location as if it came from the file.
+      const movedLat = updates.latitude !== undefined && updates.latitude !== meter.latitude;
+      const movedLng = updates.longitude !== undefined && updates.longitude !== meter.longitude;
+      if (movedLat || movedLng) updates.location_source = 'manual';
       const alt = form.altitude === "" ? null : parseFloat(form.altitude);
       if (form.altitude !== "" && !isNaN(alt)) updates.altitude = alt;
       const dia = form.diameter === "" ? null : parseFloat(form.diameter);

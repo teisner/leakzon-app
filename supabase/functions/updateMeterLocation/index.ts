@@ -25,7 +25,10 @@ Deno.serve(async (req) => {
 
     await admin
       .from('meter')
-      .update({ latitude: Number(latitude), longitude: Number(longitude), location_source: 'geocoded' })
+      // 'field', not 'geocoded': someone stood at the meter and dropped the pin
+      // from the phone's GPS. Calling that a geocode misreported the most
+      // reliable of the non-imported positions as the least.
+      .update({ latitude: Number(latitude), longitude: Number(longitude), location_source: 'field' })
       .eq('id', meter_id);
 
     return json({ success: true });

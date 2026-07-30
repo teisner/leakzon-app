@@ -3,8 +3,11 @@ import { CircleMarker, Popup, Marker } from "react-leaflet";
 import L from "leaflet";
 import { createShapeIcon } from "@/lib/shapeIcons";
 import { resolvePointColors } from "@/lib/colorPalette";
+import { useLanguage } from "@/lib/i18n";
+import { locationSourceInfo, locationSourceLabelKey } from "@/lib/locationSource";
 
 export default function MeterMarkers({ meters, layerConfig, highlightedUid, highlightedMeterIds, onToggleMain, onEditMeter, pane }) {
+  const { t } = useLanguage();
   // Optional Leaflet pane so these markers land in their layer's z-order slot.
   const paneProp = pane ? { pane } : {};
   const validMeters = useMemo(
@@ -37,12 +40,13 @@ export default function MeterMarkers({ meters, layerConfig, highlightedUid, high
             {m.communication_type && <tr><td className="popup-key">Comm Type</td><td className="popup-val">{m.communication_type}</td></tr>}
             <tr><td className="popup-key">Latitude</td><td className="popup-val">{m.latitude?.toFixed(6)}</td></tr>
             <tr><td className="popup-key">Longitude</td><td className="popup-val">{m.longitude?.toFixed(6)}</td></tr>
-            {m.location_source && (
+            {/* Was only ever able to say "geocoded" or "estimated from street
+                data"; there are five ways a location can arrive and the popup
+                now names the right one. */}
+            {locationSourceInfo(m) && (
               <tr>
                 <td className="popup-key">Location</td>
-                <td className="popup-val">
-                  {m.location_source === "geocoded" ? "Google Maps geocoded" : "Estimated from street data"}
-                </td>
+                <td className="popup-val">{t(locationSourceLabelKey(locationSourceInfo(m)))}</td>
               </tr>
             )}
             {m.additional_ids?.map((id, i) => (
