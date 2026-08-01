@@ -336,7 +336,7 @@ The running version is shown at the bottom of the side menu.
 - The header now names the customer and address under the meter's UID, which is
   how anyone actually recognises which meter they are looking at.
 
-## 1.150, 1.151 — 2026-08-01 · *Bug fix + New feature* · **Important**
+## 1.150, 1.151, 1.156 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**
 - **Fixed the actual cause: the import was writing too much at once.** Each batch
   sent up to **18,000 readings in a single write**, which takes the database
@@ -350,6 +350,11 @@ The running version is shown at the bottom of the side menu.
 - Verified with a full-size import into Obion TN: **694 meters × 24 hourly columns
   = 16,656 readings, saved in 12 seconds**, all 24 times of day stored distinctly.
   (The test data was removed afterwards.)
+- **Optimize Data Files now writes in the same safe chunks.** It was still
+  sending 5,000 readings per write, which measures at **7.7 seconds** against the
+  8 seconds a write is allowed — no margin at all, and it had grown slower since
+  readings started carrying a time. It now writes 2,000 at a time, measured at
+  **4.1 seconds**.
 - **Fixed the silent failure.** The import counted every reading it *built* and
   announced them as saved without ever checking whether the database accepted
   them. A refused batch was reported as a success — which is how an import could

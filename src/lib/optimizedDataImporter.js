@@ -1,5 +1,16 @@
 import { uploadFile } from "@/api/storageClient";
 import { normalizeReadingForProject } from "@/lib/dateUtils";
+
+// Rows per INSERT from the browser, and how many run at once.
+//
+// A write from the browser gets about 8 seconds of database time. Measured
+// against this platform: 2,000 consumption rows take ~3.3s, 5,000 ~7.4s. The
+// consumption insert used to send 5,000, which left almost no margin — and each
+// row now fires the trigger that keeps reading_date in step with reading_at, so
+// the same batch costs more than it did. 2,000 leaves room for a slow moment.
+const CONSUMPTION_CHUNK = 2000;
+const METER_CHUNK = 1000;
+const INSERT_CONCURRENCY = 3;
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
@@ -114,8 +125,8 @@ export async function importOptimizedMeterData(meterData, projectId, onProgress)
 
     const result = await runBatchesInParallel(
       records,
-      1000,
-      4,
+      METER_CHUNK,
+      INSERT_CONCURRENCY,
       (batch) => supabase.from('meter').insert(batch),
       (completedBatches, totalBatches, processed) => {
         onProgress?.({ phase: "meters", processed: totalProcessed + processed, total: totalRows });
@@ -174,8 +185,8 @@ export async function importOptimizedConsumptionData(consumptionData, projectId,
 
   const result = await runBatchesInParallel(
     readings,
-    5000,
-    4,
+    CONSUMPTION_CHUNK,
+    INSERT_CONCURRENCY,
     (batch) => supabase.from('consumption_reading').insert(batch),
     (completedBatches, totalBatches, processed) => {
       onProgress?.({ phase: "readings", processed, total: readings.length });
