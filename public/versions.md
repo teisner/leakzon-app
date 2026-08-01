@@ -289,8 +289,20 @@ The running version is shown at the bottom of the side menu.
   is returned in chronological order, which with 24 readings a day is the only
   order that reads correctly.
 
-## 1.150 — 2026-07-30 · *Bug fix + New feature* · **Important**
+## 1.150, 1.151 — 2026-07-30 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**
+- **Fixed the actual cause: the import was writing too much at once.** Each batch
+  sent up to **18,000 readings in a single write**, which takes the database
+  around 18 seconds — well past the 8 seconds a request from the browser is
+  allowed. Every batch was cancelled with *"canceling statement due to statement
+  timeout"*, and before the fix above that refusal was thrown away, which is why
+  an import could finish with no data and no complaint.
+- Readings are now written **2,000 at a time, three at once**. Measured on this
+  project: 2,000 rows take about 3.3 seconds and 5,000 about 7.4 — 2,000 leaves
+  room for a slow moment without going over.
+- Verified with a full-size import into Obion TN: **694 meters × 24 hourly columns
+  = 16,656 readings, saved in 12 seconds**, all 24 times of day stored distinctly.
+  (The test data was removed afterwards.)
 - **Fixed the silent failure.** The import counted every reading it *built* and
   announced them as saved without ever checking whether the database accepted
   them. A refused batch was reported as a success — which is how an import could

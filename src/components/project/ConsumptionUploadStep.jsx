@@ -236,6 +236,11 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
     );
   };
 
+  // Rows per INSERT, and how many of those run at once. Kept well inside the
+  // statement timeout a browser-side write gets.
+  const INSERT_CHUNK = 2000;
+  const INSERT_CONCURRENCY = 3;
+
   const handleConfirm = async () => {
     try {
       setPhase("processing");
@@ -252,10 +257,11 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
       setProgress(10);
       setProgressLabel("Calculating batch sizes...");
 
-      // Each record produces one reading per consumption column.
-      // Split the file into batches so each batch produces at most 10,000 readings.
+      // Each record produces one reading per consumption column. Rows are
+      // grouped into batches to bound memory, and each batch is then written in
+      // smaller chunks — see INSERT_CHUNK.
       const readingsPerRecord = consumptionColumns.length || 1;
-      const MAX_READINGS_PER_BATCH = 18000;
+      const MAX_READINGS_PER_BATCH = 20000;
       const recordsPerBatch = Math.max(1, Math.floor(MAX_READINGS_PER_BATCH / readingsPerRecord));
       const totalBatches = Math.ceil(rows.length / recordsPerBatch);
 
@@ -355,14 +361,26 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
         }
 
         if (batchReadings.length > 0) {
-          // supabase-js resolves with an error rather than throwing. This was
-          // unchecked, so a refused batch still counted towards the total and
-          // the import announced readings it had never written.
-          const { error: insertError } = await supabase.from('consumption_reading').insert(batchReadings);
-          if (insertError) {
+          // The whole batch used to go in one INSERT of up to 18,000 rows, which
+          // takes about 18 seconds of database time — well past the 8-second
+          // ceiling a browser request is allowed, so every one was cancelled
+          // with "canceling statement due to statement timeout". Measured on
+          // this project: 2,000 rows takes ~3.3s, 5,000 ~7.4s. 2,000 leaves
+          // room for a slow moment without going over.
+          // runBatchesInParallel already retries and then throws the database's
+          // own error; this only adds where it happened.
+          try {
+            await runBatchesInParallel(
+              batchReadings,
+              INSERT_CHUNK,
+              INSERT_CONCURRENCY,
+              (chunk) => supabase.from('consumption_reading').insert(chunk),
+              () => {}
+            );
+          } catch (err) {
             throw new Error(
-              `The database refused batch ${batchIdx + 1} of ${totalBatches}: ${insertError.message}`
-              + (insertError.hint ? ` (${insertError.hint})` : "")
+              `The database refused part of batch ${batchIdx + 1} of ${totalBatches}: ${err?.message || err}`
+              + (err?.hint ? ` (${err.hint})` : "")
             );
           }
           totalReadingsCreated += batchReadings.length;
