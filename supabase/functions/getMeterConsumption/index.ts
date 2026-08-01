@@ -26,6 +26,9 @@ Deno.serve(async (req) => {
         .from('consumption_reading')
         .select('*')
         .eq('meter_id', meter_id)
+        // Chronological, which with hourly data is the only order that reads
+        // correctly — id is insertion order and a file can arrive unsorted.
+        .order('reading_at')
         .order('id')
         .range(from, from + batchSize - 1);
       allReadings.push(...(batch || []));

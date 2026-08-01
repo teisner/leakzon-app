@@ -10,7 +10,7 @@ import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { downloadConsumptionTemplate } from "@/lib/meterTemplate";
 import { parseCSV, parseJSONData, detectIdColumns } from "@/lib/meterAnalysis";
-import { normalizeDateForProject } from "@/lib/dateUtils";
+import { normalizeDateForProject, normalizeReadingForProject, detectReadingGranularity } from "@/lib/dateUtils";
 import { runBatchesInParallel } from "@/lib/parallelBatch";
 
 function detectDateColumns(columns) {
@@ -263,27 +263,20 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               const val = parseFloat(String(row[col] || "").replace(/,/g, ""));
               if (isNaN(val)) continue;
 
-              let readingDate = null;
-              let periodLabel = null;
-
-              if (dateColumn) {
-                // Long format: date is in a cell
-                const rawDate = String(row[dateColumn] || "").trim();
-                const normalized = normalizeDateForProject(rawDate, dateFormat);
-                readingDate = normalized.isoDate;
-                periodLabel = normalized.label || rawDate || null;
-              } else {
-                // Wide format: date is in the column header
-                const normalized = normalizeDateForProject(col, dateFormat);
-                readingDate = normalized.isoDate;
-                periodLabel = normalized.label || col;
-              }
+              // The raw value carrying the date — a cell in long format, the
+              // column header in wide format.
+              const raw = dateColumn ? String(row[dateColumn] || "").trim() : col;
+              const normalized = normalizeReadingForProject(raw, dateFormat);
 
               batchReadings.push({
                 project_id: projectId,
                 meter_id: meter.id,
-                reading_date: readingDate,
-                period_label: periodLabel,
+                // reading_at is the real value now; reading_date is derived from
+                // it by a database trigger, so the two can never disagree. A
+                // file with no time of day lands on midnight, which is what
+                // makes a daily file and an hourly one the same shape of data.
+                reading_at: normalized.isoDateTime,
+                period_label: normalized.label || raw || null,
                 consumption: val,
                 source_file_url: fileUrl,
                 source_file_name: file?.name || "",
@@ -514,14 +507,30 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
                 <option key={col} value={col}>{col}</option>
               ))}
             </select>
-            {!dateColumn && consumptionColumns.length > 0 && (() => {
-              const sample = consumptionColumns.find((c) => normalizeDateForProject(c, dateFormat).isoDate);
+            {consumptionColumns.length > 0 && (() => {
+              // Wide format reads the dates from the headers; long format from
+              // the chosen column's values, sampled from the rows on screen.
+              const values = dateColumn
+                ? (rows || []).slice(0, 200).map((r) => r[dateColumn])
+                : consumptionColumns;
+              const sample = values.find((c) => normalizeReadingForProject(c, dateFormat).isoDateTime);
               if (!sample) return null;
-              const norm = normalizeDateForProject(sample, dateFormat);
+              const norm = normalizeReadingForProject(sample, dateFormat);
+              const g = detectReadingGranularity(values);
               return (
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">
-                  ✓ Date headers detected — "{sample}" → "{norm.label}"
-                </p>
+                <div className="mt-1 space-y-0.5">
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                    ✓ Dates detected — "{sample}" → "{norm.label}"
+                  </p>
+                  {/* Which shape of data this is, and why we think so — an
+                      hourly file wrongly read as daily would stack 24 readings
+                      on one timestamp. */}
+                  <p className={`text-[10px] ${g.granularity === "hourly" ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"}`}>
+                    {g.granularity === "hourly"
+                      ? `✓ Hourly data — up to ${g.maxPerDate} readings per day across ${g.distinctDates} day${g.distinctDates === 1 ? "" : "s"}`
+                      : `✓ Daily data — ${g.distinctDates} day${g.distinctDates === 1 ? "" : "s"}, each stored at 00:00`}
+                  </p>
+                </div>
               );
             })()}
           </div>

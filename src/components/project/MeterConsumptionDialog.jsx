@@ -10,6 +10,12 @@ import { WeatherTooltip, renderWeatherDot } from "./WeatherPeakDot";
 import { hasContinuousDailyData } from "@/lib/consumptionAnalysis";
 
 function getReadingDate(r) {
+  // reading_at carries the time of day; reading_date is the same moment
+  // truncated, kept for everything written before hourly data existed.
+  if (r.reading_at) {
+    const t = new Date(r.reading_at);
+    if (!isNaN(t.getTime())) return t;
+  }
   if (r.reading_date) {
     let d = new Date(r.reading_date);
     if (!isNaN(d.getTime())) return d;

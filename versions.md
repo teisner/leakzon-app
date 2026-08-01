@@ -266,6 +266,29 @@ The running version is shown at the bottom of the side menu.
 - A legend under the map names everything with its count, so nothing found reads
   as "nothing mapped within 250 m" rather than looking like a failure to load.
 
+## 1.149 — 2026-07-30 · *New feature* · **Important**
+**Consumption readings now carry a time, so hourly data can be imported**
+- A reading was stored as a date and nothing more, so a meter could hold **one
+  reading per day and no more** — an hourly file collapsed into 24 rows that
+  looked identical and could not be told apart or put in order. AMI meters report
+  hourly, so this was a ceiling on what the platform could hold at all.
+- Every reading now has a **date and a time**. All 1,826,298 existing readings
+  were given one, set to **00:00** on the day they already had, so nothing moved
+  and every chart reads exactly as before.
+- **The import works out for itself whether a file is hourly or daily** and says
+  so before you commit to it — *"Hourly data — up to 24 readings per day across 1
+  day"* or *"Daily data — 3 days, each stored at 00:00"*. It decides on two
+  signals: a time written in the file, or the same date appearing more than once.
+- **A file with no time of day is stored at 00:00**, shown as
+  **01/08/2026 00:00**. That is what makes a daily file and an hourly one the same
+  shape of data rather than two that cannot be compared.
+- Times are read in the formats utilities actually use — `01/08/2026 14:30`,
+  `2026-08-01T14:00:00`, `01/08/2026 2 PM` — and the day/month order of the date
+  is worked out exactly as before, with the time attached rather than confusing it.
+- The consumption table shows the time against each reading, and a meter's series
+  is returned in chronological order, which with 24 readings a day is the only
+  order that reads correctly.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144, 1.148 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **A meter can now be added by hand.** An **Add meter** button in the meter table

@@ -6,6 +6,12 @@ import { Loader2, CalendarDays, TrendingUp } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
 
 function getReadingDate(r) {
+  // reading_at carries the time of day; reading_date is the same moment
+  // truncated, kept for everything written before hourly data existed.
+  if (r.reading_at) {
+    const t = new Date(r.reading_at);
+    if (!isNaN(t.getTime())) return t;
+  }
   if (r.reading_date) {
     let d = new Date(r.reading_date);
     if (!isNaN(d.getTime())) return d;
@@ -36,6 +42,10 @@ function getReadingDate(r) {
 
 function getReadingLabel(r) {
   if (r.period_label) return r.period_label;
+  // An hourly reading has to show its time or a day's 24 rows are identical.
+  if (r.reading_at) {
+    try { return format(parseISO(r.reading_at), "dd/MM/yyyy HH:mm"); } catch { /* fall through */ }
+  }
   if (r.reading_date) {
     try { return format(parseISO(r.reading_date), "dd/MM/yyyy"); } catch { return r.reading_date; }
   }

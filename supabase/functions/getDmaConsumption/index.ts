@@ -18,14 +18,16 @@ function pointInPolygon(lat: number, lng: number, polygon: [number, number][]) {
 function aggregateByDate(readings: any[]) {
   const byKey: Record<string, any> = {};
   for (const r of readings) {
-    const key = r.reading_date || r.period_label || 'unknown';
-    if (!byKey[key]) byKey[key] = { reading_date: r.reading_date, period_label: r.period_label, consumption: 0, count: 0 };
+    // Group on the timestamp so an hourly series stays hourly; falling back to
+    // the date would fold a day's 24 readings into one point.
+    const key = r.reading_at || r.reading_date || r.period_label || 'unknown';
+    if (!byKey[key]) byKey[key] = { reading_at: r.reading_at, reading_date: r.reading_date, period_label: r.period_label, consumption: 0, count: 0 };
     byKey[key].consumption += r.consumption || 0;
     byKey[key].count += 1;
   }
   return Object.values(byKey).sort((a: any, b: any) => {
-    const da = a.reading_date ? new Date(a.reading_date).getTime() : 0;
-    const db = b.reading_date ? new Date(b.reading_date).getTime() : 0;
+    const da = new Date(a.reading_at || a.reading_date || 0).getTime();
+    const db = new Date(b.reading_at || b.reading_date || 0).getTime();
     return da - db;
   });
 }

@@ -1,4 +1,5 @@
 import { uploadFile } from "@/api/storageClient";
+import { normalizeReadingForProject } from "@/lib/dateUtils";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { resolveLayerTypeId } from "@/lib/layerType";
@@ -159,7 +160,11 @@ export async function importOptimizedConsumptionData(consumptionData, projectId,
       readings.push({
         project_id: projectId,
         meter_id: meter.id,
-        reading_date: dates[i],
+        // Same rule as the main import: the timestamp is the real value, and a
+        // header with no time of day means midnight. The database trigger fills
+        // reading_date from it.
+        reading_at: normalizeReadingForProject(dates[i], "EU").isoDateTime || null,
+        period_label: normalizeReadingForProject(dates[i], "EU").label || String(dates[i]),
         consumption: val,
         source_file_url: file_url,
         source_file_name: "optimized_consumption_data.csv",
