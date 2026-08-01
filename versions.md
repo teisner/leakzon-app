@@ -289,7 +289,7 @@ The running version is shown at the bottom of the side menu.
   is returned in chronological order, which with 24 readings a day is the only
   order that reads correctly.
 
-## 1.150, 1.151 — 2026-07-30 · *Bug fix + New feature* · **Important**
+## 1.150 – 1.152 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**
 - **Fixed the actual cause: the import was writing too much at once.** Each batch
   sent up to **18,000 readings in a single write**, which takes the database
@@ -322,6 +322,11 @@ The running version is shown at the bottom of the side menu.
   first 200 rows — *"✓ 1,368 numeric values"*, or a red *"No numbers in these
   columns — every value is text"*, which is the mistake that produces an empty
   import.
+- **The summary now stays on screen instead of being swept away.** A successful
+  import used to jump to "Go to Map" about a second and a half after showing the
+  summary — barely enough time to read it. It now waits for you: press
+  **Continue** when you're done looking, and only then does the "Go to Map"
+  screen appear.
 
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144, 1.148 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**

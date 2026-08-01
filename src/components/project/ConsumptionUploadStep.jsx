@@ -433,6 +433,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
         rows: rows.length,
         columns: consumptionColumns.length,
         readings: totalReadingsCreated,
+        errors: errorLogs.length,
         skipped,
         failedRows,
         matchedRows: rows.length - skipped.uidNotFound - skipped.noUid,
@@ -443,14 +444,9 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
           : "Nothing was imported."
       );
       setPhase("done");
-
-      // Only leave the step by itself when something actually landed. A file
-      // that produced nothing needs to stay on screen with its reasons.
-      if (totalReadingsCreated > 0) {
-        setTimeout(() => {
-          onUploaded?.({ readings: totalReadingsCreated, errors: errorLogs.length });
-        }, 1500);
-      }
+      // Stays on this screen either way now — the summary below is the point,
+      // not a stop on the way to the map. The operator moves on with the
+      // "Continue" button once they've actually read it.
     } catch (err) {
       setError(err.message || "Failed to upload consumption data.");
       setPhase("config");
@@ -556,12 +552,19 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               </p>
             )}
 
-            {summary.failedRows.length > 0 && (
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={downloadFailedRows}>
-                <Download className="w-3.5 h-3.5" />
-                Download the {summary.failedRows.length.toLocaleString()} row{summary.failedRows.length === 1 ? "" : "s"} that failed (CSV)
-              </Button>
-            )}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {summary.failedRows.length > 0 ? (
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={downloadFailedRows}>
+                  <Download className="w-3.5 h-3.5" />
+                  Download the {summary.failedRows.length.toLocaleString()} row{summary.failedRows.length === 1 ? "" : "s"} that failed (CSV)
+                </Button>
+              ) : <span />}
+              {summary.readings > 0 && (
+                <Button size="sm" className="h-7 text-xs gap-1.5" onClick={() => onUploaded?.({ readings: summary.readings, errors: summary.errors })}>
+                  Continue <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
