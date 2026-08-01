@@ -298,7 +298,7 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.152, 1.154 — 2026-08-01 · *New feature + Bug fix* · **Important**
+## 1.152, 1.154, 1.155 — 2026-08-01 · *New feature + Bug fix* · **Important**
 **The consumption chart reads hourly data, and shows you where your data is**
 - **The chart now supports hourly.** Where a meter reports more than once a day it
   offers **Hourly / Daily / Monthly**, and opens on the one that suits the project
@@ -324,6 +324,17 @@ The running version is shown at the bottom of the side menu.
 - **Weather is now off by default, behind its own button.** It was fetched from an
   outside service every time a chart opened; nothing is requested until you ask
   for it. Confirmed: no weather call goes out until the button is pressed.
+- **The chart dialog has been reorganised.** The options had arrived one at a
+  time and become an undivided row of eight buttons where nothing said which
+  choice belonged to what. They are now in labelled groups — **Resolution**,
+  **Period**, **Show** — and the two switches are icons, because they are on or
+  off rather than a choice between alternatives.
+- **"Monthly" no longer means two different things.** The old AMI/AMR switch and
+  the resolution control both ended in a Monthly button for the same monthly bar
+  chart. Resolution now owns it: choosing Monthly gives the bar chart, and the
+  Period and Show controls step aside, since neither applies to it.
+- The header now names the customer and address under the meter's UID, which is
+  how anyone actually recognises which meter they are looking at.
 
 ## 1.150, 1.151 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**

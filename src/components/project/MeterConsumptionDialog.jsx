@@ -5,7 +5,7 @@ import {
 } from "@/lib/consumptionSeries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, TrendingUp, CloudSun, CloudOff } from "lucide-react";
+import { Loader2, BarChart3, TrendingUp, CloudSun, CloudOff, Scissors, Table as TableIcon } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
 import { BarChart, Bar, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWeatherPeaks } from "@/lib/weatherData";
@@ -69,10 +69,24 @@ function getReadingLabel(r) {
   return "—";
 }
 
+// A labelled cluster of controls. The caption is what tells you whether a
+// button is choosing a view, a resolution or a period — without it the row is
+// eight buttons in a line.
+function Group({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export default function MeterConsumptionDialog({ open, onOpenChange, meter, project, onViewReadings }) {
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [range, setRange] = useState("30d");
+  // Monthly is the bar chart that used to be the separate "AMR" view; every
+  // other resolution is the detail line chart.
   const [viewMode, setViewMode] = useState("ami");
   // How the readings are bucketed, and whether the empty stretches are drawn.
   const [granularity, setGranularity] = useState(null);
@@ -103,6 +117,11 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   // What the data actually is, and where it lives.
   const detected = useMemo(() => detectSeriesGranularity(readings), [readings]);
+
+  useEffect(() => {
+    if (!granularity) return;
+    setViewMode(granularity === "monthly" ? "amr" : "ami");
+  }, [granularity]);
   const coverage = useMemo(() => coverageSummary(readings), [readings]);
 
   useEffect(() => {
@@ -113,9 +132,12 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
     // a few days are missing.
     const isAmi = String(project?.project_type || "").toUpperCase() === "AMI";
     const continuous = hasContinuousDailyData(dated.map((r) => r._date), 7);
-    setViewMode(detected.hourly || isAmi || continuous ? "ami" : "amr");
     // The project says how it is read; the data says whether that is possible.
-    setGranularity(defaultGranularity(project?.project_type, detected));
+    const g = detected.hourly || isAmi || continuous
+      ? defaultGranularity(project?.project_type, detected)
+      : "monthly";
+    setGranularity(g);
+    setViewMode(g === "monthly" ? "amr" : "ami");
   }, [dated, detected, project?.project_type]);
 
   const maxDate = useMemo(() => {
@@ -222,15 +244,26 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            Consumption — {meter.uid}
+          <div className="flex items-start justify-between gap-3 pe-6">
+            <div className="min-w-0">
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <BarChart3 className="w-5 h-5 text-blue-600 shrink-0" />
+                <span className="truncate">Consumption — {meter.uid}</span>
+              </DialogTitle>
+              {/* The address says which meter this is far better than the UID,
+                  and it was not on this screen at all. */}
+              {(meter.address || meter.payer_name) && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {[meter.payer_name, meter.address].filter(Boolean).join(" · ")}
+                </p>
+              )}
+            </div>
             {onViewReadings && (
-              <Button variant="outline" size="sm" className="h-7 ml-1 text-xs" onClick={onViewReadings} title="View consumption readings">
-                Data
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 shrink-0" onClick={onViewReadings} title="See every reading as a table">
+                <TableIcon className="w-3.5 h-3.5" /> Data
               </Button>
             )}
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         {loading ? (
@@ -246,120 +279,101 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Controls, in labelled groups. They arrived one at a time and had
+                become an undifferentiated row of eight buttons where nothing
+                said which choice belonged to what. */}
             {hasDates && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center rounded-md border border-border overflow-hidden">
-                  <Button size="sm" variant={viewMode === "ami" ? "default" : "ghost"} onClick={() => setViewMode("ami")} className="rounded-none">AMI</Button>
-                  <Button size="sm" variant={viewMode === "amr" ? "default" : "ghost"} onClick={() => setViewMode("amr")} className="rounded-none">AMR</Button>
-                </div>
-                {viewMode === "ami" && detected.hourly && (
-                  // Only offered when the meter really holds several readings a
-                  // day — otherwise hourly and daily would draw the same line.
+              <div className="flex items-end gap-3 flex-wrap">
+                {/* One idea, not two. The old AMI/AMR switch and this control
+                    both ended in a "Monthly" button meaning the same thing —
+                    the monthly bar chart. Resolution now owns it, and the view
+                    follows from the choice. */}
+                <Group label="Resolution">
                   <div className="flex items-center rounded-md border border-border overflow-hidden">
-                    <Button size="sm" variant={granularity === "hourly" ? "default" : "ghost"} onClick={() => setGranularity("hourly")} className="rounded-none">Hourly</Button>
-                    <Button size="sm" variant={granularity === "daily" ? "default" : "ghost"} onClick={() => setGranularity("daily")} className="rounded-none">Daily</Button>
-                    <Button size="sm" variant={granularity === "monthly" ? "default" : "ghost"} onClick={() => setGranularity("monthly")} className="rounded-none">Monthly</Button>
+                    {detected.hourly && (
+                      <Button size="sm" variant={granularity === "hourly" ? "default" : "ghost"} onClick={() => setGranularity("hourly")} className="rounded-none h-7 text-xs px-2.5">Hourly</Button>
+                    )}
+                    <Button size="sm" variant={granularity === "daily" ? "default" : "ghost"} onClick={() => setGranularity("daily")} className="rounded-none h-7 text-xs px-2.5">Daily</Button>
+                    <Button size="sm" variant={granularity === "monthly" ? "default" : "ghost"} onClick={() => setGranularity("monthly")} className="rounded-none h-7 text-xs px-2.5">Monthly</Button>
                   </div>
-                )}
-                {viewMode === "ami" && (<>
-                <Button size="sm" variant={range === "7d" ? "default" : "outline"} onClick={() => setRange("7d")}>Last 7 days</Button>
-                <Button size="sm" variant={range === "30d" ? "default" : "outline"} onClick={() => setRange("30d")}>Last 30 days</Button>
-                <Button size="sm" variant={range === "custom" ? "default" : "outline"} onClick={() => setRange("custom")}>Custom range</Button>
-                {range === "custom" && (
-                  <div className="flex items-center gap-2 ml-2">
-                    <input
-                      type="date"
-                      value={customFrom}
-                      onChange={(e) => setCustomFrom(e.target.value)}
-                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                    />
-                    <span className="text-xs text-slate-400">to</span>
-                    <input
-                      type="date"
-                      value={customTo}
-                      onChange={(e) => setCustomTo(e.target.value)}
-                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                    />
-                  </div>
-                )}
-                <Button
-                  size="sm"
-                  variant={onlyWithData ? "default" : "outline"}
-                  onClick={() => setOnlyWithData((v) => !v)}
-                  title="Leave out the periods that hold no reading, instead of drawing them as zero"
-                >
-                  Only periods with data
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showWeather ? "default" : "outline"}
-                  onClick={() => setShowWeather((v) => !v)}
-                  className="gap-1.5"
-                  title={showWeather
-                    ? "Weather is being fetched for the peak days"
-                    : "Fetch the weather for the peak days — nothing is requested until you turn this on"}
-                >
-                  {showWeather ? <CloudSun className="w-3.5 h-3.5" /> : <CloudOff className="w-3.5 h-3.5" />}
-                  Weather
-                </Button>
-                </>)}
-              </div>
-            )}
+                </Group>
 
-            {/* Where the data actually is. A meter with a month of readings in
-                the middle of a year looks like a flat line otherwise, and the
-                question "which dates do I have?" had no answer on this screen. */}
-            {hasDates && coverage.first && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
-                <span>
-                  <span className="font-medium text-foreground">{coverage.readings.toLocaleString()}</span> readings
-                </span>
-                <span>·</span>
-                <span>
-                  <span className="font-medium text-foreground">{coverage.daysWithData.toLocaleString()}</span> day{coverage.daysWithData === 1 ? "" : "s"} with data
-                  {coverage.emptyDays > 0 && (
-                    <span className="text-amber-600 dark:text-amber-400"> · {coverage.emptyDays.toLocaleString()} empty</span>
-                  )}
-                </span>
-                <span>·</span>
-                <span>
-                  {format(coverage.first, "dd/MM/yyyy")} — {format(coverage.last, "dd/MM/yyyy")}
-                </span>
-                {detected.hourly && (
-                  <>
-                    <span>·</span>
-                    <span className="text-blue-600 dark:text-blue-400">
-                      hourly, up to {detected.maxPerDay} readings a day
-                    </span>
-                  </>
+                {viewMode === "ami" && (
+                  <Group label="Period">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center rounded-md border border-border overflow-hidden">
+                        <Button size="sm" variant={range === "7d" ? "default" : "ghost"} onClick={() => setRange("7d")} className="rounded-none h-7 text-xs px-2.5">7 days</Button>
+                        <Button size="sm" variant={range === "30d" ? "default" : "ghost"} onClick={() => setRange("30d")} className="rounded-none h-7 text-xs px-2.5">30 days</Button>
+                        <Button size="sm" variant={range === "custom" ? "default" : "ghost"} onClick={() => setRange("custom")} className="rounded-none h-7 text-xs px-2.5">Custom</Button>
+                      </div>
+                      {range === "custom" && (
+                        <>
+                          <input
+                            type="date"
+                            value={customFrom}
+                            onChange={(e) => setCustomFrom(e.target.value)}
+                            className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                          />
+                          <span className="text-xs text-muted-foreground">to</span>
+                          <input
+                            type="date"
+                            value={customTo}
+                            onChange={(e) => setCustomTo(e.target.value)}
+                            className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                          />
+                        </>
+                      )}
+                    </div>
+                  </Group>
                 )}
-                {project?.project_type && (
-                  <>
-                    <span>·</span>
-                    <span>project set to <span className="font-medium text-foreground">{project.project_type}</span></span>
-                  </>
+
+                {/* The two switches are icons: they are on-or-off, not choices
+                    between alternatives, and labelling them as buttons made them
+                    read like more view modes. */}
+                {viewMode === "ami" && (
+                  <Group label="Show">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant={onlyWithData ? "default" : "outline"}
+                        onClick={() => setOnlyWithData((v) => !v)}
+                        className="h-7 w-7 p-0"
+                        title={onlyWithData
+                          ? "Showing only the periods that hold a reading"
+                          : "Leave out the periods with no reading, instead of drawing them as zero"}
+                      >
+                        <Scissors className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={showWeather ? "default" : "outline"}
+                        onClick={() => setShowWeather((v) => !v)}
+                        className="h-7 w-7 p-0"
+                        title={showWeather
+                          ? "Weather is being fetched for the peak days"
+                          : "Fetch the weather for the peak days — nothing is requested until you turn this on"}
+                      >
+                        {showWeather ? <CloudSun className="w-3.5 h-3.5" /> : <CloudOff className="w-3.5 h-3.5" />}
+                      </Button>
+                    </div>
+                  </Group>
                 )}
               </div>
             )}
 
             {stats && (
-              <div className="grid grid-cols-4 gap-3">
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900">{stats.total.toFixed(1)}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Total</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900">{stats.avg.toFixed(1)}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Average</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-emerald-600">{stats.min.toFixed(1)}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Min</p>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-amber-600">{stats.max.toFixed(1)}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Max</p>
-                </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: granularity === "hourly" ? "Total (period)" : "Total", value: stats.total, tone: "text-foreground" },
+                  { label: granularity === "hourly" ? "Average / hour" : "Average / day", value: stats.avg, tone: "text-foreground" },
+                  { label: "Lowest", value: stats.min, tone: "text-emerald-600 dark:text-emerald-400" },
+                  { label: "Highest", value: stats.max, tone: "text-amber-600 dark:text-amber-400" },
+                ].map((tile) => (
+                  <div key={tile.label} className="bg-muted/40 border border-border rounded-lg p-2.5 text-center">
+                    <p className={`text-lg font-bold tabular-nums ${tile.tone}`}>{tile.value.toFixed(1)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{tile.label}</p>
+                  </div>
+                ))}
               </div>
             )}
 
