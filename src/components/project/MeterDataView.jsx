@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
-import { Search, Loader2, Inbox, BarChart3, MessageSquareWarning, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
+import { Search, Loader2, Inbox, BarChart3, MessageSquareWarning, Plus, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MousePointerClick, Pencil, Trash2, X, Layers, MapPin, Smartphone, AlertTriangle } from "lucide-react";
 import { pointInPolygon } from "@/lib/polygonUtils";
 import { isInsertionManualLayer } from "@/lib/meterLayerDetection";
 import { meterIdOf, accountIdOf } from "@/lib/meterIds";
@@ -31,6 +31,8 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
   // Orthogonal to the type filter: "sub meters with no location" is a real thing
   // to want, so this is a toggle rather than a fifth mutually-exclusive chip.
   const [noLocationOnly, setNoLocationOnly] = useState(false);
+  // Adding by hand opens the very same editor, with no meter to edit.
+  const [addingMeter, setAddingMeter] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [consumptionTableMeter, setConsumptionTableMeter] = useState(null);
   const [editMeter, setEditMeter] = useState(null);
@@ -403,6 +405,16 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
             </Button>
             <div className="w-px h-5 bg-border mx-0.5" />
             <Button
+              onClick={() => setAddingMeter(true)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              disabled={locked}
+              title={t('meterData.addMeterHint')}
+            >
+              <Plus className="w-3.5 h-3.5" /> {t('meterData.addMeter')}
+            </Button>
+            <Button
               onClick={deleteMode ? exitDeleteMode : enterDeleteMode}
               variant={deleteMode ? "destructive" : "outline"}
               size="sm"
@@ -731,6 +743,16 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
         onOpenChange={(o) => !o && setConsumptionTableMeter(null)}
         meter={consumptionTableMeter}
         project={project}
+      />
+      <MeterEditDialog
+        open={addingMeter}
+        onOpenChange={(o) => !o && setAddingMeter(false)}
+        meter={null}
+        dmas={dmas}
+        projectId={projectId}
+        project={project}
+        onSaved={() => { setAddingMeter(false); handleMeterSaved(); }}
+        onPinpoint={onPinpoint}
       />
       <MeterEditDialog
         open={!!editMeter}

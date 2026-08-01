@@ -266,8 +266,18 @@ The running version is shown at the bottom of the side menu.
 - A legend under the map names everything with its count, so nothing found reads
   as "nothing mapped within 250 m" rather than looking like a failure to load.
 
-## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
+## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144, 1.148 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
+- **A meter can now be added by hand.** An **Add meter** button in the meter table
+  opens the same editor used for an existing meter, so a meter typed in is
+  described exactly like an imported one — same fields, same rules.
+- **It joins the right layer automatically**: a main goes to the project's Main
+  Meters layer, anything else to Sub Meters, and the layer is created if the
+  project does not have one yet. A meter with no layer never appears on the map
+  however good its coordinates are, which is the trap this avoids.
+- Its position counts as placed by hand, so it carries the same marker as any
+  other manually positioned meter. A UID is required — everything else can be
+  filled in later.
 - **Edit Meter now has Meter ID and Account ID, and is laid out in groups.** The
   two IDs were shown in the meter table but could not be edited anywhere — they
   are stored differently from the other fields, and the editor simply had no box

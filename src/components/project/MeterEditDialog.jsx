@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
+import { ensureMainMetersLayer, ensureSubMetersLayer } from "@/lib/mainMeterLayer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/api/supabaseClient";
 import { invokeFunction } from "@/api/functionsClient";
@@ -27,8 +27,12 @@ function Section({ title, children }) {
   );
 }
 
+// Opened with a meter to edit it, or with none to add one by hand. The same
+// panel does both on purpose — a meter typed in should be described exactly as
+// an imported one is, with the same fields and the same rules.
 export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dmas, projectId, onPinpoint, project }) {
   const { t } = useLanguage();
+  const isNew = !meter;
   const [form, setForm] = useState({
     uid: "",
     endpoint_id: "",
@@ -93,6 +97,21 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
 
 
   useEffect(() => {
+    if (!meter && open) {
+      // A fresh, empty meter. Sub by default: that is what most meters are, and
+      // the layer it lands in follows this choice.
+      setForm({
+        uid: "", endpoint_id: "", payer_name: "", address: "", provider: "",
+        latitude: "", longitude: "", altitude: "", diameter: "",
+        is_main: false, is_root: false, meter_id: "", account_id: "",
+      });
+      setLinkedDmaId("");
+      setOriginalDmaId("");
+      setSubMeterDmaId("");
+      setNoteCleared(false);
+      setError("");
+      return;
+    }
     if (meter) {
       setForm({
         uid: meter.uid || "",
@@ -171,14 +190,14 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
   };
 
   const handleSave = async () => {
-    if (!meter) return;
+    if (!meter && !isNew) return;
     setSaving(true);
     setError("");
     try {
       // Meter ID and Account ID are stored inside additional_ids, so they are
       // merged into the existing array rather than sent as columns — a column
       // that doesn't exist fails the whole update with PGRST204.
-      let additionalIds = setAdditionalId(meter, METER_ID_PATTERNS, "Meter ID", form.meter_id);
+      let additionalIds = setAdditionalId(meter || {}, METER_ID_PATTERNS, "Meter ID", form.meter_id);
       additionalIds = setAdditionalId({ additional_ids: additionalIds }, ACCOUNT_ID_PATTERNS, "Account ID", form.account_id);
 
       const updates = {
@@ -210,23 +229,47 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       // A coordinate changed here was typed in or dragged on the picker, so it
       // is no longer the imported position — record that, or the meter table
       // keeps presenting a hand-placed location as if it came from the file.
-      const movedLat = updates.latitude !== undefined && updates.latitude !== meter.latitude;
-      const movedLng = updates.longitude !== undefined && updates.longitude !== meter.longitude;
-      if (movedLat || movedLng) updates.location_source = 'manual';
+      // Only meaningful when editing: a new meter's source is set on insert.
+      if (!isNew) {
+        const movedLat = updates.latitude !== undefined && updates.latitude !== meter.latitude;
+        const movedLng = updates.longitude !== undefined && updates.longitude !== meter.longitude;
+        if (movedLat || movedLng) updates.location_source = 'manual';
+      }
       const alt = form.altitude === "" ? null : parseFloat(form.altitude);
       if (form.altitude !== "" && !isNaN(alt)) updates.altitude = alt;
       const dia = form.diameter === "" ? null : parseFloat(form.diameter);
       if (form.diameter !== "" && !isNaN(dia)) updates.diameter = dia;
 
-      // When promoting a sub-meter to main, assign it to the main-meter layer
-      if (!meter.is_main && form.is_main && projectId) {
+      // The layer a meter belongs to follows from what it is: a main goes to the
+      // project's Main Meters layer, anything else to Sub Meters — created if
+      // the project has neither yet. A meter with no layer never draws on the
+      // map, whatever its coordinates say.
+      if (isNew) {
+        if (!projectId) throw new Error("No project to add the meter to");
+        updates.layer_id = form.is_main
+          ? await ensureMainMetersLayer(projectId)
+          : await ensureSubMetersLayer(projectId);
+      } else if (!meter.is_main && form.is_main && projectId) {
+        // Promoting an existing sub-meter to main moves it across too.
         updates.layer_id = await ensureMainMetersLayer(projectId);
       }
 
-      // Same rule as everywhere else that writes from the browser: check the
-      // error. This closed as though saved when the write was refused.
-      const { error: updateError } = await supabase.from('meter').update(updates).eq('id', meter.id);
-      if (updateError) throw new Error(updateError.message);
+      let meterId = meter?.id;
+      if (isNew) {
+        if (!form.uid.trim()) throw new Error("A UID is required");
+        const { data: created, error: insertError } = await supabase
+          .from('meter')
+          .insert({ ...updates, project_id: projectId, location_source: updates.latitude != null ? 'manual' : null })
+          .select()
+          .single();
+        if (insertError) throw new Error(insertError.message);
+        meterId = created.id;
+      } else {
+        // Same rule as everywhere else that writes from the browser: check the
+        // error. This closed as though saved when the write was refused.
+        const { error: updateError } = await supabase.from('meter').update(updates).eq('id', meter.id);
+        if (updateError) throw new Error(updateError.message);
+      }
 
       // Handle DMA linking (only for main meters)
       if (form.is_main && linkedDmaId !== originalDmaId) {
@@ -236,11 +279,11 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
         }
         // Link new DMA — unlink any other DMA that was pointing to a different main meter
         if (linkedDmaId) {
-          await supabase.from('dma').update({ main_meter_id: meter.id }).eq('id', linkedDmaId);
+          await supabase.from('dma').update({ main_meter_id: meterId }).eq('id', linkedDmaId);
         }
         // Keep the meter's own dma_id in step: it drives the DMA column in the
         // meter table and the DMA assignment in the LeakZon export.
-        await supabase.from('meter').update({ dma_id: linkedDmaId || null }).eq('id', meter.id);
+        await supabase.from('meter').update({ dma_id: linkedDmaId || null }).eq('id', meterId);
       }
 
       onSaved?.();
@@ -275,7 +318,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
       >
         <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
         <p className="flex-1 min-w-0 text-base font-bold text-foreground truncate">
-          {t('meterEdit.title', { uid: meter?.uid })}
+          {isNew ? t('meterEdit.addTitle') : t('meterEdit.title', { uid: meter?.uid })}
         </p>
         <button
           onClick={() => onOpenChange(false)}
@@ -552,7 +595,7 @@ export default function MeterEditDialog({ open, onOpenChange, meter, onSaved, dm
         </Button>
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-          {t('meterEdit.saveChanges')}
+          {isNew ? t('meterEdit.addMeter') : t('meterEdit.saveChanges')}
         </Button>
       </div>
     </div>

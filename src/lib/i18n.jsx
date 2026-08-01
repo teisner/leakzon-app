@@ -383,6 +383,8 @@ const translations = {
     'locationSource.generated': 'Generated for an export, not a surveyed position',
     'locationSource.other': 'Not from the import file',
     'meterData.metersLabel': 'meters',
+    'meterData.addMeter': 'Add meter',
+    'meterData.addMeterHint': 'Add a meter by hand — it joins the Main or Sub Meters layer to match its type',
     'meterData.colSubDma': 'Sub-DMA',
     'meterData.colDma': 'DMA',
     'meterData.colLocation': 'Location',
@@ -823,6 +825,8 @@ const translations = {
     'manualLayer.create': 'Create & Start Placing',
 
     // Meter Edit Dialog
+    'meterEdit.addTitle': 'Add a meter',
+    'meterEdit.addMeter': 'Add meter',
     'meterEdit.title': 'Edit Meter — {uid}',
     'meterEdit.fieldNote': 'Reported from the field',
     'meterEdit.clearFieldNote': 'Clear this note',
@@ -1457,6 +1461,8 @@ const translations = {
     'locationSource.generated': 'נוצר עבור ייצוא, אינו מיקום שנמדד',
     'locationSource.other': 'לא מתוך קובץ הייבוא',
     'meterData.metersLabel': 'מונים',
+    'meterData.addMeter': 'הוספת מונה',
+    'meterData.addMeterHint': 'הוספת מונה ידנית — הוא ישויך לשכבת המונים הראשיים או מוני המשנה לפי סוגו',
     'meterData.colSubDma': 'איזור כמונה משנה',
     'meterData.colDma': 'איזור פחת',
     'meterData.colLocation': 'מיקום',
@@ -1897,6 +1903,8 @@ const translations = {
     'manualLayer.create': 'צור והתחל להציב',
 
     // Meter Edit Dialog
+    'meterEdit.addTitle': 'הוספת מונה',
+    'meterEdit.addMeter': 'הוסף מונה',
     'meterEdit.title': 'עריכת מונה — {uid}',
     'meterEdit.fieldNote': 'דווח מהשטח',
     'meterEdit.clearFieldNote': 'נקה את ההערה',
