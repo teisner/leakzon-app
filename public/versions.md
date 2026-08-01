@@ -289,6 +289,28 @@ The running version is shown at the bottom of the side menu.
   is returned in chronological order, which with 24 readings a day is the only
   order that reads correctly.
 
+## 1.150 — 2026-07-30 · *Bug fix + New feature* · **Important**
+**A consumption import that saves nothing now says so, and shows you why**
+- **Fixed the silent failure.** The import counted every reading it *built* and
+  announced them as saved without ever checking whether the database accepted
+  them. A refused batch was reported as a success — which is how an import could
+  finish with "Done!" and leave the project with no consumption data at all. Any
+  refusal now stops the import and shows exactly what the database said.
+- **Every import now ends with a summary**: rows read, reading columns selected,
+  readings saved, and each reason anything was skipped — UID not in this project,
+  row with no UID, value that is not a number, date that could not be read.
+- **The rows that failed can be downloaded as a CSV**, with the original columns
+  plus *why it was skipped* and the offending value, so a file can be corrected
+  and re-imported instead of guessed at.
+- **A run that saves nothing no longer closes itself** and no longer looks like a
+  success — it stays on screen, marked amber, naming the most likely cause. If
+  the reading columns held text it says so directly.
+- **The columns are checked before you commit to the import.** Choosing the
+  reading columns now reports how many of their values are actually numbers in the
+  first 200 rows — *"✓ 1,368 numeric values"*, or a red *"No numbers in these
+  columns — every value is text"*, which is the mistake that produces an empty
+  import.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144, 1.148 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **A meter can now be added by hand.** An **Add meter** button in the meter table

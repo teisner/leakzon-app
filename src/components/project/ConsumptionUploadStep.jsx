@@ -4,13 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Check, AlertCircle, Loader2, ChevronRight, Gauge, Ban, FileSpreadsheet } from "lucide-react";
+import { Upload, FileText, Check, AlertCircle, Loader2, ChevronRight, Gauge, Ban, FileSpreadsheet, AlertTriangle, Download } from "lucide-react";
 import { uploadFile } from "@/api/storageClient";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { downloadConsumptionTemplate } from "@/lib/meterTemplate";
 import { parseCSV, parseJSONData, detectIdColumns } from "@/lib/meterAnalysis";
-import { normalizeDateForProject, normalizeReadingForProject, detectReadingGranularity } from "@/lib/dateUtils";
+import { normalizeReadingForProject, detectReadingGranularity } from "@/lib/dateUtils";
 import { runBatchesInParallel } from "@/lib/parallelBatch";
 
 function detectDateColumns(columns) {
@@ -75,6 +75,7 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
   const [computing, setComputing] = useState(false);
   const [eta, setEta] = useState(null);
   const [batchInfo, setBatchInfo] = useState(null);
+  const [summary, setSummary] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -201,6 +202,34 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
     }
   };
 
+  // The rows the import could not use, with the reason on each — so a file can
+  // be corrected and re-imported rather than guessed at.
+  const downloadFailedRows = () => {
+    const rowsOut = summary?.failedRows || [];
+    if (rowsOut.length === 0) return;
+    const dataCols = columns || [];
+    const header = [...dataCols, "Why it was skipped", "Detail"];
+    const escape = (v) => {
+      const str = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const lines = [header.map(escape).join(",")];
+    for (const r of rowsOut) {
+      lines.push([...dataCols.map((c) => escape(r[c])), escape(r.__reason), escape(r.__detail)].join(","));
+    }
+    // The BOM is what makes Excel read the file as UTF-8 rather than mangling
+    // any non-English text in it.
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(file?.name || "consumption").replace(/\.[^.]+$/, "")}_failed_rows.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const toggleConsumptionColumn = (col) => {
     setConsumptionColumns((prev) =>
       prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]
@@ -250,6 +279,16 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
       let totalReadingsCreated = 0;
       const uploadStart = Date.now();
 
+      // Everything the import chose not to write, and why. Without this a file
+      // that produced nothing reported "Done!" and left no trace of the reason —
+      // which is exactly what happened when the columns picked held no numbers.
+      const skipped = { noUid: 0, uidNotFound: 0, notNumeric: 0, badDate: 0 };
+      const failedRows = [];
+      const FAILED_ROW_CAP = 20000;
+      const recordFailure = (row, reason, detail) => {
+        if (failedRows.length < FAILED_ROW_CAP) failedRows.push({ ...row, __reason: reason, __detail: detail });
+      };
+
       for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
         const batchRows = rows.slice(batchIdx * recordsPerBatch, (batchIdx + 1) * recordsPerBatch);
         const batchReadings = [];
@@ -260,13 +299,28 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
 
           if (meter) {
             for (const col of consumptionColumns) {
-              const val = parseFloat(String(row[col] || "").replace(/,/g, ""));
-              if (isNaN(val)) continue;
+              const rawValue = String(row[col] ?? "").trim();
+              const val = parseFloat(rawValue.replace(/,/g, ""));
+              if (isNaN(val)) {
+                // A blank cell is a meter with no reading that period, which is
+                // normal. Text where a number should be is not, and is the thing
+                // worth telling the operator about.
+                if (rawValue !== "") {
+                  skipped.notNumeric++;
+                  recordFailure(row, "Value is not a number", `${col} = "${rawValue}"`);
+                }
+                continue;
+              }
 
               // The raw value carrying the date — a cell in long format, the
               // column header in wide format.
               const raw = dateColumn ? String(row[dateColumn] || "").trim() : col;
               const normalized = normalizeReadingForProject(raw, dateFormat);
+              if (!normalized.isoDateTime) {
+                skipped.badDate++;
+                recordFailure(row, "Date could not be read", `"${raw}"`);
+                continue;
+              }
 
               batchReadings.push({
                 project_id: projectId,
@@ -283,6 +337,11 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               });
             }
           } else {
+            const reason = String(rawUid).trim()
+              ? "UID not found in this project"
+              : "Row has no UID";
+            if (String(rawUid).trim()) skipped.uidNotFound++; else skipped.noUid++;
+            recordFailure(row, reason, String(rawUid));
             errorLogs.push({
               project_id: projectId,
               import_type: "consumption",
@@ -290,13 +349,22 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
               row_data: row,
               source_file_url: fileUrl,
               source_file_name: file?.name || "",
-              error_message: "UID not found in meter database",
+              error_message: reason,
             });
           }
         }
 
         if (batchReadings.length > 0) {
-          await supabase.from('consumption_reading').insert(batchReadings);
+          // supabase-js resolves with an error rather than throwing. This was
+          // unchecked, so a refused batch still counted towards the total and
+          // the import announced readings it had never written.
+          const { error: insertError } = await supabase.from('consumption_reading').insert(batchReadings);
+          if (insertError) {
+            throw new Error(
+              `The database refused batch ${batchIdx + 1} of ${totalBatches}: ${insertError.message}`
+              + (insertError.hint ? ` (${insertError.hint})` : "")
+            );
+          }
           totalReadingsCreated += batchReadings.length;
         }
 
@@ -343,12 +411,28 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
       setBatchInfo(null);
 
       setProgress(100);
-      setProgressLabel(`Done! ${totalReadingsCreated} readings saved, ${errorLogs.length} errors logged.`);
+      setSummary({
+        rows: rows.length,
+        columns: consumptionColumns.length,
+        readings: totalReadingsCreated,
+        skipped,
+        failedRows,
+        matchedRows: rows.length - skipped.uidNotFound - skipped.noUid,
+      });
+      setProgressLabel(
+        totalReadingsCreated > 0
+          ? `Done — ${totalReadingsCreated.toLocaleString()} readings saved.`
+          : "Nothing was imported."
+      );
       setPhase("done");
 
-      setTimeout(() => {
-        onUploaded?.({ readings: totalReadingsCreated, errors: errorLogs.length });
-      }, 1500);
+      // Only leave the step by itself when something actually landed. A file
+      // that produced nothing needs to stay on screen with its reasons.
+      if (totalReadingsCreated > 0) {
+        setTimeout(() => {
+          onUploaded?.({ readings: totalReadingsCreated, errors: errorLogs.length });
+        }, 1500);
+      }
     } catch (err) {
       setError(err.message || "Failed to upload consumption data.");
       setPhase("config");
@@ -376,8 +460,12 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
       <div className="py-6 space-y-4">
         <div className="flex items-center gap-3">
           {phase === "done" ? (
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              summary?.readings > 0 ? "bg-emerald-500/20" : "bg-amber-500/20"
+            }`}>
+              {summary?.readings > 0
+                ? <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                : <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
             </div>
           ) : (
             <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
@@ -407,6 +495,57 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
           )}
           <span>{Math.round(progress)}%</span>
         </div>
+
+        {/* What the import actually did. Shown whether it worked or not — a run
+            that saves nothing needs an account of itself more than a good one. */}
+        {phase === "done" && summary && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Import summary</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+              <span className="text-muted-foreground">Rows read from the file</span>
+              <span className="text-foreground font-medium tabular-nums">{summary.rows.toLocaleString()}</span>
+              <span className="text-muted-foreground">Reading columns selected</span>
+              <span className="text-foreground font-medium tabular-nums">{summary.columns}</span>
+              <span className="text-muted-foreground">Readings saved</span>
+              <span className={`font-semibold tabular-nums ${summary.readings > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                {summary.readings.toLocaleString()}
+              </span>
+              {summary.skipped.uidNotFound > 0 && (<>
+                <span className="text-muted-foreground">Rows whose UID is not in this project</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium tabular-nums">{summary.skipped.uidNotFound.toLocaleString()}</span>
+              </>)}
+              {summary.skipped.noUid > 0 && (<>
+                <span className="text-muted-foreground">Rows with no UID</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium tabular-nums">{summary.skipped.noUid.toLocaleString()}</span>
+              </>)}
+              {summary.skipped.notNumeric > 0 && (<>
+                <span className="text-muted-foreground">Values that are not numbers</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium tabular-nums">{summary.skipped.notNumeric.toLocaleString()}</span>
+              </>)}
+              {summary.skipped.badDate > 0 && (<>
+                <span className="text-muted-foreground">Dates that could not be read</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium tabular-nums">{summary.skipped.badDate.toLocaleString()}</span>
+              </>)}
+            </div>
+
+            {summary.readings === 0 && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-md p-2">
+                {summary.skipped.notNumeric > 0
+                  ? "The columns chosen as readings hold text, not numbers. Go back and pick the columns that contain the consumption values — in a wide file those are the dated columns, in a long file the single value column."
+                  : summary.skipped.uidNotFound > 0
+                    ? "None of the UIDs in the file match a meter in this project. Check the UID column, or import the meters first."
+                    : "Nothing in the file produced a reading. Check the UID column and the reading columns."}
+              </p>
+            )}
+
+            {summary.failedRows.length > 0 && (
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={downloadFailedRows}>
+                <Download className="w-3.5 h-3.5" />
+                Download the {summary.failedRows.length.toLocaleString()} row{summary.failedRows.length === 1 ? "" : "s"} that failed (CSV)
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -537,6 +676,37 @@ export default function ConsumptionUploadStep({ projectId, dateFormat = "EU", me
 
           <div>
             <Label className="mb-1.5 block text-sm">Consumption Column(s) <span className="text-red-600 dark:text-red-400">*</span></Label>
+            {/* How many of the chosen cells actually hold numbers, checked on a
+                sample before the import runs. Picking the wrong columns here
+                produces an import that saves nothing, which used to be
+                discovered only afterwards. */}
+            {consumptionColumns.length > 0 && (() => {
+              const sample = (rows || []).slice(0, 200);
+              let numeric = 0, text = 0, blank = 0;
+              let firstText = null;
+              for (const r of sample) {
+                for (const c of consumptionColumns) {
+                  const raw = String(r[c] ?? "").trim();
+                  if (!raw) { blank++; continue; }
+                  if (isNaN(parseFloat(raw.replace(/,/g, "")))) {
+                    text++;
+                    if (!firstText) firstText = `${c} = "${raw}"`;
+                  } else numeric++;
+                }
+              }
+              if (numeric === 0 && text === 0) return null;
+              const ok = numeric > 0;
+              return (
+                <p className={`text-[11px] mb-2 rounded-md px-2 py-1 border ${
+                  ok ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/25"
+                     : "text-red-700 dark:text-red-300 bg-red-500/10 border-red-500/25"
+                }`}>
+                  {ok
+                    ? `✓ ${numeric.toLocaleString()} numeric values in the first ${sample.length} rows${text > 0 ? ` · ${text.toLocaleString()} non-numeric will be skipped` : ""}${blank > 0 ? ` · ${blank.toLocaleString()} blank` : ""}`
+                    : `No numbers in these columns — every value is text${firstText ? ` (e.g. ${firstText})` : ""}. Importing now would save nothing.`}
+                </p>
+              );
+            })()}
             <p className="text-xs text-muted-foreground mb-2">Select one or more columns containing consumption values.</p>
             <div className="border border-border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
               {columns.map((col) => {
