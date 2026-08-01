@@ -136,15 +136,18 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
             title="Sub-meter communication"
             description="Written as the Communication value for sub-meters in the LeakZon export. Main meters always export as AMI."
           >
-            <input
-              type="text"
-              defaultValue={project.sub_meter_communication || ""}
-              onBlur={(e) => {
-                const v = e.target.value.trim();
-                if (v !== (project.sub_meter_communication || "")) handleUpdate("sub_meter_communication", v || null);
-              }}
-              placeholder="e.g. AMR"
-              className="w-40 h-9 px-2.5 rounded-md border border-border bg-background text-sm text-foreground"
+            {/* Was free text, which meant a typo or a synonym went straight into
+                the export as the Communication value. There are only two answers
+                a utility gives here. Nothing is selected until one is chosen —
+                a project that never set it still exports an empty Communication
+                for its sub-meters, as before. */}
+            <SegmentedToggle
+              value={project.sub_meter_communication || ""}
+              options={[
+                { value: "AMI", label: "AMI" },
+                { value: "AMR", label: "AMR" },
+              ]}
+              onChange={(v) => handleUpdate("sub_meter_communication", v)}
             />
           </SettingRow>
 

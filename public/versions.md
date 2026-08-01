@@ -289,6 +289,15 @@ The running version is shown at the bottom of the side menu.
   is returned in chronological order, which with 24 readings a day is the only
   order that reads correctly.
 
+## 1.153 — 2026-08-01 · *Updated feature*
+**Sub-meter communication is now a choice, not free text**
+- The setting was a text box, so a typo or a synonym went straight into the
+  **Communication** column of the LeakZon export. It is now **AMI** or **AMR**,
+  the only two answers a utility gives.
+- Nothing is selected on a project that never set it, and those still export an
+  empty Communication for their sub-meters exactly as before — no project's export
+  changes until you choose. Main meters continue to export as AMI regardless.
+
 ## 1.152 — 2026-08-01 · *New feature + Bug fix* · **Important**
 **The consumption chart reads hourly data, and shows you where your data is**
 - **The chart now supports hourly.** Where a meter reports more than once a day it
