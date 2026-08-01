@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { invokeFunction } from "@/api/functionsClient";
+import {
+  detectSeriesGranularity, buildSeries, coverageSummary, defaultGranularity,
+} from "@/lib/consumptionSeries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, BarChart3, TrendingUp } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
-import { BarChart, Bar, AreaChart, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWeatherPeaks } from "@/lib/weatherData";
 import { WeatherTooltip, renderWeatherDot } from "./WeatherPeakDot";
 import { hasContinuousDailyData } from "@/lib/consumptionAnalysis";
@@ -71,6 +74,9 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
   const [loading, setLoading] = useState(false);
   const [range, setRange] = useState("30d");
   const [viewMode, setViewMode] = useState("ami");
+  // How the readings are bucketed, and whether the empty stretches are drawn.
+  const [granularity, setGranularity] = useState(null);
+  const [onlyWithData, setOnlyWithData] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
@@ -92,10 +98,22 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   const hasDates = dated.length > 0;
 
+  // What the data actually is, and where it lives.
+  const detected = useMemo(() => detectSeriesGranularity(readings), [readings]);
+  const coverage = useMemo(() => coverageSummary(readings), [readings]);
+
   useEffect(() => {
     if (dated.length === 0) return;
-    setViewMode(hasContinuousDailyData(dated.map((r) => r._date), 7) ? "ami" : "amr");
-  }, [dated]);
+    // AMR is the monthly roll-up, for meters read every so often. A meter that
+    // reports hourly is never that, and neither is a project set to AMI — the
+    // gap test alone would drop an AMI meter into the monthly view just because
+    // a few days are missing.
+    const isAmi = String(project?.project_type || "").toUpperCase() === "AMI";
+    const continuous = hasContinuousDailyData(dated.map((r) => r._date), 7);
+    setViewMode(detected.hourly || isAmi || continuous ? "ami" : "amr");
+    // The project says how it is read; the data says whether that is possible.
+    setGranularity(defaultGranularity(project?.project_type, detected));
+  }, [dated, detected, project?.project_type]);
 
   const maxDate = useMemo(() => {
     if (dated.length === 0) return null;
@@ -109,58 +127,38 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
     }
   }, [maxDate]);
 
-  const filtered = useMemo(() => {
-    if (!hasDates) {
-      return readings.map((r) => ({ ...r, _date: null }));
-    }
-    let from = null, to = null;
-    if (range === "7d") {
-      to = maxDate;
-      from = subDays(to, 7);
-    } else if (range === "30d") {
-      to = maxDate;
-      from = subDays(to, 30);
-    } else {
-      if (customFrom) { from = new Date(customFrom); from.setHours(0, 0, 0, 0); }
-      if (customTo) { to = new Date(customTo); to.setHours(23, 59, 59, 999); }
-    }
-    const inRange = dated
-      .filter((r) => {
-        if (from && r._date < from) return false;
-        if (to && r._date > to) return false;
-        return true;
-      })
-      .sort((a, b) => a._date - b._date);
+  // The window being charted. Hourly keeps the clock time; daily and monthly
+  // roll up into whole days and months.
+  const { from, to } = useMemo(() => {
+    if (!hasDates) return { from: null, to: null };
+    if (range === "7d") return { from: subDays(maxDate, 7), to: maxDate };
+    if (range === "30d") return { from: subDays(maxDate, 30), to: maxDate };
+    const f = customFrom ? new Date(customFrom) : null;
+    const t = customTo ? new Date(customTo) : null;
+    if (f) f.setHours(0, 0, 0, 0);
+    if (t) t.setHours(23, 59, 59, 999);
+    return { from: f, to: t };
+  }, [hasDates, range, customFrom, customTo, maxDate]);
 
-    if (from && to && inRange.length > 0) {
-      const byDay = {};
-      inRange.forEach((r) => {
-        const key = format(r._date, "yyyy-MM-dd");
-        if (!byDay[key]) byDay[key] = r;
-      });
-      const filled = [];
-      const cursor = new Date(from);
-      cursor.setHours(0, 0, 0, 0);
-      const endLimit = new Date(to);
-      endLimit.setHours(23, 59, 59, 999);
-      while (cursor <= endLimit) {
-        const key = format(cursor, "yyyy-MM-dd");
-        if (byDay[key]) {
-          filled.push(byDay[key]);
-        } else {
-          filled.push({
-            _date: new Date(cursor),
-            consumption: 0,
-            isMissing: true,
-          });
-        }
-        cursor.setDate(cursor.getDate() + 1);
-      }
-      return filled;
-    }
+  // Points to plot. Readings are summed within each bucket — with hourly data a
+  // day is the sum of its 24 readings, where this used to take the first one and
+  // report a whole day as a single hour of it.
+  const series = useMemo(() => {
+    if (!hasDates) return [];
+    return buildSeries(readings, {
+      granularity: granularity || "daily",
+      from,
+      to,
+      // "Only periods with data" simply stops emitting the empty ones.
+      fillGaps: !onlyWithData,
+    });
+  }, [readings, hasDates, granularity, from, to, onlyWithData]);
 
-    return inRange;
-  }, [readings, dated, hasDates, range, customFrom, customTo, maxDate]);
+  // The weather overlay and the stats below still work off a flat list.
+  const filtered = useMemo(
+    () => series.map((p) => ({ ...p, _date: p.at })),
+    [series]
+  );
 
   const { peaks, weatherData, loadingWeather } = useWeatherPeaks(viewMode === "amr" ? [] : filtered, project?.city, project?.country);
 
@@ -169,17 +167,21 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
 
   // ─── Chart data ─────────────────────────────────────────────────
   const chartData = useMemo(() => {
-    return filtered.map((r, i) => {
-      const dateStr = r._date ? format(r._date, "yyyy-MM-dd") : null;
+    const fmt = granularity === "hourly" ? "MMM dd HH:mm"
+      : granularity === "monthly" ? "MMM yyyy"
+      : "MMM dd, yyyy";
+    return series.map((p, i) => {
+      const dateStr = format(p.at, "yyyy-MM-dd");
       return {
-        label: r._date ? format(r._date, "MMM dd, yyyy") : getReadingLabel(r),
-        consumption: r.consumption,
+        label: format(p.at, fmt),
+        consumption: p.consumption,
         dateStr,
+        readings: p.count,
         peakType: peaks.highs.has(i) ? "high" : peaks.lows.has(i) ? "low" : null,
-        weather: dateStr ? weatherData[dateStr] : null,
+        weather: weatherData[dateStr] || null,
       };
     });
-  }, [filtered, peaks, weatherData]);
+  }, [series, granularity, peaks, weatherData]);
 
   const monthlyChartData = useMemo(() => {
     if (!hasDates) return [];
@@ -243,6 +245,15 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                   <Button size="sm" variant={viewMode === "ami" ? "default" : "ghost"} onClick={() => setViewMode("ami")} className="rounded-none">AMI</Button>
                   <Button size="sm" variant={viewMode === "amr" ? "default" : "ghost"} onClick={() => setViewMode("amr")} className="rounded-none">AMR</Button>
                 </div>
+                {viewMode === "ami" && detected.hourly && (
+                  // Only offered when the meter really holds several readings a
+                  // day — otherwise hourly and daily would draw the same line.
+                  <div className="flex items-center rounded-md border border-border overflow-hidden">
+                    <Button size="sm" variant={granularity === "hourly" ? "default" : "ghost"} onClick={() => setGranularity("hourly")} className="rounded-none">Hourly</Button>
+                    <Button size="sm" variant={granularity === "daily" ? "default" : "ghost"} onClick={() => setGranularity("daily")} className="rounded-none">Daily</Button>
+                    <Button size="sm" variant={granularity === "monthly" ? "default" : "ghost"} onClick={() => setGranularity("monthly")} className="rounded-none">Monthly</Button>
+                  </div>
+                )}
                 {viewMode === "ami" && (<>
                 <Button size="sm" variant={range === "7d" ? "default" : "outline"} onClick={() => setRange("7d")}>Last 7 days</Button>
                 <Button size="sm" variant={range === "30d" ? "default" : "outline"} onClick={() => setRange("30d")}>Last 30 days</Button>
@@ -264,7 +275,51 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                     />
                   </div>
                 )}
+                <Button
+                  size="sm"
+                  variant={onlyWithData ? "default" : "outline"}
+                  onClick={() => setOnlyWithData((v) => !v)}
+                  title="Leave out the periods that hold no reading, instead of drawing them as zero"
+                >
+                  Only periods with data
+                </Button>
                 </>)}
+              </div>
+            )}
+
+            {/* Where the data actually is. A meter with a month of readings in
+                the middle of a year looks like a flat line otherwise, and the
+                question "which dates do I have?" had no answer on this screen. */}
+            {hasDates && coverage.first && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground bg-muted/40 border border-border rounded-lg px-3 py-2">
+                <span>
+                  <span className="font-medium text-foreground">{coverage.readings.toLocaleString()}</span> readings
+                </span>
+                <span>·</span>
+                <span>
+                  <span className="font-medium text-foreground">{coverage.daysWithData.toLocaleString()}</span> day{coverage.daysWithData === 1 ? "" : "s"} with data
+                  {coverage.emptyDays > 0 && (
+                    <span className="text-amber-600 dark:text-amber-400"> · {coverage.emptyDays.toLocaleString()} empty</span>
+                  )}
+                </span>
+                <span>·</span>
+                <span>
+                  {format(coverage.first, "dd/MM/yyyy")} — {format(coverage.last, "dd/MM/yyyy")}
+                </span>
+                {detected.hourly && (
+                  <>
+                    <span>·</span>
+                    <span className="text-blue-600 dark:text-blue-400">
+                      hourly, up to {detected.maxPerDay} readings a day
+                    </span>
+                  </>
+                )}
+                {project?.project_type && (
+                  <>
+                    <span>·</span>
+                    <span>project set to <span className="font-medium text-foreground">{project.project_type}</span></span>
+                  </>
+                )}
               </div>
             )}
 

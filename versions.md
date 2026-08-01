@@ -289,7 +289,27 @@ The running version is shown at the bottom of the side menu.
   is returned in chronological order, which with 24 readings a day is the only
   order that reads correctly.
 
-## 1.150 – 1.152 — 2026-08-01 · *Bug fix + New feature* · **Important**
+## 1.152 — 2026-08-01 · *New feature + Bug fix* · **Important**
+**The consumption chart reads hourly data, and shows you where your data is**
+- **The chart now supports hourly.** Where a meter reports more than once a day it
+  offers **Hourly / Daily / Monthly**, and opens on the one that suits the project
+  — hourly for a project set to **AMI**, daily otherwise. The choice only appears
+  where the data can actually support it.
+- **Fixed: a day was being reported as one hour of itself.** The chart kept the
+  *first* reading of each day and discarded the rest — correct while a meter could
+  only hold one reading a day, and silently wrong once it could hold 24. Readings
+  are now added up within the period, so a daily point on hourly data is the day's
+  real total.
+- **A summary of where the data actually is** sits above the chart: how many
+  readings, how many days carry data, how many are empty, the range they span,
+  whether the meter reports hourly, and what the project is set to.
+- **"Only periods with data"** leaves the empty stretches out instead of drawing
+  them as zero — so a meter with one month of readings inside a year shows that
+  month rather than a flat line either side of it.
+- An AMI project, or any meter reporting hourly, no longer drops into the monthly
+  view just because a few days are missing.
+
+## 1.150, 1.151 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**
 - **Fixed the actual cause: the import was writing too much at once.** Each batch
   sent up to **18,000 readings in a single write**, which takes the database
