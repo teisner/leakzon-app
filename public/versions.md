@@ -298,7 +298,7 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.152 — 2026-08-01 · *New feature + Bug fix* · **Important**
+## 1.152, 1.154 — 2026-08-01 · *New feature + Bug fix* · **Important**
 **The consumption chart reads hourly data, and shows you where your data is**
 - **The chart now supports hourly.** Where a meter reports more than once a day it
   offers **Hourly / Daily / Monthly**, and opens on the one that suits the project
@@ -317,6 +317,13 @@ The running version is shown at the bottom of the side menu.
   month rather than a flat line either side of it.
 - An AMI project, or any meter reporting hourly, no longer drops into the monthly
   view just because a few days are missing.
+- **The Data table reads hourly too.** It had the same fault as the chart — one
+  row per day, showing the first reading and dropping the other 23. It now offers
+  **Hourly / Daily / Monthly** wherever the meter has the data, sums the readings
+  within each period, and names the column *Date & time* when showing hours.
+- **Weather is now off by default, behind its own button.** It was fetched from an
+  outside service every time a chart opened; nothing is requested until you ask
+  for it. Confirmed: no weather call goes out until the button is pressed.
 
 ## 1.150, 1.151 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**

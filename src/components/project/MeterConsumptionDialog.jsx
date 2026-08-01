@@ -5,7 +5,7 @@ import {
 } from "@/lib/consumptionSeries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, BarChart3, TrendingUp } from "lucide-react";
+import { Loader2, BarChart3, TrendingUp, CloudSun, CloudOff } from "lucide-react";
 import { subDays, format, parseISO } from "date-fns";
 import { BarChart, Bar, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useWeatherPeaks } from "@/lib/weatherData";
@@ -77,6 +77,9 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
   // How the readings are bucketed, and whether the empty stretches are drawn.
   const [granularity, setGranularity] = useState(null);
   const [onlyWithData, setOnlyWithData] = useState(false);
+  // Weather is fetched from an outside service and only annotates the peaks, so
+  // it is off unless asked for — no call goes out until it is switched on.
+  const [showWeather, setShowWeather] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
@@ -160,7 +163,11 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
     [series]
   );
 
-  const { peaks, weatherData, loadingWeather } = useWeatherPeaks(viewMode === "amr" ? [] : filtered, project?.city, project?.country);
+  const { peaks, weatherData, loadingWeather } = useWeatherPeaks(
+    viewMode === "amr" || !showWeather ? [] : filtered,
+    project?.city,
+    project?.country
+  );
 
   // Main/insertion meters read blue, sub-meters green — matching the DMA chart.
   const seriesColor = meter?.is_main ? "#3b82f6" : "#22c55e";
@@ -282,6 +289,18 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                   title="Leave out the periods that hold no reading, instead of drawing them as zero"
                 >
                   Only periods with data
+                </Button>
+                <Button
+                  size="sm"
+                  variant={showWeather ? "default" : "outline"}
+                  onClick={() => setShowWeather((v) => !v)}
+                  className="gap-1.5"
+                  title={showWeather
+                    ? "Weather is being fetched for the peak days"
+                    : "Fetch the weather for the peak days — nothing is requested until you turn this on"}
+                >
+                  {showWeather ? <CloudSun className="w-3.5 h-3.5" /> : <CloudOff className="w-3.5 h-3.5" />}
+                  Weather
                 </Button>
                 </>)}
               </div>

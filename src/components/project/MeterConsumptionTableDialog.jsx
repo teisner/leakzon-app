@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { invokeFunction } from "@/api/functionsClient";
+import {
+  detectSeriesGranularity, buildSeries, defaultGranularity, readingMoment,
+} from "@/lib/consumptionSeries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, CalendarDays, TrendingUp } from "lucide-react";
@@ -58,6 +61,9 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
   const [range, setRange] = useState("30d");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  // Hourly where the meter has it, so a day's 24 readings are 24 rows rather
+  // than the first of them standing in for the whole day.
+  const [granularity, setGranularity] = useState(null);
 
   useEffect(() => {
     if (!open || !meter) return;
@@ -88,6 +94,13 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
     }
   }, [maxDate]);
 
+  const detected = useMemo(() => detectSeriesGranularity(readings), [readings]);
+
+  useEffect(() => {
+    if (readings.length === 0) return;
+    setGranularity(defaultGranularity(project?.project_type, detected));
+  }, [readings, detected, project?.project_type]);
+
   const filtered = useMemo(() => {
     if (!hasDates) return readings.map((r) => ({ ...r, _date: null, _label: getReadingLabel(r) }));
     let from = null, to = null;
@@ -98,46 +111,38 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
       if (customTo) { to = new Date(customTo); to.setHours(23, 59, 59, 999); }
     }
 
-    // Build a per-date map of actual readings (normalized to midnight)
-    const byDay = {};
-    for (const r of dated) {
-      if (!r._date) continue;
-      if (from && r._date < from) continue;
-      if (to && r._date > to) continue;
-      const key = format(r._date, "yyyy-MM-dd");
-      if (!byDay[key]) byDay[key] = r;
+    const g = granularity || "daily";
+    // Readings are summed within each period. This used to keep the first
+    // reading of a day and drop the rest, which showed an hourly meter's whole
+    // day as one of its hours.
+    const points = buildSeries(readings, { granularity: g, from, to, fillGaps: !!(from && to) });
+
+    // Which source file a period came from — unambiguous for a single reading,
+    // and named once when several readings share one.
+    const filesByKey = new Map();
+    for (const r of readings) {
+      const d = readingMoment(r);
+      if (!d) continue;
+      const key = g === "hourly"
+        ? `${format(d, "yyyy-MM-dd")}T${format(d, "HH")}`
+        : g === "monthly" ? format(d, "yyyy-MM") : format(d, "yyyy-MM-dd");
+      if (!filesByKey.has(key)) filesByKey.set(key, new Set());
+      if (r.source_file_name) filesByKey.get(key).add(r.source_file_name);
     }
 
-    // If we have explicit from/to bounds, fill in every day in the range —
-    // missing days show as 0 consumption
-    if (from && to) {
-      const result = [];
-      const cursor = new Date(from);
-      cursor.setHours(0, 0, 0, 0);
-      while (cursor <= to) {
-        const key = format(cursor, "yyyy-MM-dd");
-        const r = byDay[key];
-        if (r) {
-          result.push({ ...r, _label: format(cursor, "dd/MM/yyyy") });
-        } else {
-          result.push({
-            _date: new Date(cursor),
-            _label: format(cursor, "dd/MM/yyyy"),
-            consumption: 0,
-            source_file_name: "—",
-            isMissing: true,
-          });
-        }
-        cursor.setDate(cursor.getDate() + 1);
-      }
-      return result;
-    }
-
-    // No custom range bounds — just list existing readings in range
-    return Object.values(byDay)
-      .sort((a, b) => a._date - b._date)
-      .map((r) => ({ ...r, _label: format(r._date, "dd/MM/yyyy") }));
-  }, [readings, dated, hasDates, range, customFrom, customTo, maxDate]);
+    const fmt = g === "hourly" ? "dd/MM/yyyy HH:mm" : g === "monthly" ? "MM/yyyy" : "dd/MM/yyyy";
+    return points.map((pt) => {
+      const files = [...(filesByKey.get(pt.key) || [])];
+      return {
+        _date: pt.at,
+        _label: format(pt.at, fmt),
+        consumption: pt.consumption,
+        readings: pt.count,
+        isMissing: pt.isMissing,
+        source_file_name: files.length === 1 ? files[0] : files.length > 1 ? `${files.length} files` : "—",
+      };
+    });
+  }, [readings, hasDates, range, customFrom, customTo, maxDate, granularity]);
 
   const total = useMemo(() => filtered.reduce((sum, r) => sum + (r.consumption || 0), 0), [filtered]);
   const unit = project?.water_unit === "Gallons" ? "gal" : "m³";
@@ -169,6 +174,14 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
           <div className="space-y-4">
             {hasDates && (
               <div className="flex items-center gap-2 flex-wrap">
+                {detected.hourly && (
+                  // Only where the meter really reports more than once a day.
+                  <div className="flex items-center rounded-md border border-border overflow-hidden mr-1">
+                    <Button size="sm" variant={granularity === "hourly" ? "default" : "ghost"} onClick={() => setGranularity("hourly")} className="rounded-none">Hourly</Button>
+                    <Button size="sm" variant={granularity === "daily" ? "default" : "ghost"} onClick={() => setGranularity("daily")} className="rounded-none">Daily</Button>
+                    <Button size="sm" variant={granularity === "monthly" ? "default" : "ghost"} onClick={() => setGranularity("monthly")} className="rounded-none">Monthly</Button>
+                  </div>
+                )}
                 <Button size="sm" variant={range === "7d" ? "default" : "outline"} onClick={() => setRange("7d")}>Last 7 days</Button>
                 <Button size="sm" variant={range === "30d" ? "default" : "outline"} onClick={() => setRange("30d")}>Last 30 days</Button>
                 <Button size="sm" variant={range === "custom" ? "default" : "outline"} onClick={() => setRange("custom")}>Custom range</Button>
@@ -196,7 +209,7 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
               <table className="w-full text-sm">
                 <thead className="bg-muted sticky top-0">
                   <tr className="text-xs text-muted-foreground uppercase tracking-wide">
-                    <th className="px-4 py-2.5 text-left font-semibold">Date</th>
+                    <th className="px-4 py-2.5 text-left font-semibold">{granularity === "hourly" ? "Date & time" : granularity === "monthly" ? "Month" : "Date"}</th>
                     <th className="px-4 py-2.5 text-right font-semibold">Consumption ({unit})</th>
                     <th className="px-4 py-2.5 text-left font-semibold">Source File</th>
                   </tr>
