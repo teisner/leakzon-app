@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { invokeFunction } from "@/api/functionsClient";
 import {
-  detectSeriesGranularity, buildSeries, defaultGranularity, readingMoment,
+  detectSeriesGranularity, buildSeries, defaultGranularity, readingMoment, coverageSummary,
 } from "@/lib/consumptionSeries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,9 @@ function getReadingLabel(r) {
 export default function MeterConsumptionTableDialog({ open, onOpenChange, meter, project }) {
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [range, setRange] = useState("30d");
+  // Same rule as the chart: fit the window to what the meter actually holds
+  // rather than showing a fixed month with the data in one corner of it.
+  const [range, setRange] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   // Hourly where the meter has it, so a day's 24 readings are 24 rows rather
@@ -95,16 +97,19 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
   }, [maxDate]);
 
   const detected = useMemo(() => detectSeriesGranularity(readings), [readings]);
+  const coverage = useMemo(() => coverageSummary(readings), [readings]);
 
   useEffect(() => {
     if (readings.length === 0) return;
     setGranularity(defaultGranularity(project?.project_type, detected));
-  }, [readings, detected, project?.project_type]);
+    setRange(coverage.spanDays >= 30 ? "30d" : "all");
+  }, [readings, detected, project?.project_type, coverage.spanDays]);
 
   const filtered = useMemo(() => {
     if (!hasDates) return readings.map((r) => ({ ...r, _date: null, _label: getReadingLabel(r) }));
     let from = null, to = null;
-    if (range === "7d") { to = maxDate; from = subDays(to, 7); }
+    if (range === "all") { from = coverage.first; to = coverage.last; }
+    else if (range === "7d") { to = maxDate; from = subDays(to, 7); }
     else if (range === "30d") { to = maxDate; from = subDays(to, 30); }
     else {
       if (customFrom) { from = new Date(customFrom); from.setHours(0, 0, 0, 0); }
@@ -142,7 +147,7 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
         source_file_name: files.length === 1 ? files[0] : files.length > 1 ? `${files.length} files` : "—",
       };
     });
-  }, [readings, hasDates, range, customFrom, customTo, maxDate, granularity]);
+  }, [readings, hasDates, range, customFrom, customTo, maxDate, granularity, coverage.first, coverage.last]);
 
   const total = useMemo(() => filtered.reduce((sum, r) => sum + (r.consumption || 0), 0), [filtered]);
   const unit = project?.water_unit === "Gallons" ? "gal" : "m³";
@@ -182,6 +187,7 @@ export default function MeterConsumptionTableDialog({ open, onOpenChange, meter,
                     <Button size="sm" variant={granularity === "monthly" ? "default" : "ghost"} onClick={() => setGranularity("monthly")} className="rounded-none">Monthly</Button>
                   </div>
                 )}
+                <Button size="sm" variant={range === "all" ? "default" : "outline"} onClick={() => setRange("all")} title="Exactly the period this meter has readings for">All data</Button>
                 <Button size="sm" variant={range === "7d" ? "default" : "outline"} onClick={() => setRange("7d")}>Last 7 days</Button>
                 <Button size="sm" variant={range === "30d" ? "default" : "outline"} onClick={() => setRange("30d")}>Last 30 days</Button>
                 <Button size="sm" variant={range === "custom" ? "default" : "outline"} onClick={() => setRange("custom")}>Custom range</Button>

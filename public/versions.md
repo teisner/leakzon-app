@@ -298,7 +298,7 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.152, 1.154, 1.155 — 2026-08-01 · *New feature + Bug fix* · **Important**
+## 1.152, 1.154, 1.155, 1.157 — 2026-08-02 · *New feature + Bug fix* · **Important**
 **The consumption chart reads hourly data, and shows you where your data is**
 - **The chart now supports hourly.** Where a meter reports more than once a day it
   offers **Hourly / Daily / Monthly**, and opens on the one that suits the project
@@ -335,6 +335,12 @@ The running version is shown at the bottom of the side menu.
   Period and Show controls step aside, since neither applies to it.
 - The header now names the customer and address under the meter's UID, which is
   how anyone actually recognises which meter they are looking at.
+- **The period now fits the data instead of the calendar.** A meter holding two
+  days of readings opened on "Last 30 days" and drew them in one corner of a
+  mostly empty month. Chart and Data list both open on **All data** — exactly the
+  stretch the meter has readings for — unless there is a month or more, in which
+  case Last 30 days still opens. All data is also a button, so it is one click
+  back from any other period.
 
 ## 1.150, 1.151, 1.156 — 2026-08-01 · *Bug fix + New feature* · **Important**
 **A consumption import that saves nothing now says so, and shows you why**

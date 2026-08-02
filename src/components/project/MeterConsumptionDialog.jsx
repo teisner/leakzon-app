@@ -84,7 +84,10 @@ function Group({ label, children }) {
 export default function MeterConsumptionDialog({ open, onOpenChange, meter, project, onViewReadings }) {
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [range, setRange] = useState("30d");
+  // "all" spans exactly what the meter holds. It is the default whenever the
+  // data does not fill the 30-day window, because a fixed window on two days of
+  // readings is 28 days of blank chart.
+  const [range, setRange] = useState("all");
   // Monthly is the bar chart that used to be the separate "AMR" view; every
   // other resolution is the detail line chart.
   const [viewMode, setViewMode] = useState("ami");
@@ -138,7 +141,9 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
       : "monthly";
     setGranularity(g);
     setViewMode(g === "monthly" ? "amr" : "ami");
-  }, [dated, detected, project?.project_type]);
+    // Fit the window to the data unless there is genuinely a month of it.
+    setRange(coverage.spanDays >= 30 ? "30d" : "all");
+  }, [dated, detected, project?.project_type, coverage.spanDays]);
 
   const maxDate = useMemo(() => {
     if (dated.length === 0) return null;
@@ -156,6 +161,7 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
   // roll up into whole days and months.
   const { from, to } = useMemo(() => {
     if (!hasDates) return { from: null, to: null };
+    if (range === "all") return { from: coverage.first, to: coverage.last };
     if (range === "7d") return { from: subDays(maxDate, 7), to: maxDate };
     if (range === "30d") return { from: subDays(maxDate, 30), to: maxDate };
     const f = customFrom ? new Date(customFrom) : null;
@@ -163,7 +169,7 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
     if (f) f.setHours(0, 0, 0, 0);
     if (t) t.setHours(23, 59, 59, 999);
     return { from: f, to: t };
-  }, [hasDates, range, customFrom, customTo, maxDate]);
+  }, [hasDates, range, customFrom, customTo, maxDate, coverage.first, coverage.last]);
 
   // Points to plot. Readings are summed within each bucket — with hourly data a
   // day is the sum of its 24 readings, where this used to take the first one and
@@ -302,6 +308,7 @@ export default function MeterConsumptionDialog({ open, onOpenChange, meter, proj
                   <Group label="Period">
                     <div className="flex items-center gap-1.5">
                       <div className="flex items-center rounded-md border border-border overflow-hidden">
+                        <Button size="sm" variant={range === "all" ? "default" : "ghost"} onClick={() => setRange("all")} className="rounded-none h-7 text-xs px-2.5" title="Exactly the period this meter has readings for">All data</Button>
                         <Button size="sm" variant={range === "7d" ? "default" : "ghost"} onClick={() => setRange("7d")} className="rounded-none h-7 text-xs px-2.5">7 days</Button>
                         <Button size="sm" variant={range === "30d" ? "default" : "ghost"} onClick={() => setRange("30d")} className="rounded-none h-7 text-xs px-2.5">30 days</Button>
                         <Button size="sm" variant={range === "custom" ? "default" : "ghost"} onClick={() => setRange("custom")} className="rounded-none h-7 text-xs px-2.5">Custom</Button>
