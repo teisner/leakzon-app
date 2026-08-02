@@ -356,6 +356,28 @@ export default function LeakzonExportDialog({ open, onOpenChange, project, onExp
               {identifierFields.length === 0 && (
                 <p className="text-[11px] text-amber-600 dark:text-amber-400">{t("leakzonExport.identifierEmpty")}</p>
               )}
+              {/* The receiving system matches on this column, so a value shared
+                  by two meters merges them on import. Every meter still ships —
+                  what the operator needs is to see it and add a field. */}
+              {preview?.identifierCollisions?.meters > 0 && (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 space-y-1">
+                  <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                    {t("leakzonExport.identifierClash", {
+                      meters: preview.identifierCollisions.meters,
+                      keys: preview.identifierCollisions.keys,
+                    })}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{t("leakzonExport.identifierClashHint")}</p>
+                  <ul className="text-[11px] text-muted-foreground space-y-0.5">
+                    {preview.identifierCollisions.samples.map((c) => (
+                      <li key={c.identifier} className="truncate">
+                        <span className="font-mono">{c.identifier}</span>
+                        <span className="opacity-70"> — {c.uids.join(", ")}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Meter Number — exactly one field. */}

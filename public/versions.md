@@ -298,6 +298,26 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.158 — 2026-08-02 · *Bug fix* · **Important**
+**The export was silently dropping meters that shared an identifier**
+- **Obion exported 672 meters out of 694.** The Meter Data file collapsed any two
+  rows carrying the same **Identifier** — and the Identifier is not an identity,
+  it is whatever fields you picked in the review step. Exporting with Identifier
+  = *Address* meant two meters at one address became one row, and 23 meters never
+  reached the file. Nothing said so; the file was just short.
+- Among the meters lost was the main **"LeakZon 1"** (account 6001), which shares
+  805 BATES ANDERSON with meter 751308 — so a DMA's main meter was missing from
+  the export while its Groups row still named it.
+- **Every physical meter is now written exactly once.** The collapse exists to
+  fold the per-DMA copies of a main that feeds several DMAs back into one row;
+  it now does that on the meter itself rather than on the text of a column.
+- **The review step warns when the Identifier is not unique**, with the number of
+  meters affected and examples of the clashing values. LeakZon matches on that
+  column, so a shared value still merges rows on their side — but that is now
+  something you see and can fix by adding a field, rather than a file that comes
+  out short. For Obion, *Address* alone clashes for 23 addresses; adding
+  *Meter ID* makes every one of the 694 unique.
+
 ## 1.152, 1.154, 1.155, 1.157 — 2026-08-02 · *New feature + Bug fix* · **Important**
 **The consumption chart reads hourly data, and shows you where your data is**
 - **The chart now supports hourly.** Where a meter reports more than once a day it

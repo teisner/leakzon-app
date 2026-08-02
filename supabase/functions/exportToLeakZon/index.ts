@@ -551,27 +551,59 @@ const METER_DATA_COLUMNS = [
 //
 // analyzeMeters emits a copy of a main meter for each DMA it serves, which is
 // what the Groups file needs — a membership row per DMA. Meter Data describes
-// the meters themselves, so those copies collapse back to one. Deduped on the
-// Identifier, since that is the key the receiving system matches on and two
-// rows sharing one would collide on import regardless of why.
-function dedupeMeterRows(rows: any[]) {
+// the meters themselves, so those copies collapse back to one, keyed on the
+// meter's id.
+//
+// This used to collapse on the Identifier column instead, which is not an
+// identity: it is whatever fields the operator picked. Exporting Obion with
+// Identifier = "Address" dropped 23 of 694 meters, because two meters at one
+// address produced one Identifier — including the main "LeakZon 1", which sits
+// at 805 BATES ANDERSON alongside meter 751308. The file was short and said
+// nothing about it. Identifier collisions are still a real problem for the
+// receiving system, but the answer is to report them (see
+// identifierCollisions) rather than to silently delete meters.
+function dedupeMeterRows(meters: any[]) {
   const seen = new Set<string>();
-  const out: any[] = [];
-  for (const r of rows) {
-    // An empty Identifier carries no identity, so those rows are kept as they
-    // are rather than being collapsed into a single row.
-    const key = String(r['Identifier'] ?? '').trim();
-    if (key && seen.has(key)) continue;
-    if (key) seen.add(key);
-    out.push(r);
+  return meters.filter((m) => {
+    // Generated placeholder mains carry no id and are unique by construction.
+    if (m.id == null) return true;
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  });
+}
+
+// Whether the chosen Identifier actually identifies a meter.
+//
+// The receiving system matches rows on this column, so two meters sharing one
+// will collide on import. The operator has to learn that before they send the
+// file, which means counting it here and showing it in the review step.
+export function identifierCollisions(meters: any[], opts: any) {
+  const byKey = new Map<string, any[]>();
+  for (const m of dedupeMeterRows(meters)) {
+    const key = buildIdentifier(m, opts.identifierFields).trim();
+    if (!key) continue;
+    const list = byKey.get(key);
+    if (list) list.push(m); else byKey.set(key, [m]);
   }
-  return out;
+  const clashing = [...byKey.entries()].filter(([, list]) => list.length > 1);
+  return {
+    // How many meters are involved, and how many of them would be lost if the
+    // receiving system keeps one row per Identifier.
+    meters: clashing.reduce((s, [, list]) => s + list.length, 0),
+    overlapping: clashing.reduce((s, [, list]) => s + list.length - 1, 0),
+    keys: clashing.length,
+    samples: clashing.slice(0, 5).map(([key, list]) => ({
+      identifier: key,
+      uids: list.map((m) => String(m.uid ?? '')).slice(0, 4),
+    })),
+  };
 }
 
 export function buildMeterDataRows(meters: any[], project: any, opts: any) {
   const installed = new Date().toISOString().slice(0, 10);
   const unit = unitLabel(project?.water_unit);
-  return dedupeMeterRows(meters.map((m) => ({
+  return dedupeMeterRows(meters).map((m) => ({
     "Identifier": buildIdentifier(m, opts.identifierFields),
     "Meter Number": String(meterFieldValue(m, opts.meterNumberField) ?? ""),
     "Address": m.address ?? "",
@@ -595,7 +627,7 @@ export function buildMeterDataRows(meters: any[], project: any, opts: any) {
     "METER TYPE": "water",
     "new identifier": "",
     "new meter number": "",
-  })));
+  }));
 }
 
 const GROUPS_COLUMNS = [
@@ -805,7 +837,10 @@ Deno.serve(async (req) => {
         groups: buildGroupsRows(a.assigned, project, opts),
         noDmaCount: a.unassigned.length,
         fieldCoverage: fieldCoverage(a.assigned),
-        totalRows: a.assigned.length,
+        identifierCollisions: identifierCollisions(a.assigned, opts),
+        // The number of rows the Meter Data file will actually hold — one per
+        // physical meter, not one per Groups membership row.
+        totalRows: dedupeMeterRows(a.assigned).length,
       });
     }
 
