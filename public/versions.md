@@ -298,6 +298,13 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.161 — 2026-08-03 · *New feature*
+**Customer Signature page (test)**
+- Project Settings has a **Signature Page** toggle. Once on, it shows a
+  shareable link (piggybacking on the Customer View link) that opens a plain
+  page where the customer draws a signature on a pad and submits it — a quick
+  test, not the final design.
+
 ## 1.159, 1.160 — 2026-08-03 · *Bug fix + Updated feature* · **Important**
 **A DMA with no main meter could be marked as having one**
 - **Obion's Zone 5 has no main meter, but export said 5 of 5 DMAs did.** A main

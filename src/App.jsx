@@ -11,6 +11,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import UploadData from './pages/UploadData';
 import MobileLocator from './pages/MobileLocator';
 import CustomerMode from './pages/CustomerMode';
+import CustomerSignature from './pages/CustomerSignature';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import ImpersonationBanner from './components/ImpersonationBanner';
@@ -29,7 +30,7 @@ const SPEED_INSIGHTS_ENABLED = false;
 // Only runs inactivity logout on authenticated routes, not public-facing ones
 const InactivityGuard = () => {
   const location = useLocation();
-  const isPublic = location.pathname.startsWith('/mobile-locator') || location.pathname.startsWith('/customer-mode');
+  const isPublic = location.pathname.startsWith('/mobile-locator') || location.pathname.startsWith('/customer-mode') || location.pathname.startsWith('/customer-signature');
   useInactivityLogout(isPublic);
   return null;
 };
@@ -53,6 +54,7 @@ function App() {
           <Route path="/project/:id/upload" element={<UploadData />} />
           <Route path="/mobile-locator/:projectId" element={<MobileLocator />} />
           <Route path="/customer-mode/:projectId" element={<CustomerMode />} />
+          <Route path="/customer-signature/:projectId" element={<CustomerSignature />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </Router>

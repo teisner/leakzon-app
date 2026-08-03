@@ -1,8 +1,11 @@
-import React from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, PenLine, Copy } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { invokeFunction } from "@/api/functionsClient";
+import { useToast } from "@/components/ui/use-toast";
 
 function SegmentedToggle({ value, options, onChange }) {
   return (
@@ -42,8 +45,38 @@ function SettingRow({ icon: Icon, title, description, children }) {
 }
 
 export default function ProjectSettingsPage({ project, onUpdate, locked, currentUser }) {
+  const { toast } = useToast();
   const handleUpdate = (field, value) => {
     onUpdate({ [field]: value });
+  };
+
+  // Signature page — a quick test feature, reuses the same customer_view_link
+  // token as the rest of the customer-facing surface rather than a link system
+  // of its own.
+  const [signatureUrl, setSignatureUrl] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const loadSignatureLink = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const res = await invokeFunction("manageCustomerViewLinks", { action: "list", project_id: project.id });
+      const active = (res.data?.links || []).find((l) => l.is_valid);
+      setSignatureUrl(active ? `${window.location.origin}/customer-signature/${project.id}?token=${active.token}` : null);
+    } catch {
+      setSignatureUrl(null);
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (project?.signature_page_enabled) loadSignatureLink();
+  }, [project?.signature_page_enabled, loadSignatureLink]);
+
+  const handleCopySignatureUrl = async () => {
+    if (!signatureUrl) return;
+    await navigator.clipboard.writeText(signatureUrl);
+    setCopied(true);
+    toast({ title: "Link copied to clipboard" });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Shown in the project's own distance unit (m for metric, ft for imperial);
@@ -239,6 +272,39 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                 </span>
               </div>
             </SettingRow>
+          </div>
+        </div>
+
+        {/* Customer Signature card — test feature */}
+        <div className="mt-4">
+          <h2 className="text-sm font-bold text-foreground mb-1 px-1">Customer Signature (test)</h2>
+          <div className="bg-card border border-border rounded-xl px-5">
+            <SettingRow
+              icon={PenLine}
+              title="Signature Page"
+              description="A page where the customer draws their signature. Opens via the same link as Customer View."
+            >
+              <Switch
+                checked={!!project.signature_page_enabled}
+                onCheckedChange={(v) => handleUpdate("signature_page_enabled", v)}
+              />
+            </SettingRow>
+            {project.signature_page_enabled && (
+              <div className="pb-4">
+                {signatureUrl ? (
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-muted rounded px-2 py-1.5 truncate">{signatureUrl}</code>
+                    <Button size="sm" variant="outline" onClick={handleCopySignatureUrl} className="shrink-0 gap-1.5">
+                      <Copy className="w-3.5 h-3.5" /> {copied ? "Copied" : "Copy"}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    No active Customer View link yet — create one first to get a signature link.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
