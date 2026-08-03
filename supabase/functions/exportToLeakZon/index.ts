@@ -739,9 +739,11 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
     fictitious.push({
       uid: String(nextUid++),
       payer_name: `${d.name || 'DMA'}_Fic`,
-      address: '', provider: '', communication_type: '', diameter: null,
+      address: `${d.name || 'DMA'}_Fictive`,
+      provider: '', communication_type: '', diameter: null,
       is_active: true, latitude: lat, longitude: lng,
       location_source: 'generated', additional_ids: [],
+      is_root: true,
       __is_main: true, __dma_id: d.id, __dma_name: d.name || '',
     });
   }

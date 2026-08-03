@@ -298,7 +298,7 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.159 — 2026-08-03 · *Bug fix* · **Important**
+## 1.159, 1.160 — 2026-08-03 · *Bug fix + Updated feature* · **Important**
 **A DMA with no main meter could be marked as having one**
 - **Obion's Zone 5 has no main meter, but export said 5 of 5 DMAs did.** A main
   meter inventoried under Zone 5 (its `dma_id`) was being read as proof Zone 5
@@ -306,8 +306,9 @@ The running version is shown at the bottom of the side menu.
   point-in-polygon, now showing up through this second path instead.
 - "Has a main" now means only one thing everywhere in the app: a DMA's
   `main_meter_id` is actually set. A main meter's own DMA tag no longer counts.
-- Zone 5 now gets its **fictitious root meter** in the Groups sheet, like any
-  other DMA with no assigned main.
+- Zone 5 now gets its **fictitious root meter**, like any other DMA with no
+  assigned main. It now also gets an **Address** of `<DMA name>_Fictive` in the
+  Meter Data sheet, and is marked **Is Root? = True** in the Groups sheet.
 
 ## 1.158 — 2026-08-02 · *Bug fix* · **Important**
 **The export was silently dropping meters that shared an identifier**
