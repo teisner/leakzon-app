@@ -701,10 +701,13 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
     m.__dma_name = hit?.name || '';
   }
 
+  // "Has a main" means dma.main_meter_id is set — the same ground truth
+  // dmaMainMeters.js's mainMeterFor() uses for DmaPanel/InsertionMetersList.
+  // A main meter's own dma_id is just where it's inventoried, not proof it
+  // feeds that DMA: Obion's Zone 5 has no main_meter_id, yet a main meter
+  // tagged dma_id = Zone 5 used to make mainsByDma think otherwise and
+  // suppressed Zone 5's placeholder.
   const mainsByDma = new Map<string, number>();
-  for (const m of meters) {
-    if (m.__is_main && m.__dma_id) mainsByDma.set(m.__dma_id, (mainsByDma.get(m.__dma_id) || 0) + 1);
-  }
 
   // A main meter can feed several DMAs (dma.main_meter_id has no unique
   // constraint). One row can only name one DMA, so emit a copy per DMA — same
