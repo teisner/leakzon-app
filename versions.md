@@ -298,6 +298,14 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.169 — 2026-08-04 · *Updated feature*
+**Permission page is always light mode, and framed**
+- The Meter Data Permission Request page now forces light mode regardless of
+  the project's/browser's theme — it's a formal document, so it shouldn't
+  flip to dark.
+- The whole page (loading, error, submitted, and the form) is now framed in
+  a thin bordered card, consistent across every state.
+
 ## 1.168 — 2026-08-04 · *Updated feature*
 **Meter Provider Platform is now a dropdown**
 - Badger Meter, Itron, Kamstrup, Master Meter, Neptune, Sensus, Zenner USA (A–Z),

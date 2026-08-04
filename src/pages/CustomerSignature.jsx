@@ -78,6 +78,19 @@ function drawParagraphWithHighlight(doc, text, x, y, maxWidth, term) {
   return y;
 }
 
+// This is a formal document the customer signs — always light mode, frames
+// every screen state (loading/error/signed/form) the same way, regardless of
+// the app's own theme.
+function PageFrame({ children }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 p-4 sm:p-8">
+      <div className="w-full max-w-2xl border border-neutral-300 rounded-lg bg-white p-6 sm:p-10">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // Loads the full LeakZon logo (icon + wordmark) as an <img> jsPDF can embed
 // directly.
 function loadLogo() {
@@ -129,6 +142,16 @@ export default function CustomerSignature() {
 
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
+
+  // This page is a formal document the customer signs — always light mode,
+  // regardless of the project's/app's theme.
+  useEffect(() => {
+    const hadDark = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.remove("dark");
+    return () => {
+      if (hadDark) document.documentElement.classList.add("dark");
+    };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -328,32 +351,39 @@ export default function CustomerSignature() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <PageFrame>
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
+        </div>
+      </PageFrame>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center px-4">
-        <AlertCircle className="w-8 h-8 text-red-500" />
-        <p className="text-sm text-muted-foreground">{error}</p>
-      </div>
+      <PageFrame>
+        <div className="flex flex-col items-center justify-center gap-3 text-center py-10">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+          <p className="text-sm text-neutral-600">{error}</p>
+        </div>
+      </PageFrame>
     );
   }
 
   if (signed) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center px-4">
-        <CheckCircle2 className="w-8 h-8 text-green-500" />
-        <p className="text-sm font-medium">Authorization submitted. A copy of the PDF was downloaded. Thank you.</p>
-      </div>
+      <PageFrame>
+        <div className="flex flex-col items-center justify-center gap-3 text-center py-10">
+          <CheckCircle2 className="w-8 h-8 text-green-500" />
+          <p className="text-sm font-medium">Authorization submitted. A copy of the PDF was downloaded. Thank you.</p>
+        </div>
+      </PageFrame>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-5 px-4 py-10">
+    <PageFrame>
+    <div className="flex flex-col items-center gap-5">
       <div className="w-full max-w-md text-center">
         <img src="/leakzon-logo-full.png" alt="LeakZon" className="h-10 w-auto mx-auto mb-3" />
         <h1 className="text-lg font-semibold">Authorization to Access Meter Provider Data</h1>
@@ -438,5 +468,6 @@ export default function CustomerSignature() {
         </Button>
       </div>
     </div>
+    </PageFrame>
   );
 }
