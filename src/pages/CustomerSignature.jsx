@@ -144,12 +144,23 @@ export default function CustomerSignature() {
   const drawingRef = useRef(false);
 
   // This page is a formal document the customer signs — always light mode,
-  // regardless of the project's/app's theme.
+  // regardless of the project's/app's theme. A plain one-shot removal isn't
+  // enough: on a fresh page load ThemeProvider (an ancestor, so its mount
+  // effect fires AFTER this one — React runs child effects before parent
+  // effects) defaults to dark and re-adds the class right after this runs,
+  // leaving the page stuck in dark mode. The observer strips it back off
+  // for the lifetime of this page instead of racing it once.
   useEffect(() => {
-    const hadDark = document.documentElement.classList.contains("dark");
-    document.documentElement.classList.remove("dark");
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    root.classList.remove("dark");
+    const observer = new MutationObserver(() => {
+      if (root.classList.contains("dark")) root.classList.remove("dark");
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => {
-      if (hadDark) document.documentElement.classList.add("dark");
+      observer.disconnect();
+      if (hadDark) root.classList.add("dark");
     };
   }, []);
 

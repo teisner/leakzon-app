@@ -298,6 +298,17 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.170 — 2026-08-04 · *Bug fix* · **Important**
+**Permission page's forced light mode was actually losing to dark**
+- On a fresh page load, `ThemeProvider` (an ancestor) defaults to dark and
+  applies it in its own mount effect — which fires *after* the permission
+  page's effect, since React runs child effects before parent effects. Dark
+  mode won the race every time, leaving header and field labels rendered in
+  near-white dark-theme colors on the page's white card — unreadable.
+- Now watches for the class being reapplied and strips it right back off for
+  as long as the page is open, instead of a one-shot removal that could lose
+  the race.
+
 ## 1.169 — 2026-08-04 · *Updated feature*
 **Permission page is always light mode, and framed**
 - The Meter Data Permission Request page now forces light mode regardless of
