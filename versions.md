@@ -298,6 +298,11 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.173 — 2026-08-04 · *Updated feature*
+**Meter Data search field stands out**
+- Gave it a visible border so it's not lost among the other controls above
+  the table.
+
 ## 1.171, 1.172 — 2026-08-04 · *New feature + Bug fix* · **Important**
 **A boundary main meter now gets both of its Groups rows**
 - A main meter (any type) that's also billed as a sub-meter of a neighbouring

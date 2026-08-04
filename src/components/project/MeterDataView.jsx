@@ -467,7 +467,7 @@ export default function MeterDataView({ projectId, project, dmas, layers, onMete
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by UID, Meter ID, Account ID, endpoint, name, address, provider…"
-            className="pl-9 h-9"
+            className="pl-9 h-9 border-2 border-primary/40 focus-visible:border-primary"
           />
           {search !== debouncedSearch && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70 animate-spin" />
