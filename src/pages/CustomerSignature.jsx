@@ -6,6 +6,13 @@ import { invokeFunction } from "@/api/functionsClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Alphabetical, "Other" always last. "Badger Meter" (not "Budger") is the
+// real manufacturer name.
+const PROVIDER_OPTIONS = [
+  "Badger Meter", "Itron", "Kamstrup", "Master Meter", "Neptune", "Sensus", "Zenner USA",
+];
 
 const INTRO_TEXT =
   "To complete your onboarding, LeakZon needs read access to your account on your meter provider's " +
@@ -99,11 +106,26 @@ export default function CustomerSignature() {
   const [signed, setSigned] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
 
+  // providerName is the single value used everywhere (form validity, PDF,
+  // submission) — the dropdown and the "Other" text field both just write
+  // into it.
   const [providerName, setProviderName] = useState("");
+  const [providerSelection, setProviderSelection] = useState("");
+  const [customProviderName, setCustomProviderName] = useState("");
   const [customerOfficialName, setCustomerOfficialName] = useState("");
   const [signerName, setSignerName] = useState("");
   const [signerTitle, setSignerTitle] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
+
+  const handleProviderSelect = (value) => {
+    setProviderSelection(value);
+    setProviderName(value === "Other" ? customProviderName : value);
+  };
+
+  const handleCustomProviderChange = (value) => {
+    setCustomProviderName(value);
+    setProviderName(value);
+  };
 
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
@@ -354,7 +376,25 @@ export default function CustomerSignature() {
         </div>
         <div>
           <Label className="text-xs">Meter Provider Platform</Label>
-          <Input value={providerName} onChange={(e) => setProviderName(e.target.value)} placeholder="e.g. Acme Water Metering" />
+          <Select value={providerSelection} onValueChange={handleProviderSelect}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROVIDER_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+          {providerSelection === "Other" && (
+            <Input
+              className="mt-2"
+              value={customProviderName}
+              onChange={(e) => handleCustomProviderChange(e.target.value)}
+              placeholder="Provider name"
+            />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

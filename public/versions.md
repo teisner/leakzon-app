@@ -298,6 +298,13 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.168 — 2026-08-04 · *Updated feature*
+**Meter Provider Platform is now a dropdown**
+- Badger Meter, Itron, Kamstrup, Master Meter, Neptune, Sensus, Zenner USA (A–Z),
+  plus **Other**, which opens a free-text field — that typed name is what's
+  used everywhere (page, PDF, stored record). ("Badger Meter" — the real
+  manufacturer name, not "Budger Meter".)
+
 ## 1.167 — 2026-08-04 · *New feature*
 **Delete a submitted authorization from Project Settings**
 - Each row in **Submitted authorizations** gets a delete button, with a
