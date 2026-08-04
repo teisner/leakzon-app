@@ -725,16 +725,21 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
   }
 
   // A main meter can also sit on a boundary: it feeds one DMA (the "linked"
-  // DMA, via dma_id/main_meter_id) while being billed as a consumer of a
+  // DMA, via dma.main_meter_id) while being billed as a consumer of a
   // neighbouring one via sub_meter_dma_id — the same relationship
-  // dmaMainMeters.js surfaces in the network diagram. Both are genuine,
-  // separate memberships, so it gets a second Groups row for the sub-meter
-  // DMA too (never counted as a second main, and never replacing the first
-  // row — Meter Data dedupes back to one physical row by id regardless).
+  // dmaMainMeters.js surfaces in the network diagram. sub_meter_dma_id is
+  // routinely equal to the meter's own dma_id (that's where it physically
+  // sits/is billed) — that is the normal case, not a duplicate, so it must
+  // NOT be compared against __dma_id. The only real duplicate to guard is a
+  // meter whose sub_meter_dma_id names a DMA it already has a row for: one
+  // it mains for (a sharedCopies entry), or — for a meter that never got
+  // copied out at all — its own base row's __dma_id.
   const subMeterCopies: any[] = [];
   for (const m of meters) {
     if (!m.__is_main || !m.sub_meter_dma_id) continue;
-    if (m.sub_meter_dma_id === m.__dma_id) continue;
+    const dupWithMainFeed = sharedCopies.some((c) => c.id === m.id && c.__dma_id === m.sub_meter_dma_id);
+    const dupWithBaseRow = !copiedMainIds.has(m.id) && m.__dma_id === m.sub_meter_dma_id;
+    if (dupWithMainFeed || dupWithBaseRow) continue;
     const subDma = dmaById.get(m.sub_meter_dma_id);
     if (!subDma) continue;
     subMeterCopies.push({ ...m, __is_main: false, __dma_id: subDma.id, __dma_name: subDma.name || '' });

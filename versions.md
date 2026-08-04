@@ -298,7 +298,7 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.171 — 2026-08-04 · *New feature* · **Important**
+## 1.171, 1.172 — 2026-08-04 · *New feature + Bug fix* · **Important**
 **A boundary main meter now gets both of its Groups rows**
 - A main meter (any type) that's also billed as a sub-meter of a neighbouring
   DMA (`sub_meter_dma_id` — the boundary case shown in the network diagram)
@@ -306,6 +306,11 @@ The running version is shown at the bottom of the side menu.
   second row too, for the DMA that bills it as a sub-meter — marked as a
   sub, not a main, on that row. The Meter Data sheet still lists the
   physical meter once.
+- **Obion's LEAKZON4 (Zone 4's main) was still missing its Zone 5 sub-meter
+  row.** `sub_meter_dma_id` is routinely equal to the meter's own `dma_id` —
+  that's the normal case, not a duplicate — but the first version compared
+  the two and skipped it as one. Fixed to only skip a true duplicate: a DMA
+  the meter already has a row for.
 
 ## 1.170 — 2026-08-04 · *Bug fix* · **Important**
 **Permission page's forced light mode was actually losing to dark**
