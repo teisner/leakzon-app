@@ -7,11 +7,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Meter Data Permission Request: the customer names the meter provider,
-// their own official name, and the person authorizing access, then draws a
-// signature. Submitting generates a PDF granting LeakZon permission to
-// access that provider's meter data (via website/API) — basic data,
-// consumption, locations, and any other relevant meter data.
+const INTRO_TEXT =
+  "To complete your onboarding, LeakZon needs read access to your account on your meter provider's " +
+  "platform. This lets us pull your meter inventory, consumption readings, and account records so we " +
+  "can build your network model and detect leaks. We access only the data linked to your utility's " +
+  "account, and we never modify or delete anything on the provider's system.";
+
+function consentText(orgName, providerPlatform) {
+  const org = orgName || "[Organization Name]";
+  const provider = providerPlatform || "[Meter Provider Platform]";
+  return [
+    `I confirm that I am authorized to act on behalf of ${org}, and I hereby grant LeakZon Ltd. ` +
+      `permission to access and retrieve customer, meter, and consumption data associated with our ` +
+      `account on ${provider}, for the purposes of onboarding, data analysis, and ongoing leak-detection ` +
+      `services.`,
+    "I understand this authorization remains in effect until I revoke it in writing, and that LeakZon " +
+      "will handle this data in accordance with its Privacy Policy and our service agreement.",
+  ];
+}
+
+// Loads /leakzon-logo-transparent.png as an <img> jsPDF can embed directly.
+function loadLogo() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = "/leakzon-logo-transparent.png";
+  });
+}
+
+// Meter Data Permission Request: the customer names their meter provider,
+// their organization, and the person authorizing access, then signs.
+// Submitting generates a PDF granting LeakZon permission to access that
+// provider's meter data (via website/API) — basic data, consumption,
+// locations, and any other relevant meter data.
 export default function CustomerSignature() {
   const { projectId } = useParams();
   const [searchParams] = useSearchParams();
@@ -28,6 +57,7 @@ export default function CustomerSignature() {
   const [customerOfficialName, setCustomerOfficialName] = useState("");
   const [signerName, setSignerName] = useState("");
   const [signerTitle, setSignerTitle] = useState("");
+  const [signerPhone, setSignerPhone] = useState("");
 
   const canvasRef = useRef(null);
   const drawingRef = useRef(false);
@@ -98,52 +128,69 @@ export default function CustomerSignature() {
   };
 
   const formValid =
-    providerName.trim() && customerOfficialName.trim() && signerName.trim() && signerTitle.trim() && hasDrawn;
+    providerName.trim() &&
+    customerOfficialName.trim() &&
+    signerName.trim() &&
+    signerTitle.trim() &&
+    signerPhone.trim() &&
+    hasDrawn;
 
-  const buildPdf = (signatureDataUrl) => {
+  const buildPdf = async (signatureDataUrl) => {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
     const margin = 56;
     const pageWidth = doc.internal.pageSize.getWidth();
     const textWidth = pageWidth - margin * 2;
+    const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+
+    const logo = await loadLogo();
     let y = margin;
+    if (logo) {
+      const logoW = 130;
+      const logoH = (logo.naturalHeight / logo.naturalWidth) * logoW;
+      doc.addImage(logo, "PNG", margin, y, logoW, logoH);
+    }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Date: ${today}`, pageWidth - margin, margin + 10, { align: "right" });
+    doc.setTextColor(0);
+    y += 60;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Meter Data Access Permission", margin, y);
-    y += 28;
-
-    const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-    const body =
-      `I, ${signerName}, ${signerTitle}, being duly authorized on behalf of ` +
-      `${customerOfficialName}, hereby grant LeakZon permission to access meter ` +
-      `data maintained by ${providerName}, via that provider's website and/or ` +
-      `API, for the purpose of exporting and reading meter data, including but ` +
-      `not limited to basic meter information, consumption data, meter ` +
-      `locations, and any other relevant meter data.`;
+    doc.text("Authorization to Access Meter Provider Data", margin, y);
+    y += 26;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    const lines = doc.splitTextToSize(body, textWidth);
+    doc.setFontSize(10.5);
+    let lines = doc.splitTextToSize(INTRO_TEXT, textWidth);
     doc.text(lines, margin, y);
-    y += lines.length * 15 + 30;
+    y += lines.length * 14 + 18;
+
+    for (const para of consentText(customerOfficialName, providerName)) {
+      lines = doc.splitTextToSize(para, textWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * 14 + 14;
+    }
+    y += 10;
 
     if (projectName) {
       doc.text(`Project: ${projectName}`, margin, y);
       y += 20;
     }
-    doc.text(`Date: ${today}`, margin, y);
-    y += 40;
 
     doc.addImage(signatureDataUrl, "PNG", margin, y, 200, 88);
     y += 100;
     doc.setDrawColor(150);
-    doc.line(margin, y, margin + 250, y);
+    doc.line(margin, y, margin + 260, y);
     y += 16;
     doc.setFont("helvetica", "bold");
     doc.text(signerName, margin, y);
     y += 15;
     doc.setFont("helvetica", "normal");
     doc.text(signerTitle, margin, y);
+    y += 15;
+    doc.text(`Phone: ${signerPhone}`, margin, y);
 
     return doc;
   };
@@ -153,7 +200,7 @@ export default function CustomerSignature() {
     setSubmitting(true);
     try {
       const signatureDataUrl = canvasRef.current.toDataURL("image/png");
-      const doc = buildPdf(signatureDataUrl);
+      const doc = await buildPdf(signatureDataUrl);
       const pdfDataUrl = doc.output("datauristring");
 
       const res = await invokeFunction("manageCustomerSignature", {
@@ -164,13 +211,14 @@ export default function CustomerSignature() {
         customer_official_name: customerOfficialName.trim(),
         signer_name: signerName.trim(),
         signer_title: signerTitle.trim(),
+        signer_phone: signerPhone.trim(),
         signature_data: signatureDataUrl,
         pdf_data: pdfDataUrl,
       });
       if (res.data?.error) {
         setError(res.data.error);
       } else {
-        doc.save(`meter-data-permission-${providerName.trim().replace(/\s+/g, "-")}.pdf`);
+        doc.save(`meter-data-authorization-${providerName.trim().replace(/\s+/g, "-")}.pdf`);
         setSigned(true);
       }
     } catch (err) {
@@ -201,7 +249,7 @@ export default function CustomerSignature() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center px-4">
         <CheckCircle2 className="w-8 h-8 text-green-500" />
-        <p className="text-sm font-medium">Permission submitted. A copy of the PDF was downloaded. Thank you.</p>
+        <p className="text-sm font-medium">Authorization submitted. A copy of the PDF was downloaded. Thank you.</p>
       </div>
     );
   }
@@ -209,22 +257,25 @@ export default function CustomerSignature() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-5 px-4 py-10">
       <div className="w-full max-w-md text-center">
-        <h1 className="text-lg font-semibold">Meter Data Permission Request</h1>
+        <h1 className="text-lg font-semibold">Authorization to Access Meter Provider Data</h1>
         {projectName && <p className="text-sm text-muted-foreground mt-1">{projectName}</p>}
-        <p className="text-xs text-muted-foreground mt-2">
-          This grants LeakZon permission to access your meter provider's data — basic meter info, consumption,
-          locations, and other relevant meter data — via the provider's website or API.
-        </p>
+        <p className="text-xs text-muted-foreground mt-3 text-left leading-relaxed">{INTRO_TEXT}</p>
+      </div>
+
+      <div className="w-full max-w-md text-xs text-muted-foreground leading-relaxed space-y-2 text-left border-y border-border py-3">
+        {consentText(customerOfficialName, providerName).map((para, i) => (
+          <p key={i}>{para}</p>
+        ))}
       </div>
 
       <div className="w-full max-w-md space-y-3">
         <div>
-          <Label className="text-xs">Meter provider company name</Label>
-          <Input value={providerName} onChange={(e) => setProviderName(e.target.value)} placeholder="e.g. Acme Water Metering" />
+          <Label className="text-xs">Organization Name</Label>
+          <Input value={customerOfficialName} onChange={(e) => setCustomerOfficialName(e.target.value)} placeholder="e.g. City of Obion" />
         </div>
         <div>
-          <Label className="text-xs">Customer official name</Label>
-          <Input value={customerOfficialName} onChange={(e) => setCustomerOfficialName(e.target.value)} placeholder="e.g. City of Obion" />
+          <Label className="text-xs">Meter Provider Platform</Label>
+          <Input value={providerName} onChange={(e) => setProviderName(e.target.value)} placeholder="e.g. Acme Water Metering" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -235,6 +286,10 @@ export default function CustomerSignature() {
             <Label className="text-xs">Title</Label>
             <Input value={signerTitle} onChange={(e) => setSignerTitle(e.target.value)} placeholder="e.g. Utility Director" />
           </div>
+        </div>
+        <div>
+          <Label className="text-xs">Phone number</Label>
+          <Input value={signerPhone} onChange={(e) => setSignerPhone(e.target.value)} placeholder="e.g. (555) 123-4567" />
         </div>
       </div>
 

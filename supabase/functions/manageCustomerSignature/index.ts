@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const {
       action, project_id, token,
-      provider_name, customer_official_name, signer_name, signer_title,
+      provider_name, customer_official_name, signer_name, signer_title, signer_phone,
       signature_data, pdf_data,
     } = body;
 
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'submit') {
-      const required = { provider_name, customer_official_name, signer_name, signer_title, signature_data };
+      const required = { provider_name, customer_official_name, signer_name, signer_title, signer_phone, signature_data };
       const missing = Object.entries(required).filter(([, v]) => !String(v || '').trim()).map(([k]) => k);
       if (missing.length) return json({ error: `Missing required field(s): ${missing.join(', ')}` }, 400);
 
@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
         customer_official_name: customer_official_name.trim(),
         signer_name: signer_name.trim(),
         signer_title: signer_title.trim(),
+        signer_phone: signer_phone.trim(),
         signature_data,
         pdf_data: pdf_data || null,
       });
