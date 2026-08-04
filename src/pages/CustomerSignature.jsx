@@ -185,29 +185,48 @@ export default function CustomerSignature() {
     const doc = new jsPDF({ unit: "pt", format: "letter" });
     const margin = 56;
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const textWidth = pageWidth - margin * 2;
     const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 
+    // Letterhead: logo top-left, a divider under it, then the date right-
+    // aligned below the divider.
     const logo = await loadLogo();
     let y = margin;
     if (logo) {
       const logoW = 130;
       const logoH = (logo.naturalHeight / logo.naturalWidth) * logoW;
       doc.addImage(logo, "PNG", margin, y, logoW, logoH);
+      y += logoH;
+    } else {
+      y += 40;
     }
+    y += 14;
+    doc.setDrawColor(180);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 20;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Date: ${today}`, pageWidth - margin, margin + 10, { align: "right" });
+    doc.text(`Date: ${today}`, pageWidth - margin, y, { align: "right" });
     doc.setTextColor(0);
-    y += 60;
+    y += 30;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Authorization to Access Meter Provider Data", margin, y);
+    doc.text("Authorization to Access Meter Provider Data", pageWidth / 2, y, { align: "center" });
+    y += 34;
+
+    // Addressee block: "To <PROVIDER, all caps>" above the "To whom it may
+    // concern," salutation, letter-style.
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`To ${providerName.toUpperCase()}`, margin, y);
+    y += 20;
+    doc.setFont("helvetica", "normal");
+    doc.text("To whom it may concern,", margin, y);
     y += 26;
 
-    doc.setFont("helvetica", "normal");
     doc.setFontSize(10.5);
     let lines = doc.splitTextToSize(INTRO_TEXT, textWidth);
     doc.text(lines, margin, y);
@@ -238,6 +257,16 @@ export default function CustomerSignature() {
     doc.text(signerTitle, margin, y);
     y += 15;
     doc.text(`Phone: ${signerPhone}`, margin, y);
+
+    // Footer: divider near the bottom, "Confidential" centered under it.
+    const footerLineY = pageHeight - 56;
+    doc.setDrawColor(180);
+    doc.line(margin, footerLineY, pageWidth - margin, footerLineY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text("Confidential", pageWidth / 2, footerLineY + 18, { align: "center" });
+    doc.setTextColor(0);
 
     return doc;
   };

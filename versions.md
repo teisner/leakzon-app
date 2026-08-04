@@ -298,6 +298,13 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.166 — 2026-08-04 · *Updated feature*
+**Permission PDF restyled as a real letter**
+- Logo top-left, a divider under it, then the date right-aligned below that.
+- Centered header, an addressee block ("To \<PROVIDER, in caps>" above "To
+  whom it may concern,"), then the letter body.
+- A divider near the bottom with **Confidential** centered underneath.
+
 ## 1.165 — 2026-08-04 · *Updated feature*
 **Full LeakZon logo, and the meter provider's name stands out**
 - The Meter Data Permission Request page (and its PDF) now use the full
