@@ -298,6 +298,16 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.164 — 2026-08-04 · *New feature*
+**Past authorizations stay visible in Project Settings**
+- The **Meter Data Permission Request** card now lists every submitted
+  authorization (provider, organization, signer, date) with a **PDF**
+  download button, so the signed permission doesn't only exist as a copy the
+  customer downloaded — the operator can pull it up again from the project.
+  The list stays visible even if the page is later toggled off.
+- The signing page already let you clear the pad and redraw before
+  submitting; unchanged here, just confirmed.
+
 ## 1.161 – 1.163 — 2026-08-04 · *New feature*
 **Meter Data Permission Request page**
 - Project Settings has a **Permission Request Page** toggle. Once on, it shows

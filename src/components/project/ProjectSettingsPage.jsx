@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy, Download } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { invokeFunction } from "@/api/functionsClient";
+import { supabase } from "@/api/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 
 function SegmentedToggle({ value, options, onChange }) {
@@ -77,6 +78,32 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
     setCopied(true);
     toast({ title: "Link copied to clipboard" });
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Submitted permission PDFs, kept visible regardless of whether the page is
+  // currently toggled on — turning it off doesn't erase past authorizations.
+  const [submittedSignatures, setSubmittedSignatures] = useState([]);
+
+  const loadSubmittedSignatures = useCallback(async () => {
+    if (!project?.id) return;
+    const { data } = await supabase
+      .from("customer_signature")
+      .select("id, provider_name, customer_official_name, signer_name, signer_title, signed_at, pdf_data")
+      .eq("project_id", project.id)
+      .order("signed_at", { ascending: false });
+    setSubmittedSignatures(data || []);
+  }, [project?.id]);
+
+  useEffect(() => {
+    loadSubmittedSignatures();
+  }, [loadSubmittedSignatures]);
+
+  const handleDownloadPdf = (sig) => {
+    if (!sig.pdf_data) return;
+    const a = document.createElement("a");
+    a.href = sig.pdf_data;
+    a.download = `meter-data-authorization-${(sig.provider_name || "provider").replace(/\s+/g, "-")}.pdf`;
+    a.click();
   };
 
   // Shown in the project's own distance unit (m for metric, ft for imperial);
@@ -303,6 +330,41 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                     No active Customer View link yet — create one first to get a permission request link.
                   </p>
                 )}
+              </div>
+            )}
+
+            {submittedSignatures.length > 0 && (
+              <div className="py-4 border-t border-border">
+                <p className="text-xs font-semibold text-foreground mb-2">Submitted authorizations</p>
+                <div className="space-y-2">
+                  {submittedSignatures.map((sig) => (
+                    <div
+                      key={sig.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          {sig.provider_name} — {sig.customer_official_name}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {sig.signer_name}, {sig.signer_title} ·{" "}
+                          {new Date(sig.signed_at).toLocaleDateString(undefined, {
+                            year: "numeric", month: "short", day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 gap-1.5"
+                        onClick={() => handleDownloadPdf(sig)}
+                        disabled={!sig.pdf_data}
+                      >
+                        <Download className="w-3.5 h-3.5" /> PDF
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
