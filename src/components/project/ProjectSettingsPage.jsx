@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy, Download } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy, Download, Trash2 } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
@@ -104,6 +114,20 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
     a.href = sig.pdf_data;
     a.download = `meter-data-authorization-${(sig.provider_name || "provider").replace(/\s+/g, "-")}.pdf`;
     a.click();
+  };
+
+  const [signatureToDelete, setSignatureToDelete] = useState(null);
+
+  const handleDeleteSignature = async () => {
+    if (!signatureToDelete) return;
+    const { error } = await supabase.from("customer_signature").delete().eq("id", signatureToDelete.id);
+    if (error) {
+      toast({ variant: "destructive", title: "Failed to delete", description: error.message });
+    } else {
+      setSubmittedSignatures((prev) => prev.filter((s) => s.id !== signatureToDelete.id));
+      toast({ title: "Authorization deleted" });
+    }
+    setSignatureToDelete(null);
   };
 
   // Shown in the project's own distance unit (m for metric, ft for imperial);
@@ -353,15 +377,26 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                           })}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 gap-1.5"
-                        onClick={() => handleDownloadPdf(sig)}
-                        disabled={!sig.pdf_data}
-                      >
-                        <Download className="w-3.5 h-3.5" /> PDF
-                      </Button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => handleDownloadPdf(sig)}
+                          disabled={!sig.pdf_data}
+                        >
+                          <Download className="w-3.5 h-3.5" /> PDF
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                          onClick={() => setSignatureToDelete(sig)}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -369,6 +404,29 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
             )}
           </div>
         </div>
+
+        <AlertDialog open={!!signatureToDelete} onOpenChange={(open) => !open && setSignatureToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this authorization?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {signatureToDelete && (
+                  <>
+                    This permanently deletes the submitted authorization from{" "}
+                    <strong>{signatureToDelete.customer_official_name}</strong> for{" "}
+                    <strong>{signatureToDelete.provider_name}</strong>, including its stored PDF. This can't be undone.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSignature} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Summary badge */}
         <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">

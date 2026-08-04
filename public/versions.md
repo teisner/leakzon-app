@@ -298,6 +298,12 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.167 — 2026-08-04 · *New feature*
+**Delete a submitted authorization from Project Settings**
+- Each row in **Submitted authorizations** gets a delete button, with a
+  confirmation dialog before it removes the row (and its stored PDF) for
+  good.
+
 ## 1.166 — 2026-08-04 · *Updated feature*
 **Permission PDF restyled as a real letter**
 - Logo top-left, a divider under it, then the date right-aligned below that.
