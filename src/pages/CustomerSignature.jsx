@@ -26,13 +26,59 @@ function consentText(orgName, providerPlatform) {
   ];
 }
 
-// Loads /leakzon-logo-transparent.png as an <img> jsPDF can embed directly.
+// Splits text into {text, highlight} runs around (case-insensitive)
+// occurrences of `term`, so the meter provider's name can be visually called
+// out wherever it appears in the consent copy — on the page and in the PDF.
+function splitHighlight(text, term) {
+  if (!term) return [{ text, highlight: false }];
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(${escaped})`, "gi");
+  return text.split(re).filter(Boolean).map((chunk) => ({
+    text: chunk,
+    highlight: chunk.toLowerCase() === term.toLowerCase(),
+  }));
+}
+
+function HighlightedText({ text, term }) {
+  return splitHighlight(text, term).map((part, i) =>
+    part.highlight ? (
+      <strong key={i} className="text-primary font-semibold">
+        {part.text}
+      </strong>
+    ) : (
+      <React.Fragment key={i}>{part.text}</React.Fragment>
+    )
+  );
+}
+
+// Draws a paragraph in the PDF with `term` bolded/colored wherever it occurs
+// (wrapping-aware: splitTextToSize wraps first, then each line is drawn run
+// by run so the highlight survives the wrap). Returns the y position after.
+function drawParagraphWithHighlight(doc, text, x, y, maxWidth, term) {
+  const lines = doc.splitTextToSize(text, maxWidth);
+  for (const line of lines) {
+    let cursorX = x;
+    for (const part of splitHighlight(line, term)) {
+      doc.setFont("helvetica", part.highlight ? "bold" : "normal");
+      if (part.highlight) doc.setTextColor(21, 101, 192);
+      doc.text(part.text, cursorX, y);
+      cursorX += doc.getTextWidth(part.text);
+      doc.setTextColor(0);
+    }
+    y += 14;
+  }
+  doc.setFont("helvetica", "normal");
+  return y;
+}
+
+// Loads the full LeakZon logo (icon + wordmark) as an <img> jsPDF can embed
+// directly.
 function loadLogo() {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    img.src = "/leakzon-logo-transparent.png";
+    img.src = "/leakzon-logo-full.png";
   });
 }
 
@@ -167,11 +213,12 @@ export default function CustomerSignature() {
     doc.text(lines, margin, y);
     y += lines.length * 14 + 18;
 
-    for (const para of consentText(customerOfficialName, providerName)) {
-      lines = doc.splitTextToSize(para, textWidth);
-      doc.text(lines, margin, y);
-      y += lines.length * 14 + 14;
-    }
+    const [consentPara1, consentPara2] = consentText(customerOfficialName, providerName);
+    y = drawParagraphWithHighlight(doc, consentPara1, margin, y, textWidth, providerName || "[Meter Provider Platform]");
+    y += 14;
+    lines = doc.splitTextToSize(consentPara2, textWidth);
+    doc.text(lines, margin, y);
+    y += lines.length * 14 + 14;
     y += 10;
 
     if (projectName) {
@@ -257,6 +304,7 @@ export default function CustomerSignature() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-5 px-4 py-10">
       <div className="w-full max-w-md text-center">
+        <img src="/leakzon-logo-full.png" alt="LeakZon" className="h-10 w-auto mx-auto mb-3" />
         <h1 className="text-lg font-semibold">Authorization to Access Meter Provider Data</h1>
         {projectName && <p className="text-sm text-muted-foreground mt-1">{projectName}</p>}
         <p className="text-xs text-muted-foreground mt-3 text-left leading-relaxed">{INTRO_TEXT}</p>
@@ -264,7 +312,9 @@ export default function CustomerSignature() {
 
       <div className="w-full max-w-md text-xs text-muted-foreground leading-relaxed space-y-2 text-left border-y border-border py-3">
         {consentText(customerOfficialName, providerName).map((para, i) => (
-          <p key={i}>{para}</p>
+          <p key={i}>
+            <HighlightedText text={para} term={providerName || "[Meter Provider Platform]"} />
+          </p>
         ))}
       </div>
 
