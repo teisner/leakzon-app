@@ -16,287 +16,18 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
-## 1.127, 1.129 — 2026-07-29 · *New feature + Bug fix* · **Important**
-**A project with no boundary now asks you to draw one, as the first step**
-- The boundary is looked up automatically from the city when a project is
-  created. Where no official outline exists the project was simply left without
-  one, silently — and every layer is clipped to the boundary, so that matters.
-- Opening such a project now asks straight away, naming the city, and offers
-  **Draw it on the map**, **Search again**, **Upload a boundary file**, or
-  **Later**. It asks once per project, not on every visit, and never on a locked
-  project.
-- **Define the Project Boundary is now the first step of the onboarding wizard**,
-  ahead of importing shapefiles. Clicking it takes you to the map in drawing
-  mode. It counts as done as soon as the project has a boundary — including
-  projects that already had one before this, or that were given one by import,
-  so nothing shows as outstanding that isn't.
-- An existing project without a boundary can still add one at any time from the
-  Layers panel, which is unchanged.
-- **Fixed a blank page when re-fetching the boundary**, introduced by the prompt
-  above and caught before it ever reached the live site. The prompt's spinner
-  used an icon that was never imported, and the reference is evaluated the
-  moment a fetch starts — so pressing **Re-fetch** anywhere blanked the screen.
-- The project check that exists to catch exactly this kind of mistake had a gap:
-  it flagged an undefined *variable* but not an undefined *component*, which is
-  the more common way it happens. It now catches both, and a scan of the whole
-  codebase found no other case.
-
-## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125, 1.126 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
-**Export to LeakZon: analyse first, then export in the Main platform's own format**
-- The export **starts with an analysis**. Before anything downloads you see the
-  DMA count, meters assigned vs not, mains vs subs, which DMAs have no main
-  meter, main meters linked to no DMA at all, and meters with no coordinates —
-  then you choose whether to continue. The insights are shown again at the end,
-  with a **Continue to LeakZon platform** button.
-- It produces **three files** plus the shapefiles: **Meter Data**, **Groups**,
-  and a separate file for meters with no DMA. Nothing is dropped — every meter
-  appears in one file or the other.
-- **Meter Data** carries the exact columns and order the Main platform expects,
-  with constants filled in: Installation Date today, Unit following the project's
-  water unit, multiplier 1, Isactive TRUE, ufr FALSE, meter type water, and
-  Location as latitude and longitude in one field. Headers are always English,
-  whatever language the app is set to.
-- **Groups** lists each meter's identifier, whether it is a main, its DMA name,
-  whether it is a root, type REGULAR, and its communication — AMI for every main,
-  and the **Sub-meter communication** project setting for sub-meters.
-- You **choose which fields make up the Identifier** and **which field is the
-  Meter Number**, each option showing how many meters actually have a value, so a
-  column can't be exported empty by accident. **Both files can be previewed**
-  with the choices applied live.
-- **A DMA with no main meter gets a placeholder main** — a numeric UID continuing
-  past the highest in the project, account name `<DMA name>_Fic`, placed at the
-  DMA's centre — so no DMA is exported without one.
-- **A main counts for a DMA only when it is actually assigned to it.** Mains sit
-  at inlets and boundaries and are often inside a DMA they do not feed, so where
-  one happens to fall says nothing about what it serves. Expect lower "DMAs with
-  a main" numbers and more placeholders than before — they reflect what is really
-  assigned.
-- **No duplicate meters:** a main serving several DMAs appears **once** in Meter
-  Data. The Groups file still lists it once per DMA, which is what that file is
-  for.
-- Files are named after the project — `Obion TN_meter_data.xlsx`,
-  `Obion TN_groups.xlsx`, `Obion TN_meters_no_dma.xlsx` — so several exports can
-  share a folder.
-- **Excel no longer warns that the file is corrupt.** Every spreadsheet was named
-  **.xls** while holding a different format. They are now genuine **.xlsx**.
-  Affects the LeakZon export, the meter table export and the DMA data export;
-  re-export anything downloaded before this.
-- **DMA.shp and the boundary layer export as outlines**, not filled areas — DMA
-  outlines black, boundary red dashed — so they sit over a map without hiding it.
-  Including the DMA shapefile is now **optional and off by default**, since
-  LeakZon reads the areas from the Groups file; tick it when the boundaries are
-  going into a different GIS platform.
-- **Fixed:** the SHP/JSON export page reported "No DMAs with a valid polygon to
-  export" for every project — it was reading the wrong column.
-- **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
-  text "Main Meter", so its meters were exported as mains — in Woodlawn that was
-  all 5,122 sub meters.
-- **Fixed: the export failed outright on Woodlawn.** It stopped with *"Request
-  failed (546)"* — the server cut the job off for taking too much processing
-  time. Woodlawn is the largest project on the platform, and its export sat just
-  over the ceiling: the analysis and preview steps went through fine, only the
-  final packaging failed, which is why it looked like the export "sometimes"
-  worked.
-- Two things were being paid for on every export and are now not: the spreadsheet
-  and zip libraries were being loaded during the request rather than when the
-  server starts, and the finished zip was being text-encoded to travel back
-  inside the response, which cost as much again as building it.
-- **The export is now handed over as a download link** to the stored file
-  instead of being sent back inline, and the shapefiles are compressed. Together
-  that cut roughly half the work out of the request.
-- Verified on all three Woodlawn projects: each now packages in about 10 seconds
-  and produces the full set — Meter Data, Groups, meters without a DMA, and the
-  shapefiles.
-- **Fixed: every water line in the shapefile appeared to have the same
-  diameter.** The attribute table's header declared a record length of zero, so
-  GIS software reading it stepped nowhere between rows and showed the first
-  line's values repeated for all 402. The diameters were in the file all along —
-  the index to them was wrong. Woodlawn's lines now read correctly: 195 at 6",
-  113 at 4", 44 at 8", 30 at 2", 6 at 12", 5 at 16", and so on, exactly matching
-  the source.
-- **Every attribute from the source file is now exported**, not just five.
-  Water lines carry their feature id, material, location, installation and
-  inspection dates, condition, notes and length; valves keep all 26 of their
-  columns. Previously all of it was dropped.
-- Each shapefile now ships a `.cpg` declaring UTF-8, so non-English attributes
-  (Hebrew street names) open as written rather than as mojibake.
-- The same header fault is fixed in the standalone DMA shapefile export.
-
-## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
-**The changelog is grouped by subject, and the Product Overview's tables render properly**
-- **124 separate version entries are now 29.** Versions that were steps toward
-  the same thing — the whole LeakZon export, meter imports, the sign-in failures,
-  layer deletion, the screen saver — are merged into one entry each, so a run of
-  small fixes reads as the single change it was. Nothing was dropped: every
-  version from 1.000 to 1.123 is accounted for, and each entry lists which ones
-  it covers.
-- Entries that change **the way you work** are marked **Important** — data in and
-  out, what a screen lets you do, or a fault that was costing time. Cosmetic and
-  internal changes are not.
-- **Fixed: tables in the Product Overview came out as a wall of `|` characters.**
-  The panel was rendering the file without table support, so the two reference
-  tables — the working views and the meter types — appeared as raw text. They are
-  proper tables now, and scroll sideways rather than being crushed in a narrow
-  panel.
-
-## 1.108, 1.115 – 1.123 — 2026-07-29 · *New feature*
-**Easter eggs on the GIS map: a coffee break, and a flood that turns into an aquarium**
-- **Ctrl + Shift + C** brews a coffee: it fills for ten seconds with a countdown,
-  then clears itself. Escape or "skip" ends it early.
-- **Ctrl + Shift + F** floods the screen. Waves roll in as the water rises, and
-  once it is full the tank comes alive — bubbles, ten fish, two sharks and three
-  turtles, with drifting light and a slow swell in the water itself.
-- Nothing swims in a straight line: every creature roams the whole screen on its
-  own. Sharks hunt the nearest fish and open their jaws on the closing run; the
-  fish sees it coming and bolts, out-turning the shark, which only wins by
-  cutting the corner. A caught fish leaves a splash and returns seconds later.
-  After a meal the shark loses interest for a while.
-- It runs as a screen saver — no timer, **Escape** is the only way out — and the
-  map underneath stays fully usable throughout.
-- Both eggs work only on the GIS map; nowhere else in the app responds to them.
-
-## 1.109, 1.110 — 2026-07-28 · *New feature* · **Important**
-**Project type, and a Root flag on every meter**
-- New projects choose a **Project type**: **AMI** (all meters read remotely) or
-  **Hybrid** (a mix of remote and manual). New projects start on AMI; existing
-  ones can be set from **Edit project** and show no type until you pick one.
-- The meter editor has a **Root** field with **Yes / No** radio buttons. It is
-  never blank — every existing meter starts as **No** — and it feeds the Root
-  column in the LeakZon export.
-
-## 1.041, 1.081, 1.104, 1.106, 1.107 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
-**DMA editing: a movable panel, fewer boundary points, and auto-DMAs that keep their rim meters**
-- **Edit DMA can reduce the number of points in a boundary.** Opening the panel
-  checks whether the outline can be drawn with fewer points and, if so, says how
-  many there are now and how many there would be — *"50 → 34"* — and waits for
-  you to choose. Nothing happens automatically, nothing is offered when the shape
-  is already minimal, and an **Undo** restores the original. Only points sitting
-  on a straight line between their neighbours are removed: across the existing 91
-  DMAs the largest area change would be under 1%.
-- **Auto-created DMAs no longer leave the outermost meters unassigned.** The
-  outline was traced exactly through the rim meters, so those meters sat *on* the
-  edge and counted as outside. Auto-created DMAs now get **25 m of breathing
-  room**, which took "Obion Oren (test)" from 26 unassigned sub-meters to 0
-  without any meter falling into two DMAs. DMAs already created keep their shape
-  — re-create them to pick up the margin.
-- The **DMA configuration and Edit DMA panels are floating and draggable**
-  instead of blocking modals pinned over the polygon being edited, and Edit DMA
-  has a green border matching the layer and meter editors.
-
-## 1.138 — 2026-07-30 · *Bug fix* · **Important**
-**"Complete missing GIS" found nothing it could place, and never said why**
-- **Fixed: the same street written two ways counted as two streets.** A meter is
-  placed by measuring between its located neighbours on the same street, and the
-  streets were matched on their raw text — so a meter at *"1680 MARTIN DR"* was
-  looking for neighbours filed under *"MARTIN DR"* while they were all under
-  *"MARTIN DRIVE"*, and it found none. Street types, compass directions, trailing
-  dots and ordinals are now read as the same street: **DR/DRIVE, ST/STREET,
-  RD/ROAD, AVE/AVENUE, HWY/HIGHWAY, N/NORTH, W/WEST**, and so on.
-- In Obion TN this took the meters it can place from **0 to 11** of the 43 that
-  have no location, and merged 175 fragmented streets into 146 — which also means
-  more reference meters per street, so the positions it proposes for every
-  project are better founded than before.
-- **Fixed: clicking it with nothing to place did nothing at all.** The tool asked
-  for a confidence threshold and then closed silently. It now says how many
-  meters are waiting, how many are on streets where no meter has a location yet
-  (nothing to measure from), how many have no usable address, and what to do
-  instead — the Mobile Locator, or setting a position from the map, where the
-  address search will find most of them.
-- Hebrew addresses are unaffected: the abbreviations being merged are English
-  ones, and Hebrew street names group exactly as before.
-
-## 1.136 — 2026-07-30 · *Bug fix* · **Important**
-**Full route-by-route validation: two real faults found and fixed**
-- Every route was loaded in a real browser against live data — dashboard, all
-  seven project views, import/export, mobile locator, customer view and the 404
-  page — and all 25 server functions were exercised. Two things were broken.
-- **The dashboard's "force refresh" button had stopped working.** Recomputing the
-  project figures now takes about 13 seconds across 24 projects and 78,000
-  meters, which is longer than the database allows a single request to run, so it
-  was cancelled every time and reported as "Internal error". The refresh is now
-  allowed the time it needs, and the real reason is reported if anything else
-  goes wrong. The scheduled 15-minute refresh was never affected — only the
-  button.
-- **"project.unassigned" was showing as raw text** in the project header on every
-  view, wherever a project has no owner assigned. It now reads "No owner
-  assigned", in both languages.
-- No other route rendered a broken screen, and no other text on any screen is
-  untranslated. English and Hebrew both carry all 973 phrases.
-- The validation scripts are kept in the project (`scripts/validation/`) so this
-  can be repeated in minutes rather than rebuilt from scratch.
-
-## 1.145 — 2026-07-30 · *Bug fix* · **Important**
-**The Mobile Locator link never worked when opened from the email**
-- Opening the emailed link showed *"Failed to load meters — this link may have
-  expired"* however fresh the link was. The link and its token were fine: the
-  request was being turned away before it reached the platform, because a phone
-  opening a link has nobody signed in and the app only identified itself when
-  someone was. The share token was never even looked at.
-- Both halves of the Mobile Locator were affected — listing the meters that need
-  a location, and saving a position once you had walked to one. So the feature has
-  not worked from a link since it was introduced, for anyone not already signed in
-  on that device.
-- The shared **Customer View** link was never affected; it is set up differently
-  and has always been reachable without a login.
-- Verified on a simulated phone with no stored login: the link now loads Obion
-  TN's remaining meters straight away.
-
-## 1.146 — 2026-07-30 · *New feature* · **Important**
-**Mobile Locator redesigned: report what you find, and see what is around you**
-- **A technician can now say why a meter could not be located.** Every meter on
-  the list has a **Report an issue** action beside **Set location** — five common
-  reasons are one tap each (not found, no access, buried or paved over, wrong
-  address, removed from service) with room to add anything else.
-- The note goes straight onto the meter and **shows in the Meter Data table with
-  an amber icon**, the note itself as its tooltip. It also appears in the meter
-  editor with the time it was sent, and a button to clear it once dealt with.
-- The meter **stays on the list** after a note — it still has no location — but it
-  is no longer anonymous. The list shows the note under the meter so the next
-  person out does not repeat the trip, counts how many have been reported, and can
-  filter to the reported ones or the ones nobody has looked at.
-- **The map now shows what is around the pin.** Located meters, valves, hydrants,
-  water mains, plant — every visible layer the project carries — drawn in the same
-  colours the office sees, each labelled with its distance. That is what makes it
-  possible to work out which house a missing meter belongs to by looking at the
-  network rather than guessing from an address.
-- The radius is yours to choose — **100 m, 250 m or 600 m** — and the surroundings
-  follow the pin as you drag the map. Filtering happens on the server, so a phone
-  on cell data at the roadside is not made to download a project's whole valve
-  layer.
-- A legend under the map names everything with its count, so nothing found reads
-  as "nothing mapped within 250 m" rather than looking like a failure to load.
-
-## 1.149 — 2026-07-30 · *New feature* · **Important**
-**Consumption readings now carry a time, so hourly data can be imported**
-- A reading was stored as a date and nothing more, so a meter could hold **one
-  reading per day and no more** — an hourly file collapsed into 24 rows that
-  looked identical and could not be told apart or put in order. AMI meters report
-  hourly, so this was a ceiling on what the platform could hold at all.
-- Every reading now has a **date and a time**. All 1,826,298 existing readings
-  were given one, set to **00:00** on the day they already had, so nothing moved
-  and every chart reads exactly as before.
-- **The import works out for itself whether a file is hourly or daily** and says
-  so before you commit to it — *"Hourly data — up to 24 readings per day across 1
-  day"* or *"Daily data — 3 days, each stored at 00:00"*. It decides on two
-  signals: a time written in the file, or the same date appearing more than once.
-- **A file with no time of day is stored at 00:00**, shown as
-  **01/08/2026 00:00**. That is what makes a daily file and an hourly one the same
-  shape of data rather than two that cannot be compared.
-- Times are read in the formats utilities actually use — `01/08/2026 14:30`,
-  `2026-08-01T14:00:00`, `01/08/2026 2 PM` — and the day/month order of the date
-  is worked out exactly as before, with the time attached rather than confusing it.
-- The consumption table shows the time against each reading, and a meter's series
-  is returned in chronological order, which with 24 readings a day is the only
-  order that reads correctly.
-
-## 1.153 — 2026-08-01 · *Updated feature*
-**Sub-meter communication is now a choice, not free text**
-- The setting was a text box, so a typo or a synonym went straight into the
-  **Communication** column of the LeakZon export. It is now **AMI** or **AMR**,
-  the only two answers a utility gives.
-- Nothing is selected on a project that never set it, and those still export an
-  empty Communication for their sub-meters exactly as before — no project's export
-  changes until you choose. Main meters continue to export as AMI regardless.
+## 1.174 — 2026-08-04 · *Updated feature*
+**Changelog reordered to actually be newest-first, and a new Export to LeakZon chapter**
+- **The changelog wasn't reliably newest-first.** Entries had drifted out of
+  date order over many sessions — some 2026-07-28 groups sat ahead of
+  2026-07-30 ones, and the 2026-08-04 entries were split by an unrelated
+  2026-08-01 one in between. Every entry (51 groups, all versions from 1.000
+  to 1.174) is now sorted strictly newest-date-first, ties broken by the
+  highest version in the group. No entry's own content changed.
+- The Product Overview gets a dedicated **Export to LeakZon** chapter:
+  analyze-then-export, the three files and what's fixed vs. chosen in Meter
+  Data, and how DMA membership works — including a boundary main meter's two
+  Groups rows and the fictitious-placeholder-main rule.
 
 ## 1.173 — 2026-08-04 · *Updated feature*
 **Meter Data search field stands out**
@@ -508,6 +239,38 @@ The running version is shown at the bottom of the side menu.
   **Continue** when you're done looking, and only then does the "Go to Map"
   screen appear.
 
+## 1.153 — 2026-08-01 · *Updated feature*
+**Sub-meter communication is now a choice, not free text**
+- The setting was a text box, so a typo or a synonym went straight into the
+  **Communication** column of the LeakZon export. It is now **AMI** or **AMR**,
+  the only two answers a utility gives.
+- Nothing is selected on a project that never set it, and those still export an
+  empty Communication for their sub-meters exactly as before — no project's export
+  changes until you choose. Main meters continue to export as AMI regardless.
+
+## 1.149 — 2026-07-30 · *New feature* · **Important**
+**Consumption readings now carry a time, so hourly data can be imported**
+- A reading was stored as a date and nothing more, so a meter could hold **one
+  reading per day and no more** — an hourly file collapsed into 24 rows that
+  looked identical and could not be told apart or put in order. AMI meters report
+  hourly, so this was a ceiling on what the platform could hold at all.
+- Every reading now has a **date and a time**. All 1,826,298 existing readings
+  were given one, set to **00:00** on the day they already had, so nothing moved
+  and every chart reads exactly as before.
+- **The import works out for itself whether a file is hourly or daily** and says
+  so before you commit to it — *"Hourly data — up to 24 readings per day across 1
+  day"* or *"Daily data — 3 days, each stored at 00:00"*. It decides on two
+  signals: a time written in the file, or the same date appearing more than once.
+- **A file with no time of day is stored at 00:00**, shown as
+  **01/08/2026 00:00**. That is what makes a daily file and an hourly one the same
+  shape of data rather than two that cannot be compared.
+- Times are read in the formats utilities actually use — `01/08/2026 14:30`,
+  `2026-08-01T14:00:00`, `01/08/2026 2 PM` — and the day/month order of the date
+  is worked out exactly as before, with the time attached rather than confusing it.
+- The consumption table shows the time against each reading, and a meter's series
+  is returned in chronological order, which with 24 readings a day is the only
+  order that reads correctly.
+
 ## 1.013, 1.064, 1.070, 1.083, 1.085, 1.088, 1.089, 1.105, 1.128, 1.133 – 1.135, 1.137, 1.139 – 1.144, 1.148 — 2026-07-30 · *New feature + Updated feature + Bug fix* · **Important**
 **Meter data: edit from the map, multi-DMA mains, real ID columns, and deletes that work**
 - **A meter can now be added by hand.** An **Add meter** button in the meter table
@@ -642,20 +405,6 @@ The running version is shown at the bottom of the side menu.
   layer, DMA and meter editors. It is fixed once for all of them rather than one
   dialog at a time, so it cannot come back on the next panel someone adds.
 
-## 1.101, 1.103 — 2026-07-28 · *New feature + Bug fix*
-**Product Overview — how the platform works**
-- A **Product Overview** section sits above the changelog in Version Updates. It
-  describes the dashboard and every working view, then each component — layers,
-  meters, DMAs, isolation points, consumption, annotations and the customer view
-  — and walks the nine onboarding steps in order.
-- Headings are colour-coded: **blue** sections, **green** components, **amber**
-  wizard stages.
-- It is kept as a file in the project (`Product_overview.md`), editable like the
-  changelog and published with each release.
-- **Fixed:** it was borrowing the changelog's styling, which is built for a
-  version list — greyed cramped body text, every bold phrase green, a rule above
-  each section. It now has its own typography, tables, dividers and note boxes.
-
 ## 1.018, 1.102, 1.147 — 2026-07-30 · *New feature + Bug fix*
 **Network design shows main meters, and brings linked DMAs across together**
 - A DMA block shows its **main meter** with a blue inward arrow. Where that meter
@@ -678,6 +427,324 @@ The running version is shown at the bottom of the side menu.
   139×42 and 121×41; the larger blocks are unchanged.
 - Checked across the projects that have a network design, including one with
   Hebrew DMA names: nothing clipped, nothing overflowing, in any block.
+
+## 1.146 — 2026-07-30 · *New feature* · **Important**
+**Mobile Locator redesigned: report what you find, and see what is around you**
+- **A technician can now say why a meter could not be located.** Every meter on
+  the list has a **Report an issue** action beside **Set location** — five common
+  reasons are one tap each (not found, no access, buried or paved over, wrong
+  address, removed from service) with room to add anything else.
+- The note goes straight onto the meter and **shows in the Meter Data table with
+  an amber icon**, the note itself as its tooltip. It also appears in the meter
+  editor with the time it was sent, and a button to clear it once dealt with.
+- The meter **stays on the list** after a note — it still has no location — but it
+  is no longer anonymous. The list shows the note under the meter so the next
+  person out does not repeat the trip, counts how many have been reported, and can
+  filter to the reported ones or the ones nobody has looked at.
+- **The map now shows what is around the pin.** Located meters, valves, hydrants,
+  water mains, plant — every visible layer the project carries — drawn in the same
+  colours the office sees, each labelled with its distance. That is what makes it
+  possible to work out which house a missing meter belongs to by looking at the
+  network rather than guessing from an address.
+- The radius is yours to choose — **100 m, 250 m or 600 m** — and the surroundings
+  follow the pin as you drag the map. Filtering happens on the server, so a phone
+  on cell data at the roadside is not made to download a project's whole valve
+  layer.
+- A legend under the map names everything with its count, so nothing found reads
+  as "nothing mapped within 250 m" rather than looking like a failure to load.
+
+## 1.145 — 2026-07-30 · *Bug fix* · **Important**
+**The Mobile Locator link never worked when opened from the email**
+- Opening the emailed link showed *"Failed to load meters — this link may have
+  expired"* however fresh the link was. The link and its token were fine: the
+  request was being turned away before it reached the platform, because a phone
+  opening a link has nobody signed in and the app only identified itself when
+  someone was. The share token was never even looked at.
+- Both halves of the Mobile Locator were affected — listing the meters that need
+  a location, and saving a position once you had walked to one. So the feature has
+  not worked from a link since it was introduced, for anyone not already signed in
+  on that device.
+- The shared **Customer View** link was never affected; it is set up differently
+  and has always been reachable without a login.
+- Verified on a simulated phone with no stored login: the link now loads Obion
+  TN's remaining meters straight away.
+
+## 1.138 — 2026-07-30 · *Bug fix* · **Important**
+**"Complete missing GIS" found nothing it could place, and never said why**
+- **Fixed: the same street written two ways counted as two streets.** A meter is
+  placed by measuring between its located neighbours on the same street, and the
+  streets were matched on their raw text — so a meter at *"1680 MARTIN DR"* was
+  looking for neighbours filed under *"MARTIN DR"* while they were all under
+  *"MARTIN DRIVE"*, and it found none. Street types, compass directions, trailing
+  dots and ordinals are now read as the same street: **DR/DRIVE, ST/STREET,
+  RD/ROAD, AVE/AVENUE, HWY/HIGHWAY, N/NORTH, W/WEST**, and so on.
+- In Obion TN this took the meters it can place from **0 to 11** of the 43 that
+  have no location, and merged 175 fragmented streets into 146 — which also means
+  more reference meters per street, so the positions it proposes for every
+  project are better founded than before.
+- **Fixed: clicking it with nothing to place did nothing at all.** The tool asked
+  for a confidence threshold and then closed silently. It now says how many
+  meters are waiting, how many are on streets where no meter has a location yet
+  (nothing to measure from), how many have no usable address, and what to do
+  instead — the Mobile Locator, or setting a position from the map, where the
+  address search will find most of them.
+- Hebrew addresses are unaffected: the abbreviations being merged are English
+  ones, and Hebrew street names group exactly as before.
+
+## 1.136 — 2026-07-30 · *Bug fix* · **Important**
+**Full route-by-route validation: two real faults found and fixed**
+- Every route was loaded in a real browser against live data — dashboard, all
+  seven project views, import/export, mobile locator, customer view and the 404
+  page — and all 25 server functions were exercised. Two things were broken.
+- **The dashboard's "force refresh" button had stopped working.** Recomputing the
+  project figures now takes about 13 seconds across 24 projects and 78,000
+  meters, which is longer than the database allows a single request to run, so it
+  was cancelled every time and reported as "Internal error". The refresh is now
+  allowed the time it needs, and the real reason is reported if anything else
+  goes wrong. The scheduled 15-minute refresh was never affected — only the
+  button.
+- **"project.unassigned" was showing as raw text** in the project header on every
+  view, wherever a project has no owner assigned. It now reads "No owner
+  assigned", in both languages.
+- No other route rendered a broken screen, and no other text on any screen is
+  untranslated. English and Hebrew both carry all 973 phrases.
+- The validation scripts are kept in the project (`scripts/validation/`) so this
+  can be repeated in minutes rather than rebuilt from scratch.
+
+## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086, 1.130 – 1.132 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
+**Meter imports: nothing silently dropped, the file decides what is a main, and DMA names survive**
+- **Meter ID and Account ID can now be matched during the import**, alongside
+  the UID and the Endpoint ID. All four are picked from your file's columns in
+  the mapping step, and the platform suggests a match for each.
+- This is what makes them work on a file that doesn't use those words: they are
+  stored under a fixed label rather than under whatever the source column was
+  called, so a file with **MTR_NO** and **ACCT** now fills the Meter ID and
+  Account ID columns in the meter table and in the LeakZon export. Previously
+  only a column already named something like "Meter ID" was ever found.
+- Any other ID columns you tick are still kept alongside, unchanged.
+- **A matched field is now green in the mapping step**, with a tick beside its
+  name, and an unmatched one stays grey — so which fields will actually be
+  imported is visible at a glance instead of having to read down every dropdown.
+  A running **"7 of 17 fields matched"** count sits above the list.
+- **New: top up an existing layer with only the meters it doesn't already have.**
+  The meter import now asks whether the file should **create a new layer** or be
+  **added to an existing one**. Choosing an existing layer imports only the
+  meters whose UID isn't already in the project — everything already stored is
+  left exactly as it is, not updated, not replaced.
+- The new batch comes in as **sub-meters** and joins the layer you picked, which
+  is offered with its current meter count so it is clear which one you are
+  adding to. A UID repeated inside the file itself is imported once.
+- The result says both numbers: how many were added, and how many were skipped
+  because they were already there.
+- **Imports were creating no meters at all.** A meter CSV/Excel import built the
+  layer but not a single meter — nothing on the map, nothing in the table — and
+  still reported success, because it sent a field that is no longer a column and
+  never noticed the database rejecting every batch. Bulk imports now stop and
+  show the real error instead of reporting rows they never saved.
+- **DMA names from the file are kept.** They used to be thrown away unless a
+  matching DMA already existed — which on a first import is never — so
+  "Auto-Create DMAs" reported none straight after announcing they were detected.
+  The name is now stored with each meter, and once the areas are created the
+  meters that named them are linked automatically.
+- **The file decides which meters are mains.** An **"Is Main"** field
+  (`is_main`, `IsMain`, `Is Main`, `main_meter`) is honoured meter by meter;
+  `yes / true / 1 / Y / main / primary / master` mean main. **With no such field,
+  meters import as sub meters** — unless the layer is explicitly a main type by
+  category or name. Columns like `MAIN_ID` or `MAIN SIZE` are ignored, so a
+  pipe-diameter column can't mark a whole layer as mains.
+- **Imported meters default to Active** unless the file clearly says otherwise
+  (*inactive, no, false, 0, not active, disabled, off, dead*). Applies to meter
+  files, the carbon copy import, and meters created from a map layer.
+- **Layer categories are detected instead of defaulting to Other**, which is what
+  left meter layers showing a feature count but 0 meters. A split import creates
+  **Main Meters** and **Sub Meters** layers; meter-type shapefile/GeoJSON imports
+  create real meter rows. The plain **"Meters"** category was removed as
+  confusing, **Ultrasonic Meters** added as a real category.
+- **Repair for a layer already imported wrong:** open its settings and set the
+  category — saving creates the missing meter records from the layer's own
+  points, and only when it has none, so it can't duplicate them. Re-import to
+  pick up DMA names.
+
+## 1.127, 1.129 — 2026-07-29 · *New feature + Bug fix* · **Important**
+**A project with no boundary now asks you to draw one, as the first step**
+- The boundary is looked up automatically from the city when a project is
+  created. Where no official outline exists the project was simply left without
+  one, silently — and every layer is clipped to the boundary, so that matters.
+- Opening such a project now asks straight away, naming the city, and offers
+  **Draw it on the map**, **Search again**, **Upload a boundary file**, or
+  **Later**. It asks once per project, not on every visit, and never on a locked
+  project.
+- **Define the Project Boundary is now the first step of the onboarding wizard**,
+  ahead of importing shapefiles. Clicking it takes you to the map in drawing
+  mode. It counts as done as soon as the project has a boundary — including
+  projects that already had one before this, or that were given one by import,
+  so nothing shows as outstanding that isn't.
+- An existing project without a boundary can still add one at any time from the
+  Layers panel, which is unchanged.
+- **Fixed a blank page when re-fetching the boundary**, introduced by the prompt
+  above and caught before it ever reached the live site. The prompt's spinner
+  used an icon that was never imported, and the reference is evaluated the
+  moment a fetch starts — so pressing **Re-fetch** anywhere blanked the screen.
+- The project check that exists to catch exactly this kind of mistake had a gap:
+  it flagged an undefined *variable* but not an undefined *component*, which is
+  the more common way it happens. It now catches both, and a scan of the whole
+  codebase found no other case.
+
+## 1.002, 1.062, 1.063, 1.065, 1.111 – 1.114, 1.125, 1.126 — 2026-07-29 · *New feature + Updated feature + Bug fix* · **Important**
+**Export to LeakZon: analyse first, then export in the Main platform's own format**
+- The export **starts with an analysis**. Before anything downloads you see the
+  DMA count, meters assigned vs not, mains vs subs, which DMAs have no main
+  meter, main meters linked to no DMA at all, and meters with no coordinates —
+  then you choose whether to continue. The insights are shown again at the end,
+  with a **Continue to LeakZon platform** button.
+- It produces **three files** plus the shapefiles: **Meter Data**, **Groups**,
+  and a separate file for meters with no DMA. Nothing is dropped — every meter
+  appears in one file or the other.
+- **Meter Data** carries the exact columns and order the Main platform expects,
+  with constants filled in: Installation Date today, Unit following the project's
+  water unit, multiplier 1, Isactive TRUE, ufr FALSE, meter type water, and
+  Location as latitude and longitude in one field. Headers are always English,
+  whatever language the app is set to.
+- **Groups** lists each meter's identifier, whether it is a main, its DMA name,
+  whether it is a root, type REGULAR, and its communication — AMI for every main,
+  and the **Sub-meter communication** project setting for sub-meters.
+- You **choose which fields make up the Identifier** and **which field is the
+  Meter Number**, each option showing how many meters actually have a value, so a
+  column can't be exported empty by accident. **Both files can be previewed**
+  with the choices applied live.
+- **A DMA with no main meter gets a placeholder main** — a numeric UID continuing
+  past the highest in the project, account name `<DMA name>_Fic`, placed at the
+  DMA's centre — so no DMA is exported without one.
+- **A main counts for a DMA only when it is actually assigned to it.** Mains sit
+  at inlets and boundaries and are often inside a DMA they do not feed, so where
+  one happens to fall says nothing about what it serves. Expect lower "DMAs with
+  a main" numbers and more placeholders than before — they reflect what is really
+  assigned.
+- **No duplicate meters:** a main serving several DMAs appears **once** in Meter
+  Data. The Groups file still lists it once per DMA, which is what that file is
+  for.
+- Files are named after the project — `Obion TN_meter_data.xlsx`,
+  `Obion TN_groups.xlsx`, `Obion TN_meters_no_dma.xlsx` — so several exports can
+  share a folder.
+- **Excel no longer warns that the file is corrupt.** Every spreadsheet was named
+  **.xls** while holding a different format. They are now genuine **.xlsx**.
+  Affects the LeakZon export, the meter table export and the DMA data export;
+  re-export anything downloaded before this.
+- **DMA.shp and the boundary layer export as outlines**, not filled areas — DMA
+  outlines black, boundary red dashed — so they sit over a map without hiding it.
+  Including the DMA shapefile is now **optional and off by default**, since
+  LeakZon reads the areas from the Groups file; tick it when the boundaries are
+  going into a different GIS platform.
+- **Fixed:** the SHP/JSON export page reported "No DMAs with a valid polygon to
+  export" for every project — it was reading the wrong column.
+- **Fixed a misclassification:** a layer named "Sub Main Meters" contains the
+  text "Main Meter", so its meters were exported as mains — in Woodlawn that was
+  all 5,122 sub meters.
+- **Fixed: the export failed outright on Woodlawn.** It stopped with *"Request
+  failed (546)"* — the server cut the job off for taking too much processing
+  time. Woodlawn is the largest project on the platform, and its export sat just
+  over the ceiling: the analysis and preview steps went through fine, only the
+  final packaging failed, which is why it looked like the export "sometimes"
+  worked.
+- Two things were being paid for on every export and are now not: the spreadsheet
+  and zip libraries were being loaded during the request rather than when the
+  server starts, and the finished zip was being text-encoded to travel back
+  inside the response, which cost as much again as building it.
+- **The export is now handed over as a download link** to the stored file
+  instead of being sent back inline, and the shapefiles are compressed. Together
+  that cut roughly half the work out of the request.
+- Verified on all three Woodlawn projects: each now packages in about 10 seconds
+  and produces the full set — Meter Data, Groups, meters without a DMA, and the
+  shapefiles.
+- **Fixed: every water line in the shapefile appeared to have the same
+  diameter.** The attribute table's header declared a record length of zero, so
+  GIS software reading it stepped nowhere between rows and showed the first
+  line's values repeated for all 402. The diameters were in the file all along —
+  the index to them was wrong. Woodlawn's lines now read correctly: 195 at 6",
+  113 at 4", 44 at 8", 30 at 2", 6 at 12", 5 at 16", and so on, exactly matching
+  the source.
+- **Every attribute from the source file is now exported**, not just five.
+  Water lines carry their feature id, material, location, installation and
+  inspection dates, condition, notes and length; valves keep all 26 of their
+  columns. Previously all of it was dropped.
+- Each shapefile now ships a `.cpg` declaring UTF-8, so non-English attributes
+  (Hebrew street names) open as written rather than as mojibake.
+- The same header fault is fixed in the standalone DMA shapefile export.
+
+## 1.124 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
+**The changelog is grouped by subject, and the Product Overview's tables render properly**
+- **124 separate version entries are now 29.** Versions that were steps toward
+  the same thing — the whole LeakZon export, meter imports, the sign-in failures,
+  layer deletion, the screen saver — are merged into one entry each, so a run of
+  small fixes reads as the single change it was. Nothing was dropped: every
+  version from 1.000 to 1.123 is accounted for, and each entry lists which ones
+  it covers.
+- Entries that change **the way you work** are marked **Important** — data in and
+  out, what a screen lets you do, or a fault that was costing time. Cosmetic and
+  internal changes are not.
+- **Fixed: tables in the Product Overview came out as a wall of `|` characters.**
+  The panel was rendering the file without table support, so the two reference
+  tables — the working views and the meter types — appeared as raw text. They are
+  proper tables now, and scroll sideways rather than being crushed in a narrow
+  panel.
+
+## 1.108, 1.115 – 1.123 — 2026-07-29 · *New feature*
+**Easter eggs on the GIS map: a coffee break, and a flood that turns into an aquarium**
+- **Ctrl + Shift + C** brews a coffee: it fills for ten seconds with a countdown,
+  then clears itself. Escape or "skip" ends it early.
+- **Ctrl + Shift + F** floods the screen. Waves roll in as the water rises, and
+  once it is full the tank comes alive — bubbles, ten fish, two sharks and three
+  turtles, with drifting light and a slow swell in the water itself.
+- Nothing swims in a straight line: every creature roams the whole screen on its
+  own. Sharks hunt the nearest fish and open their jaws on the closing run; the
+  fish sees it coming and bolts, out-turning the shark, which only wins by
+  cutting the corner. A caught fish leaves a splash and returns seconds later.
+  After a meal the shark loses interest for a while.
+- It runs as a screen saver — no timer, **Escape** is the only way out — and the
+  map underneath stays fully usable throughout.
+- Both eggs work only on the GIS map; nowhere else in the app responds to them.
+
+## 1.109, 1.110 — 2026-07-28 · *New feature* · **Important**
+**Project type, and a Root flag on every meter**
+- New projects choose a **Project type**: **AMI** (all meters read remotely) or
+  **Hybrid** (a mix of remote and manual). New projects start on AMI; existing
+  ones can be set from **Edit project** and show no type until you pick one.
+- The meter editor has a **Root** field with **Yes / No** radio buttons. It is
+  never blank — every existing meter starts as **No** — and it feeds the Root
+  column in the LeakZon export.
+
+## 1.041, 1.081, 1.104, 1.106, 1.107 — 2026-07-28 · *New feature + Updated feature + Bug fix* · **Important**
+**DMA editing: a movable panel, fewer boundary points, and auto-DMAs that keep their rim meters**
+- **Edit DMA can reduce the number of points in a boundary.** Opening the panel
+  checks whether the outline can be drawn with fewer points and, if so, says how
+  many there are now and how many there would be — *"50 → 34"* — and waits for
+  you to choose. Nothing happens automatically, nothing is offered when the shape
+  is already minimal, and an **Undo** restores the original. Only points sitting
+  on a straight line between their neighbours are removed: across the existing 91
+  DMAs the largest area change would be under 1%.
+- **Auto-created DMAs no longer leave the outermost meters unassigned.** The
+  outline was traced exactly through the rim meters, so those meters sat *on* the
+  edge and counted as outside. Auto-created DMAs now get **25 m of breathing
+  room**, which took "Obion Oren (test)" from 26 unassigned sub-meters to 0
+  without any meter falling into two DMAs. DMAs already created keep their shape
+  — re-create them to pick up the margin.
+- The **DMA configuration and Edit DMA panels are floating and draggable**
+  instead of blocking modals pinned over the polygon being edited, and Edit DMA
+  has a green border matching the layer and meter editors.
+
+## 1.101, 1.103 — 2026-07-28 · *New feature + Bug fix*
+**Product Overview — how the platform works**
+- A **Product Overview** section sits above the changelog in Version Updates. It
+  describes the dashboard and every working view, then each component — layers,
+  meters, DMAs, isolation points, consumption, annotations and the customer view
+  — and walks the nine onboarding steps in order.
+- Headings are colour-coded: **blue** sections, **green** components, **amber**
+  wizard stages.
+- It is kept as a file in the project (`Product_overview.md`), editable like the
+  changelog and published with each release.
+- **Fixed:** it was borrowing the changelog's styling, which is built for a
+  version list — greyed cramped body text, every bold phrase green, a rule above
+  each section. It now has its own typography, tables, dividers and note boxes.
 
 ## 1.036, 1.046, 1.047, 1.067, 1.096 – 1.100 — 2026-07-28 · *Updated feature*
 **The version number moved into a strip along the bottom of the project page**
@@ -755,60 +822,6 @@ The running version is shown at the bottom of the side menu.
   the Projects icon matches the one inside a project.
 - Opening a project shows the LeakZon wordmark filling with water instead of a
   spinner, and the app has a new icon (favicon, tab, home screen).
-
-## 1.007, 1.055, 1.056, 1.058, 1.080, 1.086, 1.130 – 1.132 — 2026-07-29 · *Updated feature + Bug fix* · **Important**
-**Meter imports: nothing silently dropped, the file decides what is a main, and DMA names survive**
-- **Meter ID and Account ID can now be matched during the import**, alongside
-  the UID and the Endpoint ID. All four are picked from your file's columns in
-  the mapping step, and the platform suggests a match for each.
-- This is what makes them work on a file that doesn't use those words: they are
-  stored under a fixed label rather than under whatever the source column was
-  called, so a file with **MTR_NO** and **ACCT** now fills the Meter ID and
-  Account ID columns in the meter table and in the LeakZon export. Previously
-  only a column already named something like "Meter ID" was ever found.
-- Any other ID columns you tick are still kept alongside, unchanged.
-- **A matched field is now green in the mapping step**, with a tick beside its
-  name, and an unmatched one stays grey — so which fields will actually be
-  imported is visible at a glance instead of having to read down every dropdown.
-  A running **"7 of 17 fields matched"** count sits above the list.
-- **New: top up an existing layer with only the meters it doesn't already have.**
-  The meter import now asks whether the file should **create a new layer** or be
-  **added to an existing one**. Choosing an existing layer imports only the
-  meters whose UID isn't already in the project — everything already stored is
-  left exactly as it is, not updated, not replaced.
-- The new batch comes in as **sub-meters** and joins the layer you picked, which
-  is offered with its current meter count so it is clear which one you are
-  adding to. A UID repeated inside the file itself is imported once.
-- The result says both numbers: how many were added, and how many were skipped
-  because they were already there.
-- **Imports were creating no meters at all.** A meter CSV/Excel import built the
-  layer but not a single meter — nothing on the map, nothing in the table — and
-  still reported success, because it sent a field that is no longer a column and
-  never noticed the database rejecting every batch. Bulk imports now stop and
-  show the real error instead of reporting rows they never saved.
-- **DMA names from the file are kept.** They used to be thrown away unless a
-  matching DMA already existed — which on a first import is never — so
-  "Auto-Create DMAs" reported none straight after announcing they were detected.
-  The name is now stored with each meter, and once the areas are created the
-  meters that named them are linked automatically.
-- **The file decides which meters are mains.** An **"Is Main"** field
-  (`is_main`, `IsMain`, `Is Main`, `main_meter`) is honoured meter by meter;
-  `yes / true / 1 / Y / main / primary / master` mean main. **With no such field,
-  meters import as sub meters** — unless the layer is explicitly a main type by
-  category or name. Columns like `MAIN_ID` or `MAIN SIZE` are ignored, so a
-  pipe-diameter column can't mark a whole layer as mains.
-- **Imported meters default to Active** unless the file clearly says otherwise
-  (*inactive, no, false, 0, not active, disabled, off, dead*). Applies to meter
-  files, the carbon copy import, and meters created from a map layer.
-- **Layer categories are detected instead of defaulting to Other**, which is what
-  left meter layers showing a feature count but 0 meters. A split import creates
-  **Main Meters** and **Sub Meters** layers; meter-type shapefile/GeoJSON imports
-  create real meter rows. The plain **"Meters"** category was removed as
-  confusing, **Ultrasonic Meters** added as a real category.
-- **Repair for a layer already imported wrong:** open its settings and set the
-  category — saving creates the missing meter records from the layer's own
-  points, and only when it has none, so it can't duplicate them. Re-import to
-  pick up DMA names.
 
 ## 1.010, 1.011, 1.049, 1.051, 1.078, 1.084 — 2026-07-27 · *New feature + Bug fix* · **Important**
 **Customer view: design approval, and both sides staying in step**

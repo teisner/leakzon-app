@@ -178,6 +178,80 @@ produce the files.
 
 ---
 
+## Export to LeakZon
+
+The last step of onboarding: package the project into the files the LeakZon
+Main platform imports. It starts with an analysis, not a download — nothing is
+produced until you've seen what the project actually contains and chosen to
+continue.
+
+### Analyze, then export
+
+The analysis reports, before anything is written to disk:
+
+- How many meters are assigned to a DMA, and how many aren't.
+- Mains versus sub-meters.
+- Which DMAs have no main meter.
+- Main meters linked to no DMA at all.
+- Meters with no coordinates.
+- Whether the Identifier you've chosen actually identifies each meter (see
+  below) — with the number of meters affected and example clashes.
+
+The same summary is shown again at the end, with **Continue to LeakZon
+platform** to proceed.
+
+### The files
+
+| File | Contents |
+| --- | --- |
+| **Meter Data** | Every meter that's assigned to a DMA, one row each |
+| **Groups** | DMA membership — one row per meter *per DMA it belongs to* |
+| **Meters — No DMA** | Meters that aren't assigned to any DMA, so nothing is silently dropped |
+| Shapefiles *(optional)* | DMA and boundary outlines, off by default — tick it only when the boundaries are going into a different GIS platform |
+
+Headers are always in English, whatever language the interface is set to — the
+receiving system parses them by name.
+
+**Meter Data** carries fixed values the receiving system expects: today's date
+as Installation Date, the project's own water unit, multiplier 1, Isactive
+TRUE, ufr FALSE, meter type water, and Location as one combined
+latitude/longitude field. **Identifier** and **Meter Number** are fields you
+choose in the review step, each shown with how many meters actually have a
+value — so a column can't be exported empty by accident. Because LeakZon
+matches meters on the Identifier, the review step warns if the chosen
+combination isn't unique across the project, with examples, so it can be fixed
+before the file goes out rather than causing meters to merge on the other end.
+
+**Every physical meter appears in Meter Data exactly once** — even a main that
+plays a role in more than one DMA.
+
+### Main, Sub, and DMA membership
+
+A DMA's main meter is whichever meter its own record names — set from the DMA
+side, not guessed from where a meter happens to sit on the map. A DMA that
+has none gets a **placeholder main**: a fictitious meter positioned at the
+DMA's centre, named `<DMA name>_Fictive`, flagged as the DMA's root — so every
+DMA reaches LeakZon with exactly one main, real or placeholder.
+
+A meter's Groups membership isn't always a single row:
+
+- **A main feeding several DMAs** gets one Groups row per DMA it mains for —
+  same meter, same Identifier, one row per area.
+- **A boundary main meter** can feed one DMA while also being billed as a
+  consumer of a neighbouring one (the same relationship the Network Design
+  diagram shows as "also sub in …"). It gets **two** Groups rows: one marking
+  it main for the DMA it feeds, one marking it a sub for the DMA that bills
+  it.
+
+None of this multiplies Meter Data — that file still lists the physical meter
+once. Groups is the file built to describe membership, one row per
+relationship.
+
+Sub-meter communication is read from a project setting (**AMI** or **AMR**,
+whichever the utility actually uses); main meters always export as AMI.
+
+---
+
 ## Approval and hand-over
 
 Before exporting, the customer can be asked to approve the design. They open the
