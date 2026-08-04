@@ -298,12 +298,17 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
-## 1.161 — 2026-08-03 · *New feature*
-**Customer Signature page (test)**
-- Project Settings has a **Signature Page** toggle. Once on, it shows a
-  shareable link (piggybacking on the Customer View link) that opens a plain
-  page where the customer draws a signature on a pad and submits it — a quick
-  test, not the final design.
+## 1.161, 1.162 — 2026-08-04 · *New feature*
+**Meter Data Permission Request page**
+- Project Settings has a **Permission Request Page** toggle. Once on, it shows
+  a shareable link (piggybacking on the Customer View link) that opens a page
+  where the customer names their meter provider, their own official name, and
+  the person authorizing access (name + title), then signs.
+- Submitting generates a PDF granting LeakZon permission to access that
+  provider's meter data — basic meter info, consumption, locations, and any
+  other relevant meter data — via the provider's website or API. The customer
+  gets a copy downloaded automatically; a copy is also stored on the project
+  for later retrieval.
 
 ## 1.159, 1.160 — 2026-08-03 · *Bug fix + Updated feature* · **Important**
 **A DMA with no main meter could be marked as having one**

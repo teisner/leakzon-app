@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, PenLine, Copy } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
@@ -275,14 +275,14 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
           </div>
         </div>
 
-        {/* Customer Signature card — test feature */}
+        {/* Meter Data Permission Request card */}
         <div className="mt-4">
-          <h2 className="text-sm font-bold text-foreground mb-1 px-1">Customer Signature (test)</h2>
+          <h2 className="text-sm font-bold text-foreground mb-1 px-1">Meter Data Permission Request</h2>
           <div className="bg-card border border-border rounded-xl px-5">
             <SettingRow
-              icon={PenLine}
-              title="Signature Page"
-              description="A page where the customer draws their signature. Opens via the same link as Customer View."
+              icon={FileSignature}
+              title="Permission Request Page"
+              description="A page where the customer names their meter provider and signs to grant LeakZon access to that provider's meter data. Opens via the same link as Customer View."
             >
               <Switch
                 checked={!!project.signature_page_enabled}
@@ -300,7 +300,7 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    No active Customer View link yet — create one first to get a signature link.
+                    No active Customer View link yet — create one first to get a permission request link.
                   </p>
                 )}
               </div>

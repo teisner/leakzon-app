@@ -1,5 +1,5 @@
-// Customer-facing (anonymous) endpoint for the signature test page — same
-// share-token gate as manageCustomerAnnotations/getCustomerModeData
+// Customer-facing (anonymous) endpoint for the Meter Data Permission Request
+// page — same share-token gate as manageCustomerAnnotations/getCustomerModeData
 // (see _shared/customerToken.ts).
 import { admin, json, CORS_HEADERS } from '../_shared/authz.ts';
 import { validateCustomerToken } from '../_shared/customerToken.ts';
@@ -9,7 +9,11 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, project_id, token, signature_data } = body;
+    const {
+      action, project_id, token,
+      provider_name, customer_official_name, signer_name, signer_title,
+      signature_data, pdf_data,
+    } = body;
 
     if (!project_id) return json({ error: 'project_id is required' }, 400);
 
@@ -23,7 +27,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!project?.signature_page_enabled) {
-      return json({ error: 'The signature page is not enabled for this project' }, 403);
+      return json({ error: 'The permission request page is not enabled for this project' }, 403);
     }
 
     if (action === 'load') {
@@ -31,10 +35,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'submit') {
-      if (!signature_data) return json({ error: 'signature_data is required' }, 400);
-      const { error } = await admin
-        .from('customer_signature')
-        .insert({ project_id, signature_data });
+      const required = { provider_name, customer_official_name, signer_name, signer_title, signature_data };
+      const missing = Object.entries(required).filter(([, v]) => !String(v || '').trim()).map(([k]) => k);
+      if (missing.length) return json({ error: `Missing required field(s): ${missing.join(', ')}` }, 400);
+
+      const { error } = await admin.from('customer_signature').insert({
+        project_id,
+        provider_name: provider_name.trim(),
+        customer_official_name: customer_official_name.trim(),
+        signer_name: signer_name.trim(),
+        signer_title: signer_title.trim(),
+        signature_data,
+        pdf_data: pdf_data || null,
+      });
       if (error) throw error;
       return json({ success: true });
     }

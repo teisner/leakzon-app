@@ -1,5 +1,16 @@
 # LeakZon — working instructions
 
+## Never switch to poiplanner from here
+
+This directory is LeakZon only. **Never read, edit, or run anything under
+`/Users/tomereisner/Documents/poiplanner`** while working in this project —
+that's a separate, unrelated app. If a message seems to reference it (by
+name, by feature, or by accident), stop and ask for explicit confirmation
+before touching it rather than switching context on your own. This was
+mistakenly triggered once already and immediately retracted by the user — the
+bar for "the user really meant to switch apps" is a clear, deliberate
+statement, not an ambiguous one.
+
 This app has been fully migrated **off Base44** to a self-hosted stack:
 Supabase (Postgres + PostGIS, Auth, Storage, Edge Functions) + a Vite/React
 frontend deployed on **Vercel**. Ignore the Base44-specific guidance in
