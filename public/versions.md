@@ -298,6 +298,15 @@ The running version is shown at the bottom of the side menu.
   empty Communication for their sub-meters exactly as before — no project's export
   changes until you choose. Main meters continue to export as AMI regardless.
 
+## 1.171 — 2026-08-04 · *New feature* · **Important**
+**A boundary main meter now gets both of its Groups rows**
+- A main meter (any type) that's also billed as a sub-meter of a neighbouring
+  DMA (`sub_meter_dma_id` — the boundary case shown in the network diagram)
+  used to only get one Groups row, for the DMA it feeds. It now gets a
+  second row too, for the DMA that bills it as a sub-meter — marked as a
+  sub, not a main, on that row. The Meter Data sheet still lists the
+  physical meter once.
+
 ## 1.170 — 2026-08-04 · *Bug fix* · **Important**
 **Permission page's forced light mode was actually losing to dark**
 - On a fresh page load, `ThemeProvider` (an ancestor) defaults to dark and

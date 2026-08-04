@@ -724,6 +724,22 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
     sharedCopies.push({ ...linked, __is_main: true, __dma_id: d.id, __dma_name: d.name || '' });
   }
 
+  // A main meter can also sit on a boundary: it feeds one DMA (the "linked"
+  // DMA, via dma_id/main_meter_id) while being billed as a consumer of a
+  // neighbouring one via sub_meter_dma_id — the same relationship
+  // dmaMainMeters.js surfaces in the network diagram. Both are genuine,
+  // separate memberships, so it gets a second Groups row for the sub-meter
+  // DMA too (never counted as a second main, and never replacing the first
+  // row — Meter Data dedupes back to one physical row by id regardless).
+  const subMeterCopies: any[] = [];
+  for (const m of meters) {
+    if (!m.__is_main || !m.sub_meter_dma_id) continue;
+    if (m.sub_meter_dma_id === m.__dma_id) continue;
+    const subDma = dmaById.get(m.sub_meter_dma_id);
+    if (!subDma) continue;
+    subMeterCopies.push({ ...m, __is_main: false, __dma_id: subDma.id, __dma_name: subDma.name || '' });
+  }
+
   // Fictitious mains get numeric UIDs continuing past the highest numeric UID
   // already in the project, so they can't collide with a real meter.
   let nextUid = meters.reduce((max, m) => {
@@ -750,7 +766,7 @@ function analyzeMeters(meters: any[], dmas: any[], layers: any[]) {
 
   // A main that got per-DMA copies is represented by those copies, so the
   // original must not also be emitted or it would double-count.
-  const all = [...meters.filter((m) => !copiedMainIds.has(m.id)), ...sharedCopies, ...fictitious];
+  const all = [...meters.filter((m) => !copiedMainIds.has(m.id)), ...sharedCopies, ...subMeterCopies, ...fictitious];
   const assigned = all.filter((m) => m.__dma_id);
   const unassigned = all.filter((m) => !m.__dma_id);
 
