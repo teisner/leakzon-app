@@ -120,7 +120,7 @@ export default function MeterProviderLinksSection({ projectId }) {
     <div className="py-4 border-t border-border">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-foreground">
-          Meter Provider Access Links ({links.length}/{MAX_LINKS})
+          External Links ({links.length}/{MAX_LINKS})
         </p>
         <Button size="sm" variant="outline" className="gap-1.5" onClick={openAdd} disabled={atLimit}>
           <Plus className="w-3.5 h-3.5" /> Add Link

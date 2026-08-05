@@ -16,8 +16,8 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
-## 1.177 — 2026-08-05 · *New feature*
-**Meter Provider Access Links in Project Settings**
+## 1.177, 1.178 — 2026-08-05 · *New feature*
+**External Links in Project Settings**
 - The Meter Data Permission Request card gets a small credential list — up
   to **10 links per project** — each with a short description, URL,
   username and password. Meant for things like the meter provider's own
