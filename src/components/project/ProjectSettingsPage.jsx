@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy, Download, Trash2 } from "lucide-react";
+import { Settings, Droplets, Ruler, Calendar, Footprints, Check, Lock, Unlock, Shield, Radio, FileSignature, Copy, Download, Trash2, Ban } from "lucide-react";
 import { isolationDistanceDisplay, displayToMeters } from "@/lib/isolationDistance";
 import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -14,6 +15,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
@@ -128,6 +130,24 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
       toast({ title: "Authorization deleted" });
     }
     setSignatureToDelete(null);
+  };
+
+  // Revoke access: kills the permission page's link (turns the project-level
+  // toggle off, the same switch above) without deleting the submitted
+  // authorization/PDF — unlike Delete, which removes both. Gated by typing
+  // the signer's name, since it's a distinct, deliberate action.
+  const [signatureToRevoke, setSignatureToRevoke] = useState(null);
+  const [revokeConfirmText, setRevokeConfirmText] = useState("");
+
+  const handleRevokeAccess = () => {
+    if (!signatureToRevoke) return;
+    handleUpdate("signature_page_enabled", false);
+    toast({
+      title: "Access revoked",
+      description: "The permission link no longer works. The submitted PDF is still available below.",
+    });
+    setSignatureToRevoke(null);
+    setRevokeConfirmText("");
   };
 
   // Shown in the project's own distance unit (m for metric, ft for imperial);
@@ -387,6 +407,17 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                         >
                           <Download className="w-3.5 h-3.5" /> PDF
                         </Button>
+                        {project.signature_page_enabled && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-amber-600 hover:text-amber-700"
+                            onClick={() => setSignatureToRevoke(sig)}
+                            title="Revoke link access"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -427,6 +458,50 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog
+          open={!!signatureToRevoke}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSignatureToRevoke(null);
+              setRevokeConfirmText("");
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Revoke permission link?</DialogTitle>
+              <DialogDescription>
+                {signatureToRevoke && (
+                  <>
+                    The permission link will stop working — nobody can open it again. The authorization already
+                    submitted by <strong>{signatureToRevoke.signer_name}</strong> and its PDF stay here, unaffected.
+                    <br /><br />
+                    Type <strong>{signatureToRevoke.signer_name}</strong> to confirm.
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              value={revokeConfirmText}
+              onChange={(e) => setRevokeConfirmText(e.target.value)}
+              placeholder="Signer's name"
+              autoFocus
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setSignatureToRevoke(null); setRevokeConfirmText(""); }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRevokeAccess}
+                disabled={!signatureToRevoke || revokeConfirmText !== signatureToRevoke.signer_name}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                Revoke Access
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Summary badge */}
         <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">

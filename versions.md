@@ -16,6 +16,15 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.175 — 2026-08-05 · *New feature* · **Important**
+**Revoke a permission link without losing the submitted file**
+- Each submitted authorization gets a **Revoke** button, separate from
+  **Delete** — it turns the permission link off (nobody can open it anymore)
+  but keeps the authorization and its PDF right where they are, unlike
+  Delete which removes both.
+- Gated by typing the signer's name to confirm, since it's a deliberate,
+  distinct action from the plain confirm-dialog Delete already has.
+
 ## 1.174 — 2026-08-04 · *Updated feature*
 **Changelog reordered to actually be newest-first, and a new Export to LeakZon chapter**
 - **The changelog wasn't reliably newest-first.** Entries had drifted out of
