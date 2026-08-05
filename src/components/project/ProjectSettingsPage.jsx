@@ -5,16 +5,6 @@ import { DEFAULT_PROXIMITY_FEET } from "@/lib/dmaProximity";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
@@ -118,7 +108,10 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
     a.click();
   };
 
+  // Delete removes the authorization and its PDF for good — the higher-stakes
+  // action, so it's gated by typing the signer's name to confirm.
   const [signatureToDelete, setSignatureToDelete] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const handleDeleteSignature = async () => {
     if (!signatureToDelete) return;
@@ -130,24 +123,19 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
       toast({ title: "Authorization deleted" });
     }
     setSignatureToDelete(null);
+    setDeleteConfirmText("");
   };
 
   // Revoke access: kills the permission page's link (turns the project-level
   // toggle off, the same switch above) without deleting the submitted
-  // authorization/PDF — unlike Delete, which removes both. Gated by typing
-  // the signer's name, since it's a distinct, deliberate action.
-  const [signatureToRevoke, setSignatureToRevoke] = useState(null);
-  const [revokeConfirmText, setRevokeConfirmText] = useState("");
-
-  const handleRevokeAccess = () => {
-    if (!signatureToRevoke) return;
+  // authorization/PDF — unlike Delete. Reversible (the toggle can be turned
+  // back on), so it's one click, no confirmation.
+  const handleRevokeAccess = (sig) => {
     handleUpdate("signature_page_enabled", false);
     toast({
       title: "Access revoked",
-      description: "The permission link no longer works. The submitted PDF is still available below.",
+      description: `The permission link no longer works. ${sig.signer_name}'s submitted PDF is still available below.`,
     });
-    setSignatureToRevoke(null);
-    setRevokeConfirmText("");
   };
 
   // Shown in the project's own distance unit (m for metric, ft for imperial);
@@ -412,7 +400,7 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-amber-600 hover:text-amber-700"
-                            onClick={() => setSignatureToRevoke(sig)}
+                            onClick={() => handleRevokeAccess(sig)}
                             title="Revoke link access"
                           >
                             <Ban className="w-3.5 h-3.5" />
@@ -436,68 +424,46 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
           </div>
         </div>
 
-        <AlertDialog open={!!signatureToDelete} onOpenChange={(open) => !open && setSignatureToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete this authorization?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {signatureToDelete && (
-                  <>
-                    This permanently deletes the submitted authorization from{" "}
-                    <strong>{signatureToDelete.customer_official_name}</strong> for{" "}
-                    <strong>{signatureToDelete.provider_name}</strong>, including its stored PDF. This can't be undone.
-                  </>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteSignature} className="bg-red-600 hover:bg-red-700">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
         <Dialog
-          open={!!signatureToRevoke}
+          open={!!signatureToDelete}
           onOpenChange={(open) => {
             if (!open) {
-              setSignatureToRevoke(null);
-              setRevokeConfirmText("");
+              setSignatureToDelete(null);
+              setDeleteConfirmText("");
             }
           }}
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Revoke permission link?</DialogTitle>
+              <DialogTitle>Delete this authorization?</DialogTitle>
               <DialogDescription>
-                {signatureToRevoke && (
+                {signatureToDelete && (
                   <>
-                    The permission link will stop working — nobody can open it again. The authorization already
-                    submitted by <strong>{signatureToRevoke.signer_name}</strong> and its PDF stay here, unaffected.
+                    This permanently deletes the submitted authorization from{" "}
+                    <strong>{signatureToDelete.customer_official_name}</strong> for{" "}
+                    <strong>{signatureToDelete.provider_name}</strong>, including its stored PDF. This can't be undone.
                     <br /><br />
-                    Type <strong>{signatureToRevoke.signer_name}</strong> to confirm.
+                    Type <strong>{signatureToDelete.signer_name}</strong> to confirm.
                   </>
                 )}
               </DialogDescription>
             </DialogHeader>
             <Input
-              value={revokeConfirmText}
-              onChange={(e) => setRevokeConfirmText(e.target.value)}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Signer's name"
               autoFocus
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setSignatureToRevoke(null); setRevokeConfirmText(""); }}>
+              <Button variant="outline" onClick={() => { setSignatureToDelete(null); setDeleteConfirmText(""); }}>
                 Cancel
               </Button>
               <Button
-                onClick={handleRevokeAccess}
-                disabled={!signatureToRevoke || revokeConfirmText !== signatureToRevoke.signer_name}
-                className="bg-amber-600 hover:bg-amber-700"
+                onClick={handleDeleteSignature}
+                disabled={!signatureToDelete || deleteConfirmText !== signatureToDelete.signer_name}
+                className="bg-red-600 hover:bg-red-700"
               >
-                Revoke Access
+                Delete
               </Button>
             </DialogFooter>
           </DialogContent>
