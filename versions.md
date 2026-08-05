@@ -16,6 +16,17 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.177 — 2026-08-05 · *New feature*
+**Meter Provider Access Links in Project Settings**
+- The Meter Data Permission Request card gets a small credential list — up
+  to **10 links per project** — each with a short description, URL,
+  username and password. Meant for things like the meter provider's own
+  portal login.
+- **Open** launches the URL in a new tab; username and password can be
+  copied with one click, and the password is masked with a show/hide
+  toggle. Same trust level as the rest of the project — anyone with project
+  access can see and edit them, stored the same way everything else here is.
+
 ## 1.175, 1.176 — 2026-08-05 · *New feature* · **Important**
 **Revoke a permission link without losing the submitted file**
 - Each submitted authorization gets a **Revoke** button, separate from

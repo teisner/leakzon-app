@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { invokeFunction } from "@/api/functionsClient";
 import { supabase } from "@/api/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
+import MeterProviderLinksSection from "@/components/project/MeterProviderLinksSection";
 
 function SegmentedToggle({ value, options, onChange }) {
   return (
@@ -421,6 +422,8 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
                 </div>
               </div>
             )}
+
+            <MeterProviderLinksSection projectId={project.id} />
           </div>
         </div>
 
