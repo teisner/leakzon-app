@@ -65,8 +65,10 @@ function RecenterMap({ lat, lng }) {
   return null;
 }
 
-// Fits the map to the combined bounds of all layers once, when data becomes available.
-// Replaces the per-layer fitBounds that caused the map to jump as each layer loaded.
+// Fits the map to the given bounds once, when they become available (the
+// boundary layer's bounds when one exists, else the combined bounds of every
+// layer — see initialFitBounds below). Replaces the per-layer fitBounds that
+// caused the map to jump as each layer loaded.
 function FitToBounds({ bounds }) {
   const map = useMap();
   const fittedRef = useRef(false);
@@ -617,7 +619,12 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   const boundaryLayer = shpLayers.find((l) => /boundary/i.test(l.name));
   const boundaryGeoJSON = boundaryLayer ? geojsonCache[boundaryLayer.id] : null;
 
-  // Combined bounds of all layers — used to fit the map once on project open
+  // Bounds to fit the map to once on project open. The boundary layer is
+  // authoritative when it exists — a single bad point in any other layer
+  // (a mis-digitized shapefile feature miles from the project) used to blow
+  // the initial view out to include it, e.g. Robbins' Water Towers layer had
+  // 2 of 8 points ~20 miles off. Only falls back to the combined bounds of
+  // every layer when there's no boundary to frame on.
   const combinedBounds = useMemo(() => {
     const withBounds = layers.filter((l) => l.bounds);
     if (withBounds.length === 0) return null;
@@ -628,6 +635,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
       west: Math.min(acc.west, l.bounds.west),
     }), { north: -Infinity, south: Infinity, east: -Infinity, west: Infinity });
   }, [layers]);
+  const initialFitBounds = boundaryLayer?.bounds || combinedBounds;
 
   // Pre-compute boundary polygons in [lat,lng] format for meter clipping
   const boundaryPolygonsLatLng = useMemo(() => {
@@ -892,7 +900,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         <MapPanes layerCount={layers.length} />
         <TileDimmer dimming={mapDimming} />
         <RecenterMap lat={project.latitude} lng={project.longitude} />
-        <FitToBounds bounds={combinedBounds} />
+        <FitToBounds bounds={initialFitBounds} />
         <MapResizer />
         {showPointNumbers && (
           <PointNumberBadges

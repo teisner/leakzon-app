@@ -16,6 +16,21 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.179 — 2026-08-05 · *Bug fix* · **Important**
+**Initial zoom no longer blows out to fit a single bad point**
+- Opening a project fit the map to the combined bounds of **every** layer.
+  One mis-digitized feature anywhere — Robbins' Water Towers layer had 2 of
+  8 points sitting ~20 miles from the rest of the project — dragged that
+  combined box out far past the real boundary, so the initial view opened
+  zoomed way out.
+- The initial fit now uses the **boundary layer's own bounds** when one
+  exists, falling back to the combined bounds only when there's no
+  boundary to frame on.
+- Fixed the two specific outlier points in Robbins (a "Water Tower" and a
+  "Meter Vault", both duplicated across the "Village of Robbins" and
+  "Robbins" projects from the same source shapefile) and recomputed that
+  layer's stored bounds.
+
 ## 1.177, 1.178 — 2026-08-05 · *New feature*
 **External Links in Project Settings**
 - The Meter Data Permission Request card gets a small credential list — up
