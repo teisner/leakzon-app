@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, ChevronDown, MapPin, ListOrdered } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, MapPin, ListOrdered, Ruler } from "lucide-react";
 import { resolvePointColors } from "@/lib/colorPalette";
 
 // Renders a legend symbol that visually matches the layer's map appearance
@@ -49,12 +49,13 @@ function LayerSymbol({ layer }) {
   );
 }
 
-export default function CustomerModeLegend({ layers, dmas, visibleLayers, onToggleLayer, showDmas, onToggleDmas, showDmaNames, onToggleDmaNames, showPointNumbers, onTogglePointNumbers }) {
+export default function CustomerModeLegend({ layers, dmas, visibleLayers, onToggleLayer, showDmas, onToggleDmas, showDmaNames, onToggleDmaNames, showPointNumbers, onTogglePointNumbers, showDiameterLabels, onToggleDiameterLabels }) {
   const [minimized, setMinimized] = useState(false);
 
   const shpLayers = layers.filter((l) => l.layer_type === "shp");
   const dataLayers = layers.filter((l) => l.layer_type === "data");
   const allLayers = [...shpLayers, ...dataLayers];
+  const hasDiameterLayers = shpLayers.some((l) => l.pipe_config?.diameter_field);
 
   const isLayerVisible = (layer) =>
     visibleLayers[layer.id] !== undefined ? visibleLayers[layer.id] : (layer.visible ?? true);
@@ -129,6 +130,23 @@ export default function CustomerModeLegend({ layers, dmas, visibleLayers, onTogg
                 <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card transition-transform ${showPointNumbers ? "translate-x-3" : "translate-x-0.5"}`} />
               </span>
             </button>
+
+            {hasDiameterLayers && (
+              <button
+                onClick={onToggleDiameterLabels}
+                className={`w-full flex items-center justify-between gap-2 mb-2 pb-2 border-b border-border px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  showDiameterLabels ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground hover:bg-muted"
+                }`}
+                title="Show pipe diameter labels on top of the water line"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Ruler className="w-3 h-3" /> Diameter Labels
+                </span>
+                <span className={`relative inline-flex h-3.5 w-6 rounded-full transition-colors ${showDiameterLabels ? "bg-primary" : "bg-muted-foreground/40"}`}>
+                  <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card transition-transform ${showDiameterLabels ? "translate-x-3" : "translate-x-0.5"}`} />
+                </span>
+              </button>
+            )}
 
             <div className="space-y-1.5 max-h-[50vh] overflow-y-auto">
               {allLayers.map((layer) => {

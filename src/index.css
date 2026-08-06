@@ -258,6 +258,7 @@
 /* Pipe diameter label — centered above the water line */
 .pipe-diameter-label {
   pointer-events: none;
+  z-index: 650 !important;
 }
 .pipe-diameter-label-text {
   display: inline-block;

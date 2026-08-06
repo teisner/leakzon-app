@@ -16,6 +16,12 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.181 — 2026-08-06 · *Bug fix + New feature* · **Important**
+**Diameter labels now always render on top of the water line, and stay visible as you zoom**
+- Fixed diameter labels rendering under the pipe line instead of above it.
+- Labels now track the visible portion of a long pipe run, so zooming into any part of it still shows a label instead of only the pipe's overall midpoint.
+- Added a "Diameter Labels" toggle to the Customer View legend (shown whenever a layer has diameter data), so customers can turn labels on/off themselves.
+
 ## 1.180 — 2026-08-06 · *Updated feature*
 **Green border on the Permission Request card in Project Settings**
 - Visual highlight so the Meter Data Permission Request section stands out on the settings page.

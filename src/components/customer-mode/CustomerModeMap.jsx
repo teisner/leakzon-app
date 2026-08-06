@@ -12,6 +12,7 @@ import { isValveLayer, isFeatureIsolated, findIsolatedForFeature } from "@/lib/i
 import BingTileLayer from "@/components/project/BingTileLayer";
 import MeterMarkers from "@/components/project/MeterMarkers";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
+import PipeDiameterLabels from "@/components/project/PipeDiameterLabels";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
 import { loadNumberStyle } from "@/lib/numberStyle";
 import CustomerModeLegend from "./CustomerModeLegend";
@@ -64,6 +65,7 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
   const [showDmas, setShowDmas] = useState(true);
   const [showDmaNames, setShowDmaNames] = useState(true);
   const [showPointNumbers, setShowPointNumbers] = useState(false);
+  const [showDiameterLabels, setShowDiameterLabels] = useState(false);
   const [numberStyle] = useState(() => loadNumberStyle(project?.id));
   const [mapSource, setMapSource] = useState("google");
   const [mapType, setMapType] = useState("terrain");
@@ -495,17 +497,24 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
           const raw = geojsonCache[layer.id];
           if (!raw) return null;
           return (
-            <GeoJSON
-              key={getLayerKey(layer)}
-              data={raw}
-              style={buildLayerStyleFn(layer)}
-              onEachFeature={(feature, lyr) => {
-                if (!/boundary/i.test(layer.name)) {
-                  lyr.bindPopup(buildFeaturePopup(feature, layer));
-                }
-              }}
-              pointToLayer={buildPointToLayerFn(layer)}
-            />
+            <React.Fragment key={getLayerKey(layer)}>
+              <GeoJSON
+                data={raw}
+                style={buildLayerStyleFn(layer)}
+                onEachFeature={(feature, lyr) => {
+                  if (!/boundary/i.test(layer.name)) {
+                    lyr.bindPopup(buildFeaturePopup(feature, layer));
+                  }
+                }}
+                pointToLayer={buildPointToLayerFn(layer)}
+              />
+              {/* No `pane` — falls into Leaflet's default marker pane (600), which
+                  already sits above every layer's own pane, so the label renders
+                  on top of the water line without fighting its z-order. */}
+              {showDiameterLabels && layer.pipe_config?.diameter_field && (
+                <PipeDiameterLabels data={raw} pipeConfig={layer.pipe_config} distanceUnit={project?.distance_unit} />
+              )}
+            </React.Fragment>
           );
         })}
 
@@ -687,6 +696,8 @@ export default function CustomerModeMap({ project, layers, dmas, meters, isolate
         onToggleDmaNames={() => setShowDmaNames((v) => !v)}
         showPointNumbers={showPointNumbers}
         onTogglePointNumbers={() => setShowPointNumbers((v) => !v)}
+        showDiameterLabels={showDiameterLabels}
+        onToggleDiameterLabels={() => setShowDiameterLabels((v) => !v)}
       />
 
       {/* DMA panel — right side */}
