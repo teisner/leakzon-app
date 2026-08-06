@@ -338,7 +338,7 @@ export default function ProjectSettingsPage({ project, onUpdate, locked, current
         {/* Meter Data Permission Request card */}
         <div className="mt-4">
           <h2 className="text-sm font-bold text-foreground mb-1 px-1">Meter Data Permission Request</h2>
-          <div className="bg-card border border-border rounded-xl px-5">
+          <div className="bg-card border-2 border-green-500 rounded-xl px-5">
             <SettingRow
               icon={FileSignature}
               title="Permission Request Page"

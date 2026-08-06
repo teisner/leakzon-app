@@ -16,6 +16,10 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.180 — 2026-08-06 · *Updated feature*
+**Green border on the Permission Request card in Project Settings**
+- Visual highlight so the Meter Data Permission Request section stands out on the settings page.
+
 ## 1.179 — 2026-08-05 · *Bug fix* · **Important**
 **Initial zoom no longer blows out to fit a single bad point**
 - Opening a project fit the map to the combined bounds of **every** layer.
