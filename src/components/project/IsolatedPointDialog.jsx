@@ -63,6 +63,8 @@ export default function IsolatedPointDialog({ open, onOpenChange, valveInfo, dma
         color,
       });
       onOpenChange(false);
+    } catch {
+      // onAssigned already surfaced a toast — keep the dialog open to retry.
     } finally {
       setSaving(false);
     }

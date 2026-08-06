@@ -16,6 +16,11 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.182 — 2026-08-06 · *Bug fix* · **Important**
+**Isolated valve assignments no longer fail silently**
+- Assigning or removing an isolated valve now checks the database write's result. If a momentarily-expired session (or any other write failure) blocks the save, you now get an error message and the dialog stays open to retry — instead of it silently not saving while the app behaves as if it worked.
+- Root cause of "mark one valve and the others disappear": those others were never actually saved in the first place (silent insert failures), so they were never there to lose.
+
 ## 1.181 — 2026-08-06 · *Bug fix + New feature* · **Important**
 **Diameter labels now always render on top of the water line, and stay visible as you zoom**
 - Fixed diameter labels rendering under the pipe line instead of above it.

@@ -8,6 +8,7 @@ import { resolveLayerTypeId } from "@/lib/layerType";
 import { ensureMainMetersLayer } from "@/lib/mainMeterLayer";
 import { PanelLeftClose, PanelLeftOpen, MessageSquare, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import ProjectHeader from "@/components/project/ProjectHeader";
 import { analyzeGeoJSON } from "@/lib/geoAnalysis";
 import ProjectMap from "@/components/project/ProjectMap";
@@ -103,6 +104,7 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [project, setProject] = useState(null);
   const [layers, setLayers] = useState([]);
   const [meters, setMeters] = useState([]);
@@ -707,13 +709,24 @@ export default function ProjectDetail() {
   };
 
   const handleAssignIsolatedPoint = async (data) => {
-    await supabase.from('isolated_point').insert({ ...data, project_id: id });
+    // A momentarily-expired session drops to `anon`, which has SELECT-only
+    // access to isolated_point — the insert fails silently unless checked,
+    // and the dialog would close as if it worked while nothing was saved.
+    const { error } = await supabase.from('isolated_point').insert({ ...data, project_id: id });
+    if (error) {
+      toast({ variant: "destructive", title: "Failed to save isolated point", description: error.message });
+      throw error; // keep the dialog open so the user can retry
+    }
     loadIsolatedPoints();
     upsertIsolatedLayer();
   };
 
   const handleDeleteIsolatedPoint = async (pointId) => {
-    await supabase.from('isolated_point').delete().eq('id', pointId);
+    const { error } = await supabase.from('isolated_point').delete().eq('id', pointId);
+    if (error) {
+      toast({ variant: "destructive", title: "Failed to remove isolated point", description: error.message });
+      return;
+    }
     loadIsolatedPoints();
     upsertIsolatedLayer();
   };
