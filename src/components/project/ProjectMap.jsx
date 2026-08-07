@@ -1267,6 +1267,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           color={manualEditLayer?.color || "#3b82f6"}
           isMeterLayer={isMeterLayer}
           onMeterPointPlaced={handleMeterPointPlaced}
+          trashBinRef={trashBinRef}
         />
 
         {/* Manual line editing */}
@@ -1357,13 +1358,15 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         </div>
       )}
 
-      {/* Trash bin — drop target for deleting isolated points by drag (see
-          IsolatedPointDragMarkers). Only a drop zone, not clickable itself. */}
-      {isolatedMode && !viewHideIsolated && (
+      {/* Trash bin — drop target for deleting points by drag: isolated valve
+          points (IsolatedPointDragMarkers) in Isolated Points Mode, and any
+          point-editable layer's points (ManualPointHandler) in Edit Points on
+          Map mode. Only a drop zone, not clickable itself. */}
+      {((isolatedMode && !viewHideIsolated) || (manualEditLayer && !isManualLineLayer)) && (
         <div
           ref={trashBinRef}
           className="trash-bin-dropzone absolute bottom-3 right-3 z-[1000] flex items-center justify-center w-14 h-14 rounded-full bg-card/95 backdrop-blur border-2 border-dashed border-border text-muted-foreground shadow-lg transition-colors"
-          title="Drag an isolated point here to delete it"
+          title="Drag a point here to delete it"
         >
           <Trash2 className="w-6 h-6" />
         </div>
@@ -1465,7 +1468,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           </div>
           <div className="w-px h-5 bg-slate-200" />
           <span className="text-xs text-muted-foreground">{manualPoints.length} point{manualPoints.length !== 1 ? "s" : ""}</span>
-          <span className="text-xs text-muted-foreground/70 hidden lg:inline">Click map to add · Drag to move · Click marker to name/delete</span>
+          <span className="text-xs text-muted-foreground/70 hidden lg:inline">Click map to add · Drag to move · Drag onto trash bin to delete · Click marker to name/delete</span>
           <div className="w-px h-5 bg-slate-200" />
           <button
             onClick={() => setManualPoints((prev) => prev.slice(0, -1))}

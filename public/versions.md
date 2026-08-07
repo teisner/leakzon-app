@@ -16,6 +16,11 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.184 — 2026-08-07 · *New feature* · **Important**
+**Drag-to-trash-bin delete now also works in Edit Points on Map mode**
+- The trash bin now also appears in "Edit points on map" mode (any point-editable layer, including main/insertion meter layers), not just Isolated Points Mode. Drag any point onto it to remove it from the layer; drop elsewhere and it drags normally like before (reposition).
+- Fixes the case where a manually-added point that was never actually assigned as an isolated valve (so it doesn't show the assigned green styling, and isn't in the isolated-points list) couldn't be moved or removed at all — it can now be deleted the same way, via the layer's "Edit points on map" mode.
+
 ## 1.183 — 2026-08-07 · *New feature* · **Important**
 **Drag an isolated valve onto the trash bin to delete it**
 - In Isolated Points Mode, a trash-bin drop zone now appears bottom-right. Drag an isolated point's marker onto it to remove that isolation assignment; dropping anywhere else snaps it back in place.

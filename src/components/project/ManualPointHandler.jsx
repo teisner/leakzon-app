@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useMap, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { reverseGeocode } from "@/lib/reverseGeocode";
+import { overlapsTrashBin, armTrashBin, disarmTrashBin, setTrashBinHover } from "@/lib/trashBinDrop";
 
 const genId = () =>
   crypto.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -15,7 +16,7 @@ const createIcon = (color) =>
     popupAnchor: [0, -10],
   });
 
-function ManualMarker({ point, color, onUpdate, onDelete, autoOpen, isMeterLayer, onMeterClick }) {
+function ManualMarker({ point, color, onUpdate, onDelete, autoOpen, isMeterLayer, onMeterClick, trashBinRef }) {
   const markerRef = useRef(null);
   const [localName, setLocalName] = useState(point.name || "");
 
@@ -38,7 +39,14 @@ function ManualMarker({ point, color, onUpdate, onDelete, autoOpen, isMeterLayer
       icon={createIcon(color)}
       draggable
       eventHandlers={{
+        dragstart: () => armTrashBin(trashBinRef),
+        drag: (e) => setTrashBinHover(trashBinRef, overlapsTrashBin(e.target, trashBinRef?.current)),
         dragend: (e) => {
+          disarmTrashBin(trashBinRef);
+          if (overlapsTrashBin(e.target, trashBinRef?.current)) {
+            onDelete(point.id);
+            return;
+          }
           const pos = e.target.getLatLng();
           onUpdate(point.id, { lat: pos.lat, lng: pos.lng });
           // Re-fetch nearest address for meter points that already have a suggested address
@@ -87,7 +95,7 @@ function ManualMarker({ point, color, onUpdate, onDelete, autoOpen, isMeterLayer
 
 const MemoMarker = memo(ManualMarker);
 
-export default function ManualPointHandler({ active, points, setPoints, color, isMeterLayer, onMeterPointPlaced }) {
+export default function ManualPointHandler({ active, points, setPoints, color, isMeterLayer, onMeterPointPlaced, trashBinRef }) {
   const map = useMap();
   const [newlyAddedId, setNewlyAddedId] = useState(null);
 
@@ -152,6 +160,7 @@ export default function ManualPointHandler({ active, points, setPoints, color, i
           autoOpen={!isMeterLayer && p.id === newlyAddedId}
           isMeterLayer={isMeterLayer}
           onMeterClick={onMeterPointPlaced}
+          trashBinRef={trashBinRef}
         />
       ))}
     </>
