@@ -275,6 +275,32 @@
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
 }
 
+/* Isolated point drag marker — matches the assigned-valve circle style
+   (radius 9, black border) so it sits exactly over the GeoJSON-styled
+   circle underneath and reads as one marker. */
+.isolated-drag-marker-dot {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2.5px solid #000000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+
+/* Trash bin drop zone (isolated mode) */
+.trash-bin-dropzone--armed {
+  border-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary));
+}
+.trash-bin-dropzone--hover {
+  border-style: solid !important;
+  border-color: #dc2626 !important;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1) !important;
+  transform: scale(1.12);
+}
+
 /* Point number badge — centered on the (possibly nudged) label position */
 .point-number-badge {
   pointer-events: none;

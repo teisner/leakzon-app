@@ -31,6 +31,7 @@ import CoffeeBreak from "@/components/project/CoffeeBreak";
 import FloodOverlay from "@/components/project/FloodOverlay";
 import { diameterUnit } from "@/lib/pipeStyling";
 import PointNumberBadges from "@/components/project/PointNumberBadges";
+import IsolatedPointDragMarkers from "@/components/project/IsolatedPointDragMarkers";
 import NumberStyleControls from "@/components/project/NumberStyleControls";
 import { buildNumberablePoints } from "@/lib/pointNumbering";
 import { isMeterManualLayer } from "@/lib/meterLayerDetection";
@@ -257,6 +258,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
   }, [mapDimming]);
 
   const rootRef = useRef(null);
+  const trashBinRef = useRef(null);
 
   useEffect(() => {
     if (drawMode) {
@@ -910,6 +912,14 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
             onToggleSelect={toggleNumberSelect}
           />
         )}
+        {isolatedMode && !viewHideIsolated && (
+          <IsolatedPointDragMarkers
+            isolatedPoints={isolatedPoints}
+            dmas={dmas}
+            onDelete={onDeleteIsolatedPoint}
+            trashBinRef={trashBinRef}
+          />
+        )}
         {highlightBorderValves && borderValvePoints.map((p, i) => (
           <CircleMarker
             key={`bv-${i}`}
@@ -1336,7 +1346,7 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-3 bg-card/95 backdrop-blur rounded-lg shadow-lg border border-border px-4 py-2">
           <span className="text-sm font-semibold text-foreground">Isolated Points Mode</span>
           <div className="w-px h-5 bg-border" />
-          <span className="text-xs text-muted-foreground">Click a valve to assign DMAs</span>
+          <span className="text-xs text-muted-foreground">Click a valve to assign DMAs · drag an isolated point onto the trash bin to remove it</span>
           <div className="w-px h-5 bg-border" />
           <button
             onClick={onExitIsolatedMode}
@@ -1344,6 +1354,18 @@ export default function ProjectMap({ project, layers, meters, mapType, setMapTyp
           >
             <X className="w-3.5 h-3.5" /> Finish
           </button>
+        </div>
+      )}
+
+      {/* Trash bin — drop target for deleting isolated points by drag (see
+          IsolatedPointDragMarkers). Only a drop zone, not clickable itself. */}
+      {isolatedMode && !viewHideIsolated && (
+        <div
+          ref={trashBinRef}
+          className="trash-bin-dropzone absolute bottom-3 right-3 z-[1000] flex items-center justify-center w-14 h-14 rounded-full bg-card/95 backdrop-blur border-2 border-dashed border-border text-muted-foreground shadow-lg transition-colors"
+          title="Drag an isolated point here to delete it"
+        >
+          <Trash2 className="w-6 h-6" />
         </div>
       )}
 

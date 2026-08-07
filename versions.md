@@ -16,6 +16,10 @@ Entries without it are cosmetic, internal, or fun.
 
 The running version is shown at the bottom of the side menu.
 
+## 1.183 — 2026-08-07 · *New feature* · **Important**
+**Drag an isolated valve onto the trash bin to delete it**
+- In Isolated Points Mode, a trash-bin drop zone now appears bottom-right. Drag an isolated point's marker onto it to remove that isolation assignment; dropping anywhere else snaps it back in place.
+
 ## 1.182 — 2026-08-06 · *Bug fix* · **Important**
 **Isolated valve assignments no longer fail silently**
 - Assigning or removing an isolated valve now checks the database write's result. If a momentarily-expired session (or any other write failure) blocks the save, you now get an error message and the dialog stays open to retry — instead of it silently not saving while the app behaves as if it worked.
